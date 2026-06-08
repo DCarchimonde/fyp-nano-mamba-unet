@@ -1,0 +1,76 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+conda_env/
+*.egg-info/
+
+# PyCharm / IDE
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dataset / medical images
+Data/
+data/
+ACDC/
+database/
+*.nii
+*.nii.gz
+*.mha
+*.nrrd
+*.dcm
+*.h5
+*.hdf5
+
+# Model weights / checkpoints
+*.pth
+*.pt
+*.ckpt
+*.onnx
+checkpoints/
+weights/
+saved_models/
+
+# Training outputs
+runs/
+logs/
+wandb/
+mlruns/
+outputs/
+results/
+predictions/
+inference_outputs/
+training_outputs/
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+.cache/
+
+# Large numpy files
+*.npy
+*.npz
+
+# LaTeX generated files
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.lof
+*.lot

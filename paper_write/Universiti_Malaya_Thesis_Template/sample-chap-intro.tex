@@ -1,0 +1,99 @@
+%!TEX ROOT = thesis.tex
+
+% =========================================================
+% CHAPTER 1: INTRODUCTION
+% =========================================================
+\chapter{INTRODUCTION}
+\label{chap:intro}
+
+\section{Background of the Study}
+
+\subsection{Clinical Significance of Cardiovascular Diseases}
+Cardiovascular diseases (CVDs) constitute the most prominent global health crisis in contemporary medicine. According to the World Health Organization (WHO), CVDs are responsible for an estimated 17.9 million deaths annually, representing approximately 32\% of all global mortality \cite{who2021cvd}. The effective clinical management, risk stratification, and therapeutic intervention for severe conditions such as heart failure, myocardial infarction, and congenital cardiomyopathies strictly require a profound and precise quantification of the patient's cardiac function. 
+
+To achieve this, Cardiac Magnetic Resonance (CMR) imaging is widely recognized as the non-invasive gold standard \cite{bernard2018deep}. Compared to echocardiography, which suffers from limited acoustic windows and high operator dependency, CMR provides high-resolution, three-dimensional (3D) volumetric assessments of the heart across the dynamic cardiac cycle. Cardiologists derive critical functional indices—such as the Ejection Fraction (EF), End-Diastolic Volume (EDV), End-Systolic Volume (ESV), and Myocardial Mass—by computing the precise volumetric measurements of three primary cardiac structures: the Right Ventricle (RV), the Left Ventricle (LV), and the Myocardium (MYO).
+
+\subsection{The Bottleneck of Manual Delineation and Traditional Methods}
+Historically, extracting these volumetric metrics has relied on manual delineation by expert radiologists. However, this clinical workflow is inherently flawed and mathematically unscalable. Analyzing a standard CMR cine sequence generates hundreds of 2D slices, rendering manual annotation a highly labor-intensive process that can consume up to 30 minutes per patient \cite{bernard2018deep}. Furthermore, manual segmentation is plagued by high inter-observer and intra-observer variability. The anatomical boundary between the myocardium and the blood pool—particularly at the basal and apical slices—is notoriously ambiguous due to partial volume effects and the presence of complex trabeculations and papillary muscles. 
+
+Early automated attempts utilizing traditional image processing techniques, such as Active Contours, Level Sets, and graph-cut algorithms, failed to provide a robust solution. These algorithms rely heavily on handcrafted mathematical features and manual initialization, making them highly susceptible to image noise, radio-frequency field inhomogeneities, and varying contrast agent dynamics, thus proving inadequate for fully automated, high-throughput clinical deployments \cite{peng2020review}.
+
+\subsection{Evolution of Deep Learning and its Inherent Limitations}
+The paradigm of medical image analysis was fundamentally revolutionized by the advent of representation learning, specifically Fully Convolutional Networks (FCNs) \cite{long2015fully}. The U-Net architecture \cite{ronneberger2015u}, characterized by its symmetric encoder-decoder structure and spatial skip connections, established the foundational standard by effectively capturing multi-scale spatial representations. Its 3D extension, the 3D U-Net \cite{cicek20163d}, enabled the direct volumetric processing of MRI slices.
+
+However, the logic underpinning 3D CNNs contains a critical mathematical limitation: the inherent locality of the convolution operation. A standard 3D convolutional kernel (e.g., $3 \times 3 \times 3$) only aggregates information from an immediate local voxel neighborhood. While deep stacking of convolutional layers theoretically expands the receptive field, empirical evidence demonstrates that CNNs struggle to intrinsically model continuous, long-range spatio-temporal dependencies. The human heart operates in a continuous temporal domain; a model that treats sequential frames merely as independent spatial volumes fails to maintain physiological and anatomical continuity across the cardiac cycle.
+
+To circumvent the limitations of localized receptive fields, the academic community introduced Vision Transformers (ViTs) to medical imaging. Architectures such as UNETR \cite{hatamizadeh2022unetr} successfully integrated global self-attention mechanisms \cite{vaswani2017attention}, enabling the network to compute pairwise correlations between all volumetric tokens regardless of their spatial physical distance. While Transformers deliver superior representational power, they introduce a severe computational crisis. The standard self-attention mechanism computes an $N \times N$ attention matrix, scaling quadratically with the input sequence length $\mathcal{O}(N^2)$. For high-resolution 3D medical volumes (e.g., $256 \times 256 \times 16$), this quadratic scaling causes an explosion in parameter counts—often exceeding tens of millions (e.g., SOTA SegResNet at 18.80M parameters)—and mandates prohibitive Video RAM (VRAM) consumption.
+
+\subsection{The Paradigm Shift: Selective State Space Models}
+To resolve the profound dichotomy between the local blindness of CNNs and the computational disaster of Transformers, this research investigates the application of Selective State Space Models (SSMs). The Mamba architecture \cite{gu2023mamba} represents a theoretical breakthrough: it maps continuous-time dynamic systems into discrete sequences, utilizing a hardware-aware selective scan algorithm. Crucially, Mamba achieves a global receptive field with linear computational complexity $\mathcal{O}(N)$. By integrating this mechanism into a highly compressed semantic latent space, we hypothesize that it is possible to achieve SOTA-level spatio-temporal cardiac segmentation within an ultra-lightweight parameter envelope strictly suitable for edge-device deployment.
+
+\section{Scope of the Study}
+To maintain rigorous scientific focus and ensure absolute mathematical reproducibility, the scope of this research is explicitly defined and constrained:
+\begin{itemize}
+    \item \textbf{Dataset Boundary:} The empirical evaluation is exclusively restricted to the multi-center Automated Cardiac Diagnosis Challenge (ACDC) dataset \cite{bernard2018deep}. This study focuses strictly on the multi-class segmentation of three specific anatomical regions: the Right Ventricle (RV), the Myocardium (MYO), and the Left Ventricle (LV), across varying severe pathological states (e.g., Infarction, Cardiomyopathy).
+    \item \textbf{Architectural and Hardware Constraints:} The proposed model design is strictly bounded by modern edge-computing constraints. To simulate portable clinical hardware limitations, all training, validation, and computational profiling (FPS, VRAM) are standardized and executed on a single consumer-grade NVIDIA RTX 4060 GPU equipped with 8GB of VRAM.
+    \item \textbf{Exclusions:} This study fundamentally concentrates on the computational engineering, mathematical optimization, and architectural development of the neural network. Direct clinical deployment, longitudinal multi-center blind trials, and the integration of the model into proprietary hospital information systems (HIS) fall entirely outside the scope of this computing-centric thesis.
+\end{itemize}
+
+\section{Organization of the Thesis}
+In strict adherence to the Universiti Malaya (UM) postgraduate dissertation guidelines, this thesis is systematically structured into eight cohesive chapters to comprehensively present the research lifecycle:
+\begin{itemize}
+    \item \textbf{Chapter 1: Introduction} establishes the clinical background of cardiovascular diseases, introduces the evolution of deep learning solutions, and defines the research scope and structural organization of the thesis.
+    \item \textbf{Chapter 2: Research Problem} provides an in-depth articulation of the fundamental paradoxes hindering current automated diagnostics, specifically focusing on spatio-temporal modeling deficits and extreme computational bottlenecks.
+    \item \textbf{Chapter 3: Research Objectives} explicitly defines the primary and specific engineering goals of the study and formulates the core research questions guiding the architectural development.
+    \item \textbf{Chapter 4: Literature Review} offers an extensive critical analysis of the historical trajectory of medical image segmentation, mathematically scrutinizing traditional processing, Convolutional Networks, Vision Transformers, and State Space Models.
+    \item \textbf{Chapter 5: Research Design and Methodology} details the rigorous empirical pipeline, including spatial data harmonization, MONAI preprocessing, formulation of the composite Dice-Cross Entropy loss function, and the statistical evaluation metrics.
+    \item \textbf{Chapter 6: Results} presents the objective, empirical findings of the study, benchmarking the quantitative Dice scores and computational parameters of the proposed architecture against SOTA models.
+    \item \textbf{Chapter 7: Discussion and Limitations} provides a deep anatomical and mathematical interpretation of the results, analyzes the ablation studies via representation learning theories, and transparently dissects the model's failure cases.
+    \item \textbf{Chapter 8: Conclusion and Future Work} synthesizes the overall research achievements, explicitly answers the research questions, and outlines potential future trajectories such as federated learning and multi-modal integration.
+\end{itemize}
+
+% =========================================================
+% CHAPTER 2: RESEARCH PROBLEM
+% =========================================================
+\chapter{RESEARCH PROBLEM}
+\label{chap:problem}
+
+Despite the monumental success of existing deep learning architectures in cardiac medical image segmentation, a fundamental paradox remains unresolved, significantly hindering the clinical deployment of these automated systems. The contemporary challenge in medical AI is no longer merely achieving high accuracy on benchmark datasets; it is achieving high spatio-temporal fidelity within a strictly constrained hardware envelope. This thesis explicitly identifies the following interconnected problems:
+
+\section{The Dilemma of Spatio-Temporal Representation}
+The human heart is a highly dynamic, continuously moving organ, governed by complex fluid dynamics and electrophysiological signals. However, traditional 3D Convolutional Neural Networks process MRI sequences using rigidly localized $3 \times 3 \times 3$ volumetric kernels. This inherent locality restricts the network's receptive field, rendering it mathematically incapable of natively capturing long-range, continuous geometric variations across the temporal cardiac cycle. When processing the transition from the end-diastolic (fully expanded) to the end-systolic (fully contracted) phase, CNNs evaluate the frames as disjointed spatial blocks. This localized blindness results in temporally inconsistent segmentation masks, often missing the subtle contraction dynamics critical for diagnosing cardiomyopathies.
+
+Conversely, modern Vision Transformers resolve this temporal disconnect by introducing global self-attention mechanisms, treating the entire MRI volume as a sequence of globally interacting patches. While this establishes infinite theoretical receptive fields, it leads directly to the second critical problem.
+
+\section{The Computational Wall and Edge Deployment Restrictions}
+The self-attention mechanism within Vision Transformers requires computing pairwise correlations among all spatial elements, leading to a computational complexity of $\mathcal{O}(N^2)$ relative to the input sequence length $N$. In the high-dimensional space of 3D medical imaging, this quadratic scaling leads to catastrophic parameter explosions and unsustainable memory consumption. 
+
+Current State-of-the-Art (SOTA) models, such as SegResNet and Swin-UNETR, demand massive parameter counts (often exceeding 18 million) and extremely high Video RAM (VRAM) to process a single patient's scan. This computational bloat fundamentally contradicts the modern clinical paradigm shift towards decentralized, point-of-care edge computing. In rural clinics or emergency rooms utilizing portable ultrasound and MRI diagnostic devices, hardware is heavily constrained by thermal limits, low memory capacity, and restricted processing power. Deploying a 18-million-parameter Transformer model in such environments is physically and economically unfeasible.
+
+\section{The Challenge of Anatomical and Pathological Heterogeneity}
+Beyond computational constraints, existing lightweight models struggle profoundly with clinical realism. Real-world cardiac datasets, such as ACDC, exhibit extreme pathological heterogeneity. The anatomical boundaries of the right ventricle are exceptionally thin and highly variable, while conditions like myocardial infarction introduce heterogeneous scar tissues that defy standard pixel-intensity distributions. 
+
+Consequently, there is an urgent and critical need to develop a novel segmentation framework that simultaneously achieves the global spatio-temporal awareness and robustness of massive Vision Transformers, while strictly maintaining the hardware-efficient operational footprint of an ultra-lightweight CNN.
+
+% =========================================================
+% CHAPTER 3: RESEARCH OBJECTIVES
+% =========================================================
+\chapter{RESEARCH OBJECTIVES}
+\label{chap:objectives}
+
+To systematically address the critical spatio-temporal and computational limitations articulated in Chapter 2, the primary goal of this research is to conceptualize, programmatically implement, and rigorously evaluate an ultra-lightweight, spatio-temporally aware deep learning architecture for high-fidelity cardiac MRI segmentation.
+
+\section{Specific Objectives}
+To operationalize the primary goal, the specific engineering and analytical objectives are defined as follows:
+
+\begin{enumerate}
+    \item \textbf{Architectural Formulation:} To mathematically design and programmatically implement the "Nano-Mamba U-Net"—a novel hybrid neural architecture that replaces the dense convolutional bottlenecks of standard 3D CNNs with a continuous-time, linear-complexity $\mathcal{O}(N)$ Selective State Space Model (Mamba).
+    \item \textbf{Quantitative Benchmarking:} To rigorously benchmark the segmentation accuracy (measured via the Dice Similarity Coefficient, Hausdorff Distance, and Average Symmetric Surface Distance) of the proposed architecture against established baselines (e.g., 3D U-Net) and highly complex SOTA models (e.g., Attention U-Net, SegResNet) using the standardized, multi-pathology Automated Cardiac Diagnosis Challenge (ACDC) dataset.
+    \item \textbf{Hardware Profiling:} To rigorously evaluate the computational efficiency and edge-deployment feasibility of the proposed model by conducting comparative profiling of static architectural parameter counts, peak VRAM utilization, and real-time inference latency (quantified as Frames Per Second).
+\end{enumerate}
+
+\section{Research Questions}
+In direct alignment with the empirical objectives, this thesis seeks to answer the following core research questions through programmatic experimentation:
+
+\begin{enumerate}
+    \item \textbf{RQ1:} How can the Selective State Space mechanism, originally designed for 1D natural language processing sequences, be architecturally adapted and dimensionally flattened to accurately process 3D continuous medical imaging tensors?
+    \item \textbf{RQ2:} Does the integration of the Mamba bottleneck allow a highly compressed network (with fewer than 2 million parameters) to achieve comparable or superior spatial boundary fidelity when pitted against state-of-the-art models possessing over ten times the parameter count?
+    \item \textbf{RQ3:} What is the optimal mathematical configuration (specifically, the internal channel depth) for the state space bottleneck to perfectly balance spatio-temporal feature representation with minimal computational overhead, as verified through systematic ablation studies?
+\end{enumerate}

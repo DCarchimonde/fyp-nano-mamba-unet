@@ -1,0 +1,291 @@
+%!TEX ROOT = thesis.tex
+
+% =========================================================
+% CHAPTER 4: LITERATURE REVIEW
+% =========================================================
+\chapter{LITERATURE REVIEW}
+\label{chap:litreview}
+
+This chapter provides an exhaustive, multidisciplinary critical examination of the evolutionary trajectory of medical image segmentation. To fully appreciate the complexity of automated diagnostics, this review first deconstructs the physical principles of Cardiac Magnetic Resonance (CMR) imaging and the clinical pathology of cardiovascular diseases. Subsequently, by structurally deconstructing the mathematical foundations of traditional image processing algorithms and tracing the paradigm shift toward Convolutional Neural Networks (CNNs), this review systematically exposes the inherent spatial limitations of localized convolutions. This rigorous progression establishes the theoretical necessity for exploring Selective State Space Models (Mamba) alongside advanced optimization objectives to achieve computationally efficient, spatio-temporal cardiac segmentation.
+
+\section{Clinical and Physical Foundations of Cardiac Imaging}
+The automation of medical image analysis is intrinsically bound to the physical modalities used for data acquisition and the biological realities of human pathology. A robust deep learning model must account for these underlying physical and clinical complexities.
+
+\subsection{The Physics of Cardiac Magnetic Resonance (CMR) Imaging}
+Magnetic Resonance Imaging (MRI) is a fundamentally distinct imaging modality compared to Computed Tomography (CT). While CT measures X-ray attenuation resulting in standardized Hounsfield Units, MRI relies on the quantum mechanical properties of hydrogen protons when subjected to powerful external magnetic fields ($B_0$, typically 1.5 Tesla or 3.0 Tesla in clinical settings).
+
+In CMR, radio-frequency (RF) pulses are applied to perturb the alignment of protons. The rate at which these protons realign with the main magnetic field ($T_1$ relaxation) and the rate at which they lose phase coherence ($T_2$ relaxation) dictate the contrast of the resulting image. For dynamic cardiac function assessment, Steady-State Free Precession (SSFP) cine-MRI is the clinical gold standard \cite{carr2012cine}. 
+
+SSFP cine sequences are explicitly designed to yield extremely high Signal-to-Noise Ratios (SNR) and exceptional intrinsic contrast between the myocardium (intermediate signal intensity, rendering gray) and the blood pool (high signal intensity, rendering bright white). However, CMR is notoriously susceptible to physical artifacts. Respiratory motion, cardiac arrhythmias during acquisition, and inherent magnetic field inhomogeneities (bias fields) introduce severe spatial noise and intensity variations across slices. Deep learning models must, therefore, be architecturally robust against these non-linear physical perturbations.
+
+\subsection{Pathological Heterogeneity in Cardiovascular Diseases}
+To ensure clinical viability, automated segmentation models must generalize across a spectrum of cardiac deformities rather than merely identifying healthy anatomies. The ACDC dataset encompasses five specific pathophysiological states, each presenting unique morphological challenges for convolutional filters \cite{richardson1996report}:
+\begin{itemize}
+    \item \textbf{Normal Subjects (NOR):} Characterized by standard myocardial thickness and regular ventricular ejection fractions. The primary algorithmic challenge here is managing the partial volume effect at the basal and apical slices.
+    \item \textbf{Hypertrophic Cardiomyopathy (HCM):} A genetic disorder characterized by severe, asymmetric thickening of the myocardial wall (hypertrophy) \cite{marian2021hypertrophic}. The hypertrophied muscle frequently blurs the endocardial boundary, causing traditional region-growing algorithms to over-segment the myocardium into the ventricular cavity.
+    \item \textbf{Dilated Cardiomyopathy (DCM):} Characterized by extreme ventricular dilation and severely impaired systolic function (thinned myocardial walls). The geometric expansion creates unprecedented spatial scales that challenge networks with localized receptive fields.
+    \item \textbf{Myocardial Infarction (MINF):} The irreversible death of heart muscle secondary to prolonged ischemia (heart attack). MINF introduces localized scar tissue and regional wall motion abnormalities, disrupting the homogeneous texture of the myocardium in MRI scans.
+    \item \textbf{Abnormal Right Ventricle (ARV):} Pathologies specifically affecting the right ventricle. The RV naturally possesses an extremely thin anatomical wall and a highly variable crescent shape, making its segmentation the most complex topological problem in cardiac imaging.
+\end{itemize}
+
+\section{Traditional Approaches in Medical Image Segmentation}
+Prior to the proliferation of deep learning, the automated delineation of cardiac structures—specifically the Right Ventricle (RV), Myocardium (MYO), and Left Ventricle (LV)—relied entirely on mathematical image processing and handcrafted feature extraction to tackle the aforementioned pathologies.
+
+\subsection{Thresholding and the Heterogeneity Problem}
+The most rudimentary approach to segmentation is global intensity thresholding. Otsu's method \cite{otsu1979threshold} is a classical algorithm that mathematically calculates the optimal threshold $T$ by maximizing the inter-class variance $\sigma_B^2$ between the background and the anatomical structure. The objective function is defined as:
+\begin{equation}
+    \sigma_B^2(T) = \omega_0(T)\omega_1(T)[\mu_0(T) - \mu_1(T)]^2
+\end{equation}
+where $\omega_{0,1}$ represent the probabilities of the two classes separated by $T$, and $\mu_{0,1}$ are their respective mean intensities. While computationally trivial, such global methods fail catastrophically on Cardiac Magnetic Resonance (CMR) images. MRI sequences are inherently afflicted by bias field artifacts (radio-frequency coil inhomogeneities) and severe intensity overlaps between the myocardium and surrounding visceral tissues, rendering simple pixel-wise variance maximization entirely invalid.
+
+\subsection{Deformable Models: Active Contours and Level Sets}
+To overcome the limitations of pixel-independent thresholding, the academic focus shifted to physics-inspired deformable models. The seminal Active Contour Model ("Snakes"), introduced by Kass et al. \cite{kass1988snakes}, frames segmentation as an energy minimization problem. A parametric spline $v(s)$ dynamically deforms under the influence of internal elasticity and external image gradients to minimize the total energy functional:
+\begin{equation}
+    E_{snake}^* = \int_{0}^{1} \Big[ \frac{1}{2}\big(\alpha |v'(s)|^2 + \beta |v''(s)|^2\big) - \gamma |\nabla G_{\sigma} * I(x,y)|^2 \Big] ds
+\end{equation}
+However, the standard parametric Snake suffers from a fatal topological flaw: it cannot seamlessly split or merge. During the cardiac cycle, the complex geometry of the RV and LV often requires the segmentation contour to undergo topological transformations, which the mathematical rigidity of the Snake strictly prohibits.
+
+To resolve this topological constraint, Osher and Sethian \cite{osher1988fronts} introduced the Level Set Method. Instead of tracking the contour directly, Level Sets represent the boundary implicitly as the zero-level contour of a higher-dimensional scalar function $\phi(x, y, t)$. The evolution of this surface is governed by a partial differential equation (PDE):
+\begin{equation}
+    \frac{\partial \phi}{\partial t} + F |\nabla \phi| = 0
+\end{equation}
+where $F$ dictates the expansion or contraction speed based on image curvature. Although mathematically elegant and capable of handling topological changes, Level Sets require solving complex PDEs iteratively, which is computationally expensive. More critically, they demand highly precise manual initialization by clinicians to prevent the surface from leaking through weak myocardial boundaries (partial volume effects) \cite{peng2020review}.
+
+\section{The Deep Learning Renaissance and Convolutional Limitations}
+The fundamental inability of traditional methods to robustly generalize across heterogeneous MRI datasets catalyzed a monumental paradigm shift toward representation learning, dominated by Convolutional Neural Networks (CNNs).
+
+\subsection{Fully Convolutional Networks and 3D Volumetric Processing}
+The architectural leap from image classification to dense pixel-wise segmentation was achieved by Fully Convolutional Networks (FCNs) \cite{long2015fully}, which replaced dense linear layers with spatial convolutions. The subsequent introduction of the U-Net architecture \cite{ronneberger2015u} became the de facto standard. By utilizing a symmetric contracting (encoder) and expanding (decoder) pathway linked via spatial skip connections, U-Net effectively preserved fine-grained anatomical boundaries that would otherwise be lost during max-pooling.
+
+For cardiac MRI, which inherently comprises volumetric data, the 2D operations were naturally extended. Architectures such as 3D U-Net \cite{cicek20163d} and V-Net \cite{milletari2016v} replaced 2D kernels with 3D counterparts ($\mathcal{K} \in \mathbb{R}^{k_h \times k_w \times k_d}$), allowing the network to leverage the out-of-plane context across adjacent MRI slices.
+
+To visually articulate the hierarchical feature extraction mechanism within these deep convolutional networks, Figure \ref{fig:cnn_flow} provides a structurally exact topological schematic of a standard 3D CNN contracting block.
+
+\begin{figure}[hbt!]
+\centering
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    layer/.style={rectangle, draw=blue, thick, minimum width=6cm, minimum height=1cm, align=center, rounded corners=2pt},
+    arrow/.style={->, >=stealth, thick, draw=black}
+]
+
+% Nodes Definition
+\node[layer] (input) {\textbf{Input MRI Tensor}\\ $\mathcal{I} \in \mathbb{R}^{1 \times H \times W \times D}$};
+\node[layer, below=of input] (conv1) {\textbf{3D Double Convolution}\\ Two $3 \times 3 \times 3$ Kernels + BatchNorm + ReLU\\ Tensor Shape: $\mathbb{R}^{C \times H \times W \times D}$};
+\node[layer, below=of conv1] (pool1) {\textbf{Spatial Max Pooling}\\ $2 \times 2 \times 2$ stride 2\\ Tensor Shape: $\mathbb{R}^{C \times \frac{H}{2} \times \frac{W}{2} \times \frac{D}{2}}$};
+\node[layer, below=of pool1] (conv2) {\textbf{3D Double Convolution}\\ Feature Channel Expansion\\ Tensor Shape: $\mathbb{R}^{2C \times \frac{H}{2} \times \frac{W}{2} \times \frac{D}{2}}$};
+
+% Arrows
+\draw[arrow] (input) -- (conv1);
+\draw[arrow] (conv1) -- node[right, font=\footnotesize] {Resolution Halved} (pool1);
+\draw[arrow] (pool1) -- node[right, font=\footnotesize] {Channels Doubled} (conv2);
+
+% Bounding Box for Grouping (Safe Color Usage)
+\node[draw=red, thick, dashed, rounded corners, fit=(conv1) (pool1) (conv2), inner sep=12pt] (box) {};
+\node[red, right=0.3cm of box, align=left] {\textbf{Standard 3D}\\ \textbf{Encoder Block}};
+
+\end{tikzpicture}
+\caption{A topological schematic of the hierarchical spatial down-sampling process in a standard 3D CNN encoder. The spatial resolution is systematically compressed to extract high-level semantic features, while channel depth expands to capture complex anatomical representations.}
+\label{fig:cnn_flow}
+\end{figure}
+
+\subsection{Mathematical Formulation of U-Net Skip Connections}
+The profound mathematical innovation of U-Net lies in its symmetric encoder-decoder topology coupled with spatial Skip Connections. During the contracting (encoding) phase, repeated max-pooling operations inevitably destroy high-frequency spatial boundary information. Let $\mathbf{X}_{enc}^{(l)}$ denote the high-resolution feature map at layer $l$ of the encoder, and $\mathbf{X}_{dec}^{(l+1)}$ denote the coarser feature map from the previous decoder layer. The U-Net decoder reconstructs the spatial resolution by concatenating these tensors along the channel dimension before applying a non-linear convolutional mapping $\mathcal{F}$:
+\begin{equation}
+    \mathbf{X}_{dec}^{(l)} = \mathcal{F}\left( \mathbf{X}_{enc}^{(l)} \oplus \mathcal{U}(\mathbf{X}_{dec}^{(l+1)}) \right),
+\end{equation}
+where $\mathcal{U}$ represents a transposed convolution (up-sampling) and $\oplus$ denotes concatenation. This structural design ensures that the precise, uncompressed physical coordinates from $\mathbf{X}_{enc}^{(l)}$ are directly injected into the expanding pathway, allowing the network to meticulously reconstruct the fine-grained boundaries of the epicardium and endocardium.
+
+\subsection{The Attention Paradigm: Attention U-Net}
+While standard U-Net successfully recovers boundaries, its skip connections blindly transfer all high-resolution encoder features—including massive amounts of irrelevant background noise (e.g., lungs, liver, and ribs in an MRI scan). To systematically suppress this non-cardiac tissue, Oktay et al. \cite{oktay2018attention} proposed the Attention U-Net.
+
+This architecture integrates explicit Attention Gates (AGs) into the skip connections. The AG utilizes the coarser, semantically rich decoder feature map (gating signal, $g$) to spatially prune the high-resolution encoder feature map ($x^l$). Mathematically, both $x^l$ and $g$ are subjected to linear transformations ($W_x$ and $W_g$) and summed. The attention coefficients $q_{att}^l \in [0, 1]$ are computed via a sigmoid activation $\sigma_1$:
+\begin{equation}
+    q_{att}^l = \sigma_1\left( \psi^T \big( \sigma_2(W_x x^l + W_g g + b_g) \big) + b_{\psi} \right),
+\end{equation}
+where $\sigma_2$ is a ReLU activation, and $\psi^T$ is a $1 \times 1 \times 1$ convolutional weight vector that projects the intermediate features into a singular scalar attention map. The raw encoder features are then element-wise multiplied (Hadamard product, $\odot$) by this attention map:
+\begin{equation}
+    \hat{x}^l = x^l \odot q_{att}^l.
+\end{equation}
+This gating mechanism elegantly forces the network's optimization landscape to prioritize the specific coordinates encompassing the Right Ventricle, Myocardium, and Left Ventricle, severely penalizing gradient updates in the background.
+
+\subsection{Deep Residual Learning and SegResNet}
+As the complexity of cardiac pathologies demanded deeper representational spaces, researchers attempted to stack hundreds of convolutional layers. However, this led to the notorious degradation problem: as networks grew deeper, the accuracy saturated and then rapidly degraded, caused not by overfitting, but by vanishing gradients during backpropagation.
+
+He et al. resolved this via Deep Residual Learning (ResNet) \cite{he2016deep}. Instead of explicitly mapping the underlying mapping $\mathcal{H}(x)$, the network forces the stacked nonlinear layers to fit a residual mapping $\mathcal{F}(x)$:
+\begin{equation}
+    \mathcal{H}(x) = \mathcal{F}(x, \{W_i\}) + x.
+\end{equation}
+The inclusion of the identity shortcut connection ($+ x$) fundamentally alters the gradient flow. By applying the chain rule of calculus from layer $L$ back to layer $l$, the gradient is derived as:
+\begin{equation}
+    \frac{\partial \mathcal{L}}{\partial x_l} = \frac{\partial \mathcal{L}}{\partial x_L} \left( 1 + \frac{\partial}{\partial x_l} \sum_{i=l}^{L-1} \mathcal{F}(x_i, \mathbf{W}_i) \right).
+\end{equation}
+The scalar $1$ strictly guarantees that information (and thus, error gradients) can propagate directly back to shallow layers without being exponentially attenuated by repeated weight multiplications. 
+
+This specific mathematical breakthrough enabled the construction of modern State-of-the-Art (SOTA) volumetric segmenters like SegResNet. SegResNet utilizes heavily parameterized 3D residual blocks, expanding the capacity to over 18.8 million parameters. While mathematically sound for convergence, this immense parameter scale inevitably triggers the spatial overfitting paradox when trained on limited medical cohorts, as empirically demonstrated in this research.
+
+\subsection{The Mathematical Blind Spot: Receptive Field Locality}
+Despite setting robust empirical baselines on challenges like ACDC and integrating residual connections, 3D CNNs possess a fatal mathematical blind spot when dealing with the temporal continuum of a beating heart: the strict locality of the Receptive Field (RF). 
+
+The theoretical Receptive Field $RF_l$ of a neuron in layer $l$, defining the spatial region of the original input that influences its activation, is recursively calculated as:
+\begin{equation}
+    RF_l = RF_{l-1} + (k_l - 1) \prod_{i=1}^{l-1} s_i
+\end{equation}
+where $k_l$ is the kernel size and $s_i$ represents the stride of previous pooling layers. Because the convolution operation forces information aggregation strictly from a rigid $3 \times 3 \times 3$ voxel neighborhood, increasing the global context requires stacking deep layers. However, empirical analyses show that the \textit{effective} receptive field—the region that genuinely contributes non-zero gradients—grows sublinearly and remains heavily concentrated at its center. 
+
+Consequently, 3D CNNs evaluate sequential cardiac frames essentially as static, isolated spatial blocks. They lack the intrinsic architectural capability to explicitly model the long-range temporal dependencies and causal physiological motion from the end-diastolic to the end-systolic phase. This spatial-temporal disconnect fundamentally paved the way for sequence modeling architectures like Transformers and State Space Models.
+
+\section{Vision Transformers and the Quadratic Computational Bottleneck}
+To circumvent the inherent spatial limitations of the localized receptive field in CNNs, the medical imaging community adopted Vision Transformers (ViTs). Drawing inspiration from Natural Language Processing, architectures such as UNETR \cite{hatamizadeh2022unetr} successfully mapped volumetric 3D MRI patches into 1D sequence tokens, processing them utilizing the globally aware Self-Attention mechanism \cite{vaswani2017attention}.
+
+\subsection{Mathematical Formulation of Self-Attention}
+The core innovation of the Transformer is the Scaled Dot-Product Attention. Given an input sequence of tokens, the network projects them into three distinct matrices: Queries ($\mathbf{Q}$), Keys ($\mathbf{K}$), and Values ($\mathbf{V}$), all residing in $\mathbb{R}^{N \times d}$, where $N$ is the sequence length and $d$ is the embedding dimension. The attention matrix is computed as:
+\begin{equation}
+    \text{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{softmax}\left(\frac{\mathbf{Q}\mathbf{K}^T}{\sqrt{d_k}}\right)\mathbf{V}.
+\end{equation}
+This formulation allows every token to directly interact with every other token in the sequence, establishing a mathematically infinite receptive field in a single layer.
+
+\subsection{The $O(N^2)$ Complexity Wall in 3D Imaging}
+While Self-Attention exhibits extraordinary representational power, it introduces a severe computational bottleneck when applied to 3D medical sequences. The fundamental operation, $\mathbf{Q}\mathbf{K}^T$, involves the multiplication of an $N \times d$ matrix with a $d \times N$ matrix, yielding an $N \times N$ attention map. Consequently, the computational complexity scales quadratically with respect to the sequence length, denoted as $\mathcal{O}(N^2 d)$.
+
+In cardiac MRI segmentation, a standard preprocessed volumetric tensor (e.g., $256 \times 256 \times 16$) yields a massive sequence length $N$ when flattened. This quadratic scaling forces modern SOTA models, such as Swin-UNETR and SegResNet, into extreme parameter bloat (exceeding 18 million parameters). This creates an insurmountable barrier for clinical edge computing, where portable ultrasound devices and rural workstations severely lack the Video RAM (VRAM) and cooling capacity required to process such heavy matrices.
+
+\section{The Paradigm Shift: Selective State Space Models}
+The dichotomy between the computational efficiency of CNNs and the global awareness of Transformers catalyzed the exploration of State Space Models (SSMs). The recently proposed Mamba architecture \cite{gu2023mamba} resolves this paradox by achieving global sequence modeling with linear $\mathcal{O}(N)$ computational complexity.
+
+\subsection{Continuous-Time State Space Fundamentals}
+The theoretical foundation of Mamba is rooted in continuous-time dynamic systems. An SSM maps a 1D continuous input sequence $x(t) \in \mathbb{R}$ to an output response $y(t) \in \mathbb{R}$ through a hidden latent state $h(t) \in \mathbb{R}^N$. This system is governed by a set of linear Ordinary Differential Equations (ODEs):
+\begin{equation}
+    h'(t) = \mathbf{A}h(t) + \mathbf{B}x(t),
+\end{equation}
+\begin{equation}
+    y(t) = \mathbf{C}h(t) + \mathbf{D}x(t).
+\end{equation}
+Here, $\mathbf{A} \in \mathbb{R}^{N \times N}$ is the state transition matrix that dictates the memory of the system, while $\mathbf{B} \in \mathbb{R}^{N \times 1}$ and $\mathbf{C} \in \mathbb{R}^{1 \times N}$ project the input and output, respectively.
+
+\subsection{Discrete Discretization and Linear Complexity}
+To process discrete MRI voxel sequences using standard deep learning hardware (GPUs), the continuous ODEs must be explicitly discretized. Mamba utilizes a Zero-Order Hold (ZOH) assumption, introducing a temporal step size parameter $\mathbf{\Delta}$. The continuous matrices $\mathbf{A}$ and $\mathbf{B}$ are transformed into their discrete counterparts $\mathbf{\bar{A}}$ and $\mathbf{\bar{B}}$:
+\begin{equation}
+    \mathbf{\bar{A}} = \exp(\mathbf{\Delta} \mathbf{A}),
+\end{equation}
+\begin{equation}
+    \mathbf{\bar{B}} = (\mathbf{\Delta} \mathbf{A})^{-1} (\exp(\mathbf{\Delta} \mathbf{A}) - \mathbf{I}) \cdot \mathbf{\Delta} \mathbf{B}.
+\end{equation}
+Once discretized, the model computes the sequence autoregressively:
+\begin{equation}
+    h_t = \mathbf{\bar{A}}h_{t-1} + \mathbf{\bar{B}}x_t,
+\end{equation}
+\begin{equation}
+    y_t = \mathbf{C}h_t.
+\end{equation}
+Crucially, Mamba makes the step size $\mathbf{\Delta}$, as well as matrices $\mathbf{B}$ and $\mathbf{C}$, strictly data-dependent (Selective Scan). This hardware-aware algorithm allows the model to selectively remember critical cardiac features (e.g., end-diastole boundaries) and forget irrelevant background noise. Because the hidden state $h_t$ is updated recursively without calculating pairwise token matrices, the computational complexity drops exponentially to $\mathcal{O}(N)$. 
+
+This rigorous mathematical advantage forms the cornerstone of the proposed Nano-Mamba U-Net, theoretically enabling SOTA-level spatio-temporal segmentation at a fraction of the computational footprint.
+
+\section{Evolution of Optimization Objectives in Medical Imaging}
+Beyond the architectural paradigm shifts from CNNs to State Space Models, the mathematical formulation of the optimization objective—the loss function—has undergone a profound evolutionary trajectory. In medical image segmentation, the choice of loss function directly dictates the geometry of the optimization landscape and the model's robustness against extreme class imbalances.
+
+To systematically categorize these optimization objectives, Figure \ref{fig:loss_taxonomy} presents a topological taxonomy of the prevalent loss functions utilized in modern deep learning segmentation.
+
+\begin{figure}[hbt!]
+\centering
+\resizebox{0.95\textwidth}{!}{
+\begin{tikzpicture}[
+    node distance=1.5cm and 1cm,
+    box/.style={rectangle, draw=black!80, thick, rounded corners=3pt, align=center, minimum height=1cm, fill=white},
+    root/.style={box, fill=blue!15, text width=5cm},
+    branch/.style={box, fill=green!15, text width=4cm},
+    leaf/.style={box, fill=gray!10, text width=4.5cm, dashed},
+    edge/.style={->, >=stealth, thick, draw=black!70}
+]
+% Nodes
+\node[root] (main) {\textbf{Segmentation Loss Functions}};
+\node[branch, below left=1.5cm and 2cm of main] (dist) {\textbf{Distribution-Based}\\ (Pixel-wise Evaluation)};
+\node[branch, below right=1.5cm and 2cm of main] (region) {\textbf{Region-Based}\\ (Global Overlap Evaluation)};
+
+\node[leaf, below=0.8cm of dist] (ce) {Cross-Entropy (CE) Loss};
+\node[leaf, below=0.5cm of ce] (wce) {Weighted CE Loss};
+\node[leaf, below=0.5cm of wce] (focal) {Focal Loss};
+
+\node[leaf, below=0.8cm of region] (dice) {Dice / F1-Score Loss};
+\node[leaf, below=0.5cm of dice] (jaccard) {Jaccard (IoU) Loss};
+\node[leaf, below=0.5cm of jaccard] (tversky) {Tversky Loss};
+
+% Edges
+\draw[edge] (main) -| (dist);
+\draw[edge] (main) -| (region);
+\draw[edge] (dist) -- (ce);
+\draw[edge] (ce) -- (wce);
+\draw[edge] (wce) -- (focal);
+\draw[edge] (region) -- (dice);
+\draw[edge] (dice) -- (jaccard);
+\draw[edge] (jaccard) -- (tversky);
+\end{tikzpicture}
+}
+\caption{A comprehensive taxonomic hierarchy of loss functions in medical image segmentation, categorized into distribution-based metrics that evaluate pixel-level probabilities and region-based metrics that evaluate global geometric overlap.}
+\label{fig:loss_taxonomy}
+\end{figure}
+
+\subsection{Distribution-Based Objectives: From MSE to Focal Loss}
+Historically, regression tasks utilized the Mean Squared Error (MSE), defined as the squared $\ell_2$ norm between the prediction and the target. However, MSE fundamentally assumes that the errors are normally distributed, which violates the categorical nature of segmentation tasks. Consequently, Information Theory introduced the standard Cross-Entropy (CE) Loss. Let $p_i$ be the predicted softmax probability for the ground-truth class at voxel $i$. The CE loss over $N$ voxels is formulated as:
+\begin{equation}
+    \mathcal{L}_{CE} = - \frac{1}{N} \sum_{i=1}^{N} \log(p_i).
+\end{equation}
+While $\mathcal{L}_{CE}$ provides stable gradients, it is highly susceptible to the class imbalance paradox inherent in cardiac MRI, where the background dominates over 95\% of the volumetric tensor. The accumulation of minuscule gradients from the overwhelming background heavily biases the network.
+
+To address this, Lin et al. \cite{lin2017focal} introduced the Focal Loss. By mathematically reshaping the cross-entropy curve, Focal Loss dynamically scales the gradient based on the prediction confidence. It introduces a modulating factor $(1 - p_i)^\gamma$ and a balancing parameter $\alpha$:
+\begin{equation}
+    \mathcal{L}_{Focal} = - \sum_{i=1}^{N} \alpha (1 - p_i)^\gamma \log(p_i).
+\end{equation}
+When a voxel is easily classified ($p_i \to 1$), the modulating factor approaches zero, effectively neutralizing its contribution to the loss and forcing the optimizer to focus exclusively on hard, ambiguous boundary voxels.
+
+\subsection{Region-Based Objectives: The Overlap Paradigm}
+Despite the improvements offered by Focal Loss, distribution-based metrics still evaluate voxels independently, ignoring the topological coherence of the organ. Region-based losses evaluate the holistic intersection of the prediction and the ground truth. The seminal Sørensen–Dice coefficient, mathematically adapted into a differentiable loss function $\mathcal{L}_{Dice}$ by Milletari et al. \cite{milletari2016vnet}, is defined as:
+\begin{equation}
+    \mathcal{L}_{Dice} = 1 - \frac{2 |P \cap G|}{|P| + |G|} = 1 - \frac{2 \sum_{i} p_i g_i}{\sum_{i} p_i^2 + \sum_{i} g_i^2}.
+\end{equation}
+The Dice Loss perfectly ignores the background; however, it penalizes False Positives (FP) and False Negatives (FN) symmetrically. In specific clinical scenarios, missing a minute lesion (FN) is far more dangerous than over-segmenting (FP). Addressing this asymmetry, the Tversky Loss \cite{salehi2017tversky} was formulated as a generalized overlap index:
+\begin{equation}
+    \mathcal{L}_{Tversky} = 1 - \frac{\sum_{i} p_i g_i}{\sum_{i} p_i g_i + \alpha \sum_{i} p_i (1 - g_i) + \beta \sum_{i} (1 - p_i) g_i},
+\end{equation}
+where $\alpha$ and $\beta$ are hyperparameters that explicitly control the magnitude of penalties assigned to False Positives and False Negatives, respectively. Modern architectures, including the proposed Nano-Mamba U-Net, frequently deploy a linear fusion of distribution-based and region-based losses to leverage both pixel-wise gradient stability and global topological fidelity.
+
+\section{Advancements in Gradient Descent Optimizers}
+The optimization landscape of deep neural networks—particularly those processing high-dimensional 3D medical tensors—is characterized by extreme non-convexity, saddle points, and ill-conditioned ravines. The choice of the stochastic optimizer is crucial for effectively navigating this high-dimensional topology \cite{ruder2016overview}.
+
+\subsection{Stochastic Gradient Descent and Momentum}
+The foundational optimization algorithm is Stochastic Gradient Descent (SGD). Given a model parameterized by $\theta$ and a learning rate $\eta$, the parameters are updated iteratively based on the gradient of the objective function $J(\theta)$:
+\begin{equation}
+    \theta_{t+1} = \theta_t - \eta \nabla_{\theta} J(\theta_t).
+\end{equation}
+However, standard SGD exhibits severe oscillatory behavior in ravines where the surface curves much more steeply in one dimension than in another. To mitigate this, Momentum was mathematically introduced. By accumulating an exponentially decaying moving average of past gradients (velocity $v_t$), momentum dampens oscillations and accelerates convergence across flat regions:
+\begin{equation}
+    v_t = \gamma v_{t-1} + \eta \nabla_{\theta} J(\theta_t),
+\end{equation}
+\begin{equation}
+    \theta_{t+1} = \theta_t - v_t,
+\end{equation}
+where $\gamma$ is the momentum coefficient, typically initialized at $0.9$.
+
+\subsection{Adaptive Moment Estimation (Adam)}
+While momentum accelerates SGD, it relies on a global learning rate for all parameters. In complex architectures like State Space Models, certain weights (e.g., the discretized $\bar{\mathbf{A}}$ matrices) require vastly different optimization step sizes compared to standard convolutional kernels. 
+
+The Adaptive Moment Estimation (Adam) algorithm \cite{kingma2014adam} resolves this by computing individual adaptive learning rates for different parameters from estimates of both the first and second moments of the gradients. Let $g_t$ represent the gradient at step $t$. Adam maintains an exponentially decaying average of past gradients $m_t$ (first moment) and past squared gradients $v_t$ (second uncentered moment):
+\begin{equation}
+    m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t,
+\end{equation}
+\begin{equation}
+    v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2,
+\end{equation}
+where $\beta_1$ and $\beta_2$ are decay rates. Because $m_t$ and $v_t$ are initialized as vectors of zeros, they are biased toward zero during the initial time steps. To counteract this, Adam applies a mathematical bias correction:
+\begin{equation}
+    \hat{m}_t = \frac{m_t}{1 - \beta_1^t}, \quad \hat{v}_t = \frac{v_t}{1 - \beta_2^t}.
+\end{equation}
+The final parameter update utilizes these bias-corrected moments to scale the adaptive learning rate dynamically:
+\begin{equation}
+    \theta_{t+1} = \theta_t - \frac{\eta}{\sqrt{\hat{v}_t} + \epsilon} \hat{m}_t.
+\end{equation}
+The exceptional capability of Adam to adapt to sparse gradients and noisy optimization landscapes makes it the absolute standard for training modern medical image segmentation networks, and it serves as the foundational optimizer for the Nano-Mamba U-Net within this research.
+
+\section{Summary}
+The trajectory of medical image segmentation illustrates a continuous struggle between spatial accuracy, temporal continuity, and computational feasibility. While CNNs suffer from localized receptive fields, ViTs collapse under their own $\mathcal{O}(N^2)$ weight. The proposed integration of a linear-time $\mathcal{O}(N)$ Selective State Space Model provides a mathematically sound alternative to bridge this critical gap in current literature.

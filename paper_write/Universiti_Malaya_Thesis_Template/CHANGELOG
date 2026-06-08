@@ -1,0 +1,90 @@
+BRIEF CHANGELOG
+===============
+
+v1.5.3 January 7 2023
+    - Update university name on cover/title
+    - Add noindenttocchap option to make long chapter titles in ToC
+      not indented, as required by some faculties
+
+v1.5.2 July 5 2022
+    - Compatibilty with updated hyperref
+
+ v1.5.1 June 1 2020
+    - Bug fix for \othertitle
+    - Simpler approach to uppercasing chapter titles
+    - Forces apacite to stop expanding author list in first citation, as
+      according to APA7 guidelines (and what UM Grad Office prefers anyway?)
+    - Now use natbib commands to be more generic
+
+v1.5 October 28 2018
+    - Added many documentclass options to deal with ad-hoc formatting
+      requirements: appendixhead, altcaption, singlespacedlisttitles,
+      listpageheader, boldfrontmattertoc, boldbackmattertoc, uppercasetoc
+    - Added splitpubs environments
+    - Merged umalayathesis-manual.pdf into umalayathesis-howtouse.tex, as
+      part of the sample thesis.
+
+v1.4 December 29 2017
+    - Finally fixed matrix/matric typo (spotted by Hayyan Daoud)
+    - ToC etc are now fully double-spaced for long titles (spotted
+      by Muhammad Solleh Asmadi)
+
+v1.3 September 9 2017
+    Updated for 2017 Thesis Guidelines. http://bit.ly/2xaYpzN
+
+v1.2  May 16 2016 (Sep 8 2016 small update)
+    Well I guess I FINALLY found the updated formatting guide from
+    the Engineering Faculty's webpage, instead of on IPS' webpage!!
+    http://bit.ly/23U6JJV
+    - Added \faculty field
+    - \makecoverandtitlepage now takes an option to output the
+      relevant statement on the title page
+    - Chapter headings are now single line, with less spacing after
+      the chapter title.
+    - Bibliography entries are now explicitly 0.5 inch indented and
+      with really wide double spacing between entries.
+    - \subsubsection heading is now upright and bold.
+    - Re-ordered elements in thesis.tex to match the updated guide.
+    - (Sep 8 2016, small update) Declaration page gets numbered.
+
+
+v1.1.2  April 30 2016
+    - Float captions are now bold
+
+v1.1.1  October 09 2015
+    - Some fine-tuning requested by IPS when Norsiah tried to submit.
+    - Abstract/Abstract should be CAPITALISED as chapter title but
+      needs to be Title Case in ToC.
+    - Dedication page must not be numbered.
+    - Glossaries, List of Abbreviations, References... are now 12pt
+      (so there's no more need of \backmatter actually)
+    - Remove the "Appendices" separator page.
+    - Subsubsection should be numbered 1.1.1.1.
+
+v1.1  October 01 2015
+    - Updated ToC and list of symbols/abbrevs formattings (and a
+    - few other minor details) based on latest sample sent by Norsiah.
+    - Now incorporating list of own publications & papers presented.
+
+v1.05 September 08 2015
+    - Proper handling of both acronyms and glossaries.
+
+v1.04 December 29 2014
+    - Made page numbers to be 10pt.
+
+v1.03 November 26 2014
+    - Added \msabstractfromfile to incorporate Malay abstract
+
+v1.02 September 20 2012
+    - Used Arial Narrow lookalike for the Cover page
+    - Removed extra spacing between acronym entry groups (i.e.
+      extra spacing when the next group of acronyms start with a new
+      alphabet
+    - Removed spurious redundant \vspace*{-4pt} when new appendices
+      chapters are added
+
+v1.01 May 31 2012
+    - Fixed the Glossary name
+
+v1.0 June 6 2012
+    - First online release
