@@ -52,6 +52,27 @@ Compared with the 3D U-Net baseline, Nano-Mamba U-Net improved the mean DSC by 3
 \end{equation}
 Compared with SegResNet16, Nano-Mamba U-Net used approximately 68.9\% fewer parameters, but its mean DSC was 1.92 percentage points lower. These results indicate that Nano-Mamba U-Net is not the highest-accuracy model in the final experiment; instead, its main advantage lies in parameter efficiency with competitive validation performance.
 
+\section{Accuracy-Efficiency Visualization}
+Since the research question concerns both segmentation accuracy and model efficiency, the results should not be interpreted from Table \ref{tab:final_results} alone. Figure \ref{fig:accuracy_parameter_tradeoff} visualizes the relationship between validation mean Dice and trainable parameter count. A model positioned higher on the vertical axis has stronger Dice performance, while a model positioned further left has fewer parameters.
+
+\begin{figure}[hbt!]
+    \centering
+    \includegraphics[width=0.85\textwidth]{D:/AI_FYP/figures/accuracy_parameter_tradeoff.png}
+    \caption{Accuracy-parameter trade-off across evaluated models. SegResNet16 obtains the highest Dice score, while Nano-Mamba U-Net occupies the lowest-parameter region with competitive validation performance.}
+    \label{fig:accuracy_parameter_tradeoff}
+\end{figure}
+
+This visualization makes the central interpretation clearer. SegResNet16 is the accuracy leader and should be acknowledged as such. Nano-Mamba U-Net is not located at the top of the graph, but it appears on the left side because it has the smallest parameter count. The result therefore supports an efficiency-oriented contribution rather than an absolute accuracy claim.
+
+Figure \ref{fig:accuracy_speed_tradeoff} visualizes the relationship between validation mean Dice and inference speed. The speed result should be interpreted carefully because FPS depends on implementation details, hardware, batch size, input resolution, and measurement protocol. Therefore, FPS is reported as a practical engineering indicator rather than as a universal property of the architecture.
+
+\begin{figure}[hbt!]
+    \centering
+    \includegraphics[width=0.85\textwidth]{D:/AI_FYP/figures/accuracy_speed_tradeoff.png}
+    \caption{Accuracy-speed trade-off across evaluated models. The figure provides an engineering view of validation Dice relative to inference speed on the experimental hardware.}
+    \label{fig:accuracy_speed_tradeoff}
+\end{figure}
+
 \section{Model-by-Model Interpretation}
 The 3D U-Net baseline achieved 80.83\% mean DSC. This result is important because it provides a conventional volumetric segmentation reference point. Nano-Mamba U-Net improved over this baseline on all three structures, suggesting that the proposed compact architecture is not merely smaller but also more accurate than this particular 3D U-Net configuration under the final split.
 
