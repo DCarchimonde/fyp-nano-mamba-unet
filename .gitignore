@@ -74,3 +74,5 @@ training_outputs/
 *.toc
 *.lof
 *.lot
+# Local rigorous experiment outputs
+experiment_outputs/
