@@ -6,98 +6,118 @@
 \chapter{RESEARCH DESIGN AND METHODOLOGY}
 \label{chap:methodology}
 
-This chapter establishes the rigorous methodological framework governing the development, optimization, and evaluation of the proposed Nano-Mamba U-Net. Moving beyond empirical heuristics, this section structurally justifies every engineering decision—from addressing the inherent physical artifacts of Magnetic Resonance Imaging (MRI) during preprocessing to formulating a mathematically robust optimization objective capable of mitigating severe anatomical class imbalances. Furthermore, this chapter provides an exhaustive architectural and mathematical deconstruction of the deep learning system itself, explicitly fulfilling the "Research Design" mandate by detailing the continuous-to-discrete state space transformations that empower the model.
+This chapter describes the research design used to implement and evaluate the proposed Nano-Mamba U-Net. The methodology is written to make the experiment reproducible: it specifies the dataset boundary, data discovery procedure, patient-level split, preprocessing pipeline, model architecture, loss function, checkpoint selection, evaluation metrics, and computational profiling. The chapter also distinguishes clearly between methods adopted from prior work and components implemented in this project.
 
-\section{Dataset Justification and Clinical Heterogeneity}
-The empirical validation of any deep learning architecture in medical imaging is profoundly dependent on the quality, diversity, and clinical realism of the utilized dataset. Deep neural networks are notoriously prone to overfitting to the specific scanner characteristics or healthy anatomical priors of a limited cohort \cite{campello2021multi}. To ensure the proposed model's robustness and clinical translatability, this research exclusively leverages the Automated Cardiac Diagnosis Challenge (ACDC) dataset \cite{bernard2018deep}.
-
-The ACDC cohort consists of 100 distinct patients whose Cardiac Magnetic Resonance (CMR) cine sequences were acquired using 1.5T and 3.0T Siemens scanners. The defining characteristic of this dataset is its deliberate inclusion of severe pathological heterogeneity. The dataset is equally partitioned into five clinically distinct groups: Normal subjects (NOR), patients with previous Myocardial Infarction (MINF), Dilated Cardiomyopathy (DCM), Hypertrophic Cardiomyopathy (HCM), and Abnormal Right Ventricle (ARV). From an algorithmic perspective, these pathologies introduce extreme intra-class variability. For instance, in HCM patients, the myocardial wall is pathologically thickened, often blurring the boundaries with the papillary muscles, whereas in MINF patients, the presence of scar tissue severely alters the native magnetic resonance signal intensities and local image textures. The fundamental objective is to train the Nano-Mamba U-Net to learn highly abstract, pathology-invariant spatial representations to accurately segment the Right Ventricle (RV), Myocardium (MYO), and Left Ventricle (LV) across these diverse physical deformations.
-
-\section{Data Harmonization and Spatial Resampling}
-Medical imaging data generated in real-world clinical environments is inherently unstandardized. Variability in patient positioning, scanner FOV (Field of View), and institutional acquisition protocols lead to severe inconsistencies in physical voxel spacing and tensor dimensions. As demonstrated by the seminal work on the nnU-Net architecture \cite{isensee2021nnu}, the systematic harmonization of spatial metadata is arguably as critical to segmentation accuracy as the neural network architecture itself. 
-
-The sequential progression of the data tensors through the preprocessing pipeline is structurally represented in Figure \ref{fig:preprocessing_pipeline}. This automated harmonization was rigorously implemented utilizing the MONAI (Medical Open Network for AI) framework \cite{cardoso2022monai}.
-
-\begin{figure}[hbt!]
-\centering
-\begin{tikzpicture}[
-    node distance=1.5cm and 2cm,
-    block/.style={rectangle, draw=black!80, thick, fill=gray!10, text width=4.5cm, align=center, rounded corners=3pt, minimum height=1.2cm},
-    arrow/.style={->, >=stealth, thick, draw=black!70}
-]
-% Nodes
-\node[block] (raw) {\textbf{Raw NIfTI Volume}\\ Heterogeneous Spacing};
-\node[block, right=of raw] (channel) {\textbf{Channel Expansion}\\ $\mathbb{R}^{H \times W \times D} \rightarrow \mathbb{R}^{1 \times H \times W \times D}$};
-\node[block, below=of channel] (resample) {\textbf{Spatial Resampling}\\ Target: $256 \times 256 \times 16$};
-\node[block, left=of resample] (intensity) {\textbf{Intensity Scaling}\\ Normalizing MR Physics};
-\node[block, below=of intensity] (tensor) {\textbf{PyTorch Tensor}\\ Cuda/Hardware Ready};
-% Arrows
-\draw[arrow] (raw) -- (channel);
-\draw[arrow] (channel) -- node[right, font=\footnotesize] {Continuous/Discrete} (resample);
-\draw[arrow] (resample) -- node[above, font=\footnotesize] {Voxel Alignment} (intensity);
-\draw[arrow] (intensity) -- node[right, font=\footnotesize] {Optimization} (tensor);
-\end{tikzpicture}
-\caption{The chronological data harmonization pipeline. Raw 3D MRI volumes undergo structural standardization to resolve spatial anisotropy and signal variability prior to network ingestion.}
-\label{fig:preprocessing_pipeline}
-\end{figure}
-
-\subsection{Mathematical Formulation of Trilinear Interpolation}
-To ensure structural compatibility with the Nano-Mamba tensor dimensions, all variable-sized volumes were spatially resampled to a standardized discrete grid of $256 \times 256 \times 16$. Because image intensities represent a continuous physiological signal captured at discrete spatial coordinates, mapping them to a new grid requires robust mathematical interpolation to prevent severe aliasing artifacts. 
-
-For the continuous MRI intensity volumes, Trilinear Interpolation was applied. Let $V(x, y, z)$ denote the interpolated voxel intensity at a continuous Cartesian coordinate. By identifying the eight bounding discrete neighboring voxels $V_{000}$ through $V_{111}$ within the original grid, the continuous trilinear approximation is formulated as:
-\begin{equation}
-    V(x,y,z) \approx \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} V_{ijk} \cdot (1 - |x - x_i|) \cdot (1 - |y - y_j|) \cdot (1 - |z - z_k|),
-\end{equation}
-where $x_i, y_j, z_k$ represent the normalized spatial coordinates of the respective neighbors. 
-
-Conversely, the ground-truth segmentation masks consist of strictly categorical integers (e.g., $1$ for RV, $2$ for MYO). Applying continuous polynomial interpolation to these masks would yield meaningless floating-point values, thereby destroying the categorical class definitions. Consequently, the label matrices are resampled utilizing Nearest-Neighbor Interpolation. This non-linear operation assigns the class of the closest original voxel by minimizing the Euclidean distance:
-\begin{equation}
-    V_{mask}(x, y, z) = V \left( \arg\min_{(x_i, y_i, z_i)} \sqrt{(x-x_i)^2 + (y-y_i)^2 + (z-z_i)^2} \right).
-\end{equation}
-
-\subsection{Addressing MR Intensity Heterogeneity}
-Unlike Computed Tomography (CT), which relies on a standardized physical radiodensity scale (Hounsfield Units), the intensity values in MRI are relative and highly dependent on the specific acquisition parameters (e.g., echo time, repetition time) and the intrinsic magnetic field strength \cite{nyul1999on}. Consequently, the exact same myocardial tissue can manifest with drastically different numerical pixel intensities across different patients, creating severe instability during gradient descent optimization.
-
-To construct a normalized feature space for the neural network, the spatial intensities are systematically bounded. The Min-Max scaling function $S(\mathcal{I})$ projects the continuous intensity range into a normalized subset $[0, 1]$:
-\begin{equation}
-    S(\mathcal{I}_{xyz}) = \frac{\mathcal{I}_{xyz} - \min(\mathcal{I})}{\max(\mathcal{I}) - \min(\mathcal{I}) + \epsilon},
-\end{equation}
-where $\epsilon = 10^{-8}$ serves as a negligible numerical stability constant designed to rigorously prevent division-by-zero singularities in the event of homogeneously black image slices.
-
-\section{System Architecture Design: The Nano-Mamba U-Net}
-The core "Research Design" of this thesis is the formulation of the Nano-Mamba architecture. The network adheres to a symmetric Encoder-Bottleneck-Decoder topology, fundamentally inspired by the standard 3D U-Net \cite{cicek20163d}, but critically deviates in its deepest representational layer. The architecture leverages consecutive 3D convolutional blocks in the contracting path to extract localized spatial hierarchies, and utilizes transposed convolutions in the expanding path for precise anatomical localization. The core innovation—the Spatio-Temporal Mamba Bottleneck—is strategically positioned at the apex of the contracting path, where the spatial dimensions are maximally compressed, and the semantic channel capacity is at its peak.
-
-To visually articulate the complex forward propagation and information fusion mechanisms, Figure \ref{fig:full_architecture} presents the complete topological schematic of the proposed network.
+\section{Overall Research Workflow}
+The study follows an experimental computing workflow. First, the ACDC cardiac MRI data are discovered and paired with corresponding segmentation labels. Second, patients are separated into training and validation groups using a deterministic patient-level split. Third, all models are trained under the same preprocessing, optimization, and validation protocol. Finally, the best checkpoint for each model is selected by validation mean Dice and evaluated on the held-out validation patients.
 
 \begin{figure}[hbt!]
 \centering
 \resizebox{0.95\textwidth}{!}{
 \begin{tikzpicture}[
-    node distance=1.2cm and 1.5cm,
-    layer/.style={rectangle, draw=black!80, thick, align=center, rounded corners=2pt, minimum height=0.8cm},
-    enc/.style={layer, fill=blue!10},
-    dec/.style={layer, fill=green!10},
-    mamba/.style={layer, fill=red!10, draw=red, very thick},
-    arrow/.style={->, >=stealth, thick},
-    skip/.style={->, >=stealth, thick, dashed, draw=blue}
+    node distance=1.3cm and 1.6cm,
+    block/.style={rectangle, draw=black!80, thick, rounded corners=3pt, minimum width=3.6cm, minimum height=1cm, align=center, fill=gray!8},
+    decision/.style={diamond, draw=black!80, thick, aspect=2.2, align=center, fill=yellow!10},
+    arrow/.style={->, >=stealth, thick}
 ]
+\node[block] (data) {ACDC NIfTI\\image-label pairs};
+\node[block, right=of data] (split) {Patient-level split\\80 train / 20 validation};
+\node[block, right=of split] (prep) {MONAI preprocessing\\resize, channel, intensity};
+\node[block, below=of prep] (train) {Model training\\Dice-CE loss + AdamW};
+\node[decision, left=of train] (best) {Validation\\mean Dice improves?};
+\node[block, left=of best] (save) {Save best\\checkpoint};
+\node[block, below=of save] (eval) {Final validation\\Dice + speed + params};
+\draw[arrow] (data) -- (split);
+\draw[arrow] (split) -- (prep);
+\draw[arrow] (prep) -- (train);
+\draw[arrow] (train) -- (best);
+\draw[arrow] (best) -- node[above, font=\scriptsize] {yes} (save);
+\draw[arrow] (save) -- (eval);
+\draw[arrow] (best.south) -- ++(0,-0.6) -| node[pos=0.25, below, font=\scriptsize] {no / next epoch} (train.south);
+\end{tikzpicture}
+}
+\caption{Reproducible experimental workflow. The main methodological safeguard is patient-level separation before training, so that validation cases come from patients not seen during optimization.}
+\label{fig:experiment_workflow}
+\end{figure}
 
-% Encoder Path (Left Side)
-\node[enc] (in) {\textbf{Input 3D MRI}\\ $1 \times 256 \times 256 \times 16$};
-\node[enc, below=of in] (e1) {\textbf{Encoder 1}\\ Conv3D + ReLU\\ $16 \times 256 \times 256 \times 16$};
-\node[enc, below=of e1] (e2) {\textbf{Encoder 2}\\ MaxPool $\downarrow$ + Conv3D\\ $32 \times 128 \times 128 \times 8$};
-\node[enc, below=of e2] (e3) {\textbf{Encoder 3}\\ MaxPool $\downarrow$ + Conv3D\\ $64 \times 64 \times 64 \times 4$};
+\section{Dataset and Data Discovery}
+The experiment uses the Automated Cardiac Diagnosis Challenge (ACDC) dataset \cite{bernard2018deep}. The task is multi-class segmentation of three anatomical structures: RV, MYO, and LV. The final experiment discovered 200 valid image-label pairs from 100 patients. Each patient contributes labelled end-diastolic and end-systolic frames, giving two labelled 3D cases per patient.
 
-% Bottleneck (Bottom Center)
-\node[mamba, below right=1cm and 1cm of e3] (bot) {\textbf{Spatio-Temporal Mamba Bottleneck (128 Channels)}\\ Tensor Serialization $\rightarrow$ Selective Scan $\rightarrow$ Volumetric Reshaping\\ $\mathbb{R}^{128 \times 32 \times 32 \times 2}$};
+A practical issue in this project is that the local dataset layout contains paths ending in \texttt{.nii} that may act as containers rather than directly readable NIfTI files. Therefore, the final data discovery procedure checks whether each candidate path is a valid non-empty file or a directory containing the actual NIfTI file. Empty placeholders are skipped. This step is important because directly passing an empty placeholder file to a NIfTI reader causes a loading error. The final data discovery report confirmed 200 valid image-label pairs and no skipped invalid containers.
 
-% Decoder Path (Right Side)
-\node[dec, above right=1cm and 1cm of bot] (d3) {\textbf{Decoder 3}\\ UpConv $\uparrow$ + Concat + Conv3D\\ $64 \times 64 \times 64 \times 4$};
-\node[dec, above=of d3] (d2) {\textbf{Decoder 2}\\ UpConv $\uparrow$ + Concat + Conv3D\\ $32 \times 128 \times 128 \times 8$};
-\node[dec, above=of d2] (d1) {\textbf{Decoder 1}\\ UpConv $\uparrow$ + Concat + Conv3D\\ $16 \times 256 \times 256 \times 16$};
-\node[dec, above=of d1] (out) {\textbf{Output Mask}\\ $1 \times 1 \times 1$ Conv3D\\ $4 \times 256 \times 256 \times 16$};
+\section{Patient-Level Training and Validation Split}
+The split was performed at patient level rather than case level. This means all labelled frames from the same patient belong either to training or to validation, never both. This design prevents leakage of patient-specific anatomy into the validation set. With random seed 42 and an 80/20 split, the experiment used 80 training patients and 20 validation patients, corresponding to 160 training cases and 40 validation cases.
 
-% Connections
+Let $\mathcal{P}$ denote the set of all patient identifiers. The split can be expressed as:
+\begin{equation}
+    \mathcal{P}_{train} \cap \mathcal{P}_{val} = \varnothing, \qquad \mathcal{P}_{train} \cup \mathcal{P}_{val} = \mathcal{P}.
+\end{equation}
+This condition is the core methodological safeguard of the experiment. It ensures that the validation Dice measures performance on unseen patients rather than on additional frames from patients used during training.
+
+\section{Preprocessing Pipeline}
+All models use the same preprocessing pipeline implemented with MONAI \cite{cardoso2022monai}. Each image and label pair is loaded from NIfTI format, converted to channel-first representation, resized to a fixed spatial size of $256\times256\times16$, intensity-scaled, and converted to a PyTorch tensor. Applying the same preprocessing to all models is necessary because otherwise observed performance differences could be caused by data handling rather than architecture.
+
+\begin{figure}[hbt!]
+\centering
+\resizebox{0.9\textwidth}{!}{
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    block/.style={rectangle, draw=black!80, thick, fill=blue!5, text width=4.2cm, align=center, rounded corners=3pt, minimum height=0.9cm},
+    arrow/.style={->, >=stealth, thick}
+]
+\node[block] (load) {Load NIfTI image and label};
+\node[block, right=of load] (channel) {Ensure channel-first shape\\$H\times W\times D \rightarrow 1\times H\times W\times D$};
+\node[block, right=of channel] (resize) {Resize to\\$256\times256\times16$};
+\node[block, below=of resize] (scale) {Scale MRI intensity};
+\node[block, left=of scale] (tensor) {Convert to tensor};
+\node[block, left=of tensor] (loader) {DataLoader for training or validation};
+\draw[arrow] (load) -- (channel);
+\draw[arrow] (channel) -- (resize);
+\draw[arrow] (resize) -- (scale);
+\draw[arrow] (scale) -- (tensor);
+\draw[arrow] (tensor) -- (loader);
+\end{tikzpicture}
+}
+\caption{Preprocessing pipeline used for all compared models. Images are interpolated continuously, while labels are resized with nearest-neighbour interpolation to preserve class identities.}
+\label{fig:preprocessing_pipeline}
+\end{figure}
+
+For continuous MRI intensity volumes, trilinear interpolation is used during resizing. If $V(x,y,z)$ denotes the interpolated intensity at a continuous coordinate, the interpolation can be described as a weighted combination of its eight neighbouring voxels:
+\begin{equation}
+    V(x,y,z) \approx \sum_{i=0}^{1}\sum_{j=0}^{1}\sum_{k=0}^{1} w_{ijk}V_{ijk}.
+\end{equation}
+Here, $V_{ijk}$ are neighbouring voxel intensities and $w_{ijk}$ are interpolation weights determined by the relative distance between the target coordinate and the neighbouring grid points. For segmentation labels, nearest-neighbour interpolation is used instead, because labels are categorical class identifiers rather than continuous intensity values.
+
+MRI intensity values are relative and scanner-dependent rather than standardized physical units \cite{nyul1999on}. Therefore, intensity scaling is applied before network input. A simple min-max formulation is:
+\begin{equation}
+    S(I_{xyz}) = \frac{I_{xyz}-\min(I)}{\max(I)-\min(I)+\epsilon}.
+\end{equation}
+The constant $\epsilon$ prevents division by zero. In practice, MONAI handles these operations in the transform pipeline. The mathematical expression is included to clarify why intensity normalization is needed for stable neural network training.
+
+\section{Nano-Mamba U-Net Architecture}
+The proposed model follows a 3D U-Net-style encoder-decoder structure. The encoder uses convolutional blocks and pooling to reduce spatial resolution while increasing feature channels. The decoder uses transposed convolutions and skip connections to recover spatial resolution and preserve boundary information. The architectural modification studied in this thesis is the insertion of a lightweight Mamba-inspired bottleneck at the compressed latent representation.
+
+\begin{figure}[hbt!]
+\centering
+\resizebox{0.95\textwidth}{!}{
+\begin{tikzpicture}[
+    node distance=1.05cm and 1.4cm,
+    layer/.style={rectangle, draw=black!80, thick, align=center, rounded corners=2pt, minimum height=0.8cm},
+    enc/.style={layer, fill=blue!8},
+    dec/.style={layer, fill=green!8},
+    mamba/.style={layer, fill=red!8, draw=red!80, thick},
+    arrow/.style={->, >=stealth, thick},
+    skip/.style={->, >=stealth, thick, dashed, draw=blue!70}
+]
+\node[enc] (in) {Input\\$1\times256\times256\times16$};
+\node[enc, below=of in] (e1) {Encoder 1\\16 channels};
+\node[enc, below=of e1] (e2) {Encoder 2\\32 channels};
+\node[enc, below=of e2] (e3) {Encoder 3\\64 channels};
+\node[mamba, below right=0.8cm and 1.2cm of e3] (bot) {Mamba-inspired bottleneck\\128 channels};
+\node[dec, above right=0.8cm and 1.2cm of bot] (d3) {Decoder 3\\64 channels};
+\node[dec, above=of d3] (d2) {Decoder 2\\32 channels};
+\node[dec, above=of d2] (d1) {Decoder 1\\16 channels};
+\node[dec, above=of d1] (out) {Output logits\\4 classes};
 \draw[arrow] (in) -- (e1);
 \draw[arrow] (e1) -- (e2);
 \draw[arrow] (e2) -- (e3);
@@ -106,261 +126,91 @@ To visually articulate the complex forward propagation and information fusion me
 \draw[arrow] (d3) -- (d2);
 \draw[arrow] (d2) -- (d1);
 \draw[arrow] (d1) -- (out);
-
-% Skip Connections
-\draw[skip] (e3) -- node[above, font=\scriptsize] {Skip Connection (Concat)} (d3);
-\draw[skip] (e2) -- node[above, font=\scriptsize] {Skip Connection (Concat)} (d2);
-\draw[skip] (e1) -- node[above, font=\scriptsize] {Skip Connection (Concat)} (d1);
-
+\draw[skip] (e3) -- node[above, font=\scriptsize] {skip} (d3);
+\draw[skip] (e2) -- node[above, font=\scriptsize] {skip} (d2);
+\draw[skip] (e1) -- node[above, font=\scriptsize] {skip} (d1);
 \end{tikzpicture}
 }
-\caption{The complete architectural topology of the Nano-Mamba U-Net. Blue blocks represent the contracting spatial encoder, green blocks represent the expanding decoder, and the central red block denotes the linear-time Selective State Space Bottleneck. Dashed blue lines indicate spatial skip connections preserving high-frequency anatomical boundaries.}
+\caption{Nano-Mamba U-Net architecture. The model keeps the U-Net encoder-decoder and skip-connection structure, while replacing the deepest bottleneck with a compact Mamba-inspired sequence-processing module.}
 \label{fig:full_architecture}
 \end{figure}
 
-\subsection{Micro-Architectural Components}
-Each stage of the encoder and decoder pathways utilizes a "DoubleConv" block, comprising two consecutive $3 \times 3 \times 3$ convolutional layers. Mathematically, these layers are augmented with 3D Batch Normalization (BN) \cite{ioffe2015batch} and Rectified Linear Unit (ReLU) activation functions. 
-
-The integration of 3D BN is critical for stabilizing the internal covariate shift when processing heterogeneous MRI volumes. For a mini-batch of feature maps $\mathcal{B}$, the normalization for a specific channel is formulated as:
+Each convolutional block consists of two 3D convolutional layers followed by batch normalization and ReLU activation. A convolutional layer transforms a local neighbourhood into an output feature using learned kernels. For a 3D convolution, this can be written as:
 \begin{equation}
-    \hat{x} = \frac{x - E[\mathcal{B}]}{\sqrt{Var[\mathcal{B}] + \epsilon}},
+    Y_{c_o}(p)=\sum_{c_i}\sum_{q\in\mathcal{K}}W_{c_o,c_i}(q)X_{c_i}(p+q)+b_{c_o}.
 \end{equation}
-followed by a learnable affine transformation $y = \gamma \hat{x} + \beta$. This ensures that the gradient flow remains within a stable numerical range, preventing the vanishing gradient problem in deep 3D networks. Following normalization, the non-linearity is introduced via the ReLU function:
+Here, $X$ is the input feature map, $Y$ is the output feature map, $\mathcal{K}$ is the local 3D kernel support, and $W$ and $b$ are trainable parameters. This equation also shows the locality of convolution: each output voxel depends on a neighbourhood around position $p$.
+
+Batch normalization stabilizes training by normalizing intermediate features within a mini-batch \cite{ioffe2015batch}. For a feature value $x$, batch normalization can be expressed as:
 \begin{equation}
-    f(x) = \max(0, x).
+    \hat{x}=\frac{x-\mu_{\mathcal{B}}}{\sqrt{\sigma_{\mathcal{B}}^2+\epsilon}}, \qquad y=\gamma\hat{x}+\beta.
 \end{equation}
-By maintaining a constant gradient of 1 for all positive activations, ReLU facilitates sparse representations and accelerates the convergence of the Adam optimizer.
-
-\section{The Spatio-Temporal Mamba Bottleneck}
-The empirical superiority of the proposed architecture relies entirely on the successful mathematical integration of the Selective State Space Model \cite{gu2023mamba} into the highly compressed latent space.
-
-\subsection{Volumetric Tensor Serialization}
-Unlike localized 3D convolutions that naturally process grid-like spatial structures, the Mamba architecture fundamentally requires a 1D serialized sequence to perform its hardware-aware parallel scan. Let the highly compressed spatial feature map outputted by Encoder 3 and passed through the initial bottleneck convolution be denoted as a 5-dimensional continuous tensor:
+The parameters $\gamma$ and $\beta$ are learned, allowing the network to recover suitable feature scales after normalization. ReLU activation is then applied as:
 \begin{equation}
-    \mathcal{X} \in \mathbb{R}^{B \times C \times H \times W \times D},
+    f(x)=\max(0,x).
 \end{equation}
-where $B$ represents the mini-batch dimension, $C=128$ is the optimal semantic channel depth (as definitively proven by our subsequent ablation studies), and $H, W, D$ are the spatial coordinates ($32 \times 32 \times 2$). 
+These components are standard neural network operations and are not claimed as novel contributions of this thesis.
 
-To ingest this volumetric data into the State Space ODEs, the tensor is systematically flattened across its three spatial dimensions into a continuous 1D sequence of length $L$, where $L = H \times W \times D$. This mathematical transformation is expressed as:
+\section{Mamba-Inspired Bottleneck Implementation}
+The bottleneck receives a compressed 3D feature map. Let this tensor be:
 \begin{equation}
-    \mathbf{x}_{seq} = \text{Reshape}(\mathcal{X}) \in \mathbb{R}^{B \times C \times L}.
+    \mathcal{X}\in\mathbb{R}^{B\times C\times H\times W\times D}.
 \end{equation}
-To strictly align with the causal, autoregressive sequence processing requirements of the Mamba underlying CUDA kernels, the tensor must be transposed to treat the sequence length as the primary operational dimension:
+The tensor is serialized across the spatial dimensions to obtain a sequence:
 \begin{equation}
-    \mathbf{x}' = \text{Transpose}(\mathbf{x}_{seq}) \in \mathbb{R}^{B \times L \times C}.
+    \mathbf{X}_{seq}=\mathrm{reshape}(\mathcal{X})\in\mathbb{R}^{B\times L\times C}, \qquad L=HWD.
 \end{equation}
-This serialization essentially forces the model to traverse the 3D cardiac volume as a temporal sequence, sequentially mapping the spatial voxels across the temporal cardiac cycle.
+This operation does not create new anatomical information. It changes the representation so that the bottleneck can process compressed volumetric features as a sequence.
 
-\subsection{Continuous-Time State Space ODEs and Discretization}
-Once serialized, the sequence is processed by the State Space mechanism. Fundamentally, Mamba maps the 1D input sequence $x(t) \in \mathbb{R}$ to an output sequence $y(t) \in \mathbb{R}$ through an implicit, high-dimensional hidden latent state $h(t) \in \mathbb{R}^N$. This continuous-time dynamic mapping is governed by a set of linear Ordinary Differential Equations (ODEs):
+The implemented bottleneck is Mamba-inspired rather than a full selective scan implementation. It uses linear projection, depthwise one-dimensional convolution, gating, output projection, and residual addition. A simplified representation of the operation is:
 \begin{equation}
-    h'(t) = \mathbf{A}h(t) + \mathbf{B}x(t),
+    Z = \mathrm{Proj}_{out}\left(\mathrm{Gate}\left(\mathrm{DWConv1D}\left(\mathrm{Proj}_{in}(\mathbf{X}_{seq})\right)\right)\right)+\mathbf{X}_{seq}.
 \end{equation}
+Here, $\mathrm{Proj}_{in}$ and $\mathrm{Proj}_{out}$ are learned linear projections, $\mathrm{DWConv1D}$ is a depthwise sequence convolution, and $\mathrm{Gate}$ denotes a learned nonlinear gating operation. The output is reshaped back into 3D feature form before being passed to the decoder.
+
+This design choice must be interpreted carefully. The original Mamba paper proposes selective state space sequence modeling \cite{gu2023mamba}. The implementation in this project uses a lightweight PyTorch block inspired by this direction, but it does not claim to reproduce the full hardware-aware selective scan. The research contribution is therefore the integration and evaluation of a compact sequence-inspired bottleneck inside a cardiac MRI segmentation model.
+
+\section{Comparison Models and Ablation Design}
+The experiment compares Nano-Mamba U-Net with several reference architectures. The 3D U-Net baseline represents the standard encoder-decoder approach. Attention U-Net represents attention-gated skip connections. SegResNet16 represents a residual convolutional segmentation model. Two ablation variants are included to study the role of the bottleneck: No-Mamba U-Net replaces the Mamba-inspired bottleneck with convolutional blocks, while Half-Mamba U-Net reduces the bottleneck capacity.
+
+The purpose of the ablation study is not to prove that every Mamba-inspired configuration must outperform every convolutional configuration. Instead, the ablation tests whether the proposed bottleneck improves the accuracy-efficiency trade-off under the same training and validation protocol. This distinction is important because the final results show that No-Mamba U-Net slightly outperformed Nano-Mamba U-Net in mean Dice, while Nano-Mamba U-Net retained the lowest parameter count.
+
+\section{Training Objective and Optimization}
+The models are trained using a Dice-Cross Entropy objective. Dice loss addresses region-level overlap, while cross entropy provides voxel-wise class supervision. For class $c$, the Dice score is:
 \begin{equation}
-    y(t) = \mathbf{C}h(t).
+    \mathrm{DSC}_c=\frac{2\sum_i p_{i,c}g_{i,c}}{\sum_i p_{i,c}+\sum_i g_{i,c}+\epsilon}.
 \end{equation}
-Here, $\mathbf{A} \in \mathbb{R}^{N \times N}$ is the critically important state transition matrix that dictates the memory decay of the system. $\mathbf{B} \in \mathbb{R}^{N \times 1}$ and $\mathbf{C} \in \mathbb{R}^{1 \times N}$ are learnable projection matrices.
-
-Because modern deep learning hardware operates on discrete, quantized tensors rather than continuous differential functions, the continuous ODEs must be analytically discretized. Mamba achieves this through the Zero-Order Hold (ZOH) assumption, introducing a hardware-aware temporal step size parameter $\mathbf{\Delta}$. Applying the ZOH integral rigorously transforms the continuous matrices into their discrete counterparts $\mathbf{\bar{A}}$ and $\mathbf{\bar{B}}$:
+The corresponding Dice loss can be written as:
 \begin{equation}
-    \mathbf{\bar{A}} = \exp(\mathbf{\Delta} \mathbf{A}),
+    \mathcal{L}_{Dice}=1-\frac{1}{C}\sum_{c=1}^{C}\mathrm{DSC}_c.
 \end{equation}
+The multi-class cross-entropy term is:
 \begin{equation}
-    \mathbf{\bar{B}} = (\mathbf{\Delta} \mathbf{A})^{-1} (\exp(\mathbf{\Delta} \mathbf{A}) - \mathbf{I}) \cdot \mathbf{\Delta} \mathbf{B}.
+    \mathcal{L}_{CE}=-\sum_i\sum_c g_{i,c}\log(p_{i,c}).
 \end{equation}
-Following this discretization, the continuous differential system collapses into an elegant, discrete linear recurrence relation:
+The total loss used for optimization is:
 \begin{equation}
-    h_k = \mathbf{\bar{A}}h_{k-1} + \mathbf{\bar{B}}x_k,
+    \mathcal{L}_{total}=\mathcal{L}_{Dice}+\mathcal{L}_{CE}.
 \end{equation}
+Here, $p_{i,c}$ denotes the predicted probability for voxel $i$ and class $c$, while $g_{i,c}$ denotes the one-hot ground-truth label. This loss is a standard practical choice for medical segmentation and is implemented using MONAI's Dice-Cross Entropy loss.
+
+Optimization is performed with AdamW \cite{loshchilov2017decoupled}. The learning rate is $1\times10^{-4}$ and weight decay is $1\times10^{-5}$. All models are trained for 150 epochs. The batch size is set according to model memory requirements: lighter models use batch size 2, while heavier models use batch size 1. These settings are kept consistent in the final experimental script to support fair comparison.
+
+\section{Checkpoint Selection and Evaluation Metrics}
+A key methodological correction in the final experiment is validation-based checkpoint selection. Earlier exploratory scripts saved best models according to training loss, which is not a reliable indicator of generalization. In the final experiment, the checkpoint is saved only when validation mean Dice improves. If $\overline{D}^{(e)}_{val}$ denotes the validation mean Dice at epoch $e$, the selected checkpoint is:
 \begin{equation}
-    y_k = \mathbf{C}h_k.
+    e^*=\arg\max_e \overline{D}^{(e)}_{val}.
 \end{equation}
+The final reported metrics are computed from this selected checkpoint on the held-out validation cases.
 
-\subsection{The Selective Mechanism and Linear Complexity}
-In standard State Space Models, matrices $\mathbf{\bar{A}}$, $\mathbf{\bar{B}}$, and $\mathbf{C}$ are invariant across time, which heavily limits their ability to process dynamic, context-dependent inputs. The profound architectural innovation of the Selective State Space Model is making the step size $\mathbf{\Delta}$, as well as matrices $\mathbf{B}$ and $\mathbf{C}$, strictly data-dependent functions of the input $x_k$. 
-
-This "Selective Scan" mechanism endows the network with the mathematical capability to dynamically filter information: it can actively selectively remember critical structural features (e.g., the sharp boundary of the myocardium) and actively forget irrelevant artifacts (e.g., MRI bias field noise). Because Equation 5.13 is a pure recurrence relation that updates the hidden state $h_k$ without needing to compute the $L \times L$ pairwise interactions demanded by Vision Transformers, the computational complexity drops from quadratic $\mathcal{O}(L^2)$ to strictly linear $\mathcal{O}(L)$. 
-
-The algorithmic implementation of this process is detailed in Algorithm \ref{alg:mamba}. 
-
-\begin{algorithm}[hbt!]
-\caption{Selective Scan Mechanism for 3D Cardiac Tensors}
-\label{alg:mamba}
-\begin{algorithmic}[1]
-\REQUIRE Input serialized tensor $\mathbf{x} \in \mathbb{R}^{B \times L \times C}$, Discretization parameter $\mathbf{\Delta}$
-\ENSURE Transformed spatio-temporal features $\mathbf{y} \in \mathbb{R}^{B \times L \times C}$
-\STATE \textbf{Step 1: Data-Dependent Projection}
-\STATE $\mathbf{B}, \mathbf{C} \leftarrow \text{Linear}(\mathbf{x})$, $\mathbf{\Delta} \leftarrow \text{Softplus}(\text{Linear}(\mathbf{x}))$
-\STATE \textbf{Step 2: Discretization via ZOH}
-\STATE $\mathbf{\bar{A}} = \exp(\mathbf{\Delta} \mathbf{A})$
-\STATE $\mathbf{\bar{B}} = (\mathbf{\Delta} \mathbf{A})^{-1} (\exp(\mathbf{\Delta} \mathbf{A}) - \mathbf{I}) \cdot \mathbf{\Delta} \mathbf{B}$
-\STATE \textbf{Step 3: Recurrent Parallel Scan}
-\FOR{$t = 1$ \TO $L$}
-    \STATE $h_t = \mathbf{\bar{A}}_t h_{t-1} + \mathbf{\bar{B}}_t x_t$
-    \STATE $y_t = \mathbf{C}_t h_t$
-\ENDFOR
-\RETURN $\mathbf{y}$
-\end{algorithmic}
-\end{algorithm}
-
-\section{Stochastic Data Augmentation and Spatial Regularization}
-Deep learning models, particularly massive architectures encompassing millions of parameters, are inherently prone to memorizing the training cohort rather than learning generalizable, abstract features. Given the constrained scale of the ACDC dataset (100 patients), empirical risk minimization dictates the necessity of artificially expanding the topological diversity of the training distribution. This was achieved through a rigorous, stochastically driven 3D data augmentation pipeline utilizing the MONAI framework.
-
-\subsection{Mathematical Formulation of 3D Affine Transformations}
-To ensure the Nano-Mamba U-Net achieves rotational and scale invariance against varying patient orientations inside the MRI scanner, dynamic 3D affine transformations were applied during the data loading sequence. 
-
-Let a continuous spatial coordinate in the 3D MRI volume be represented as a homogeneous column vector $\mathbf{v} = [x, y, z, 1]^T$. A spatial augmentation is mathematically defined by a $4 \times 4$ transformation matrix $\mathcal{M}_{affine}$. For stochastic spatial rotation, the network randomly samples angles $\theta_x, \theta_y, \theta_z \in [-15^\circ, 15^\circ]$ from a uniform distribution. The composite 3D rotation matrix $\mathbf{R}$ is the cross-product of the axial rotation matrices:
+The primary reported segmentation metric is mean Dice across RV, MYO, and LV:
 \begin{equation}
-    \mathbf{R}_x(\theta_x) = 
-    \begin{bmatrix}
-    1 & 0 & 0 & 0 \\
-    0 & \cos\theta_x & -\sin\theta_x & 0 \\
-    0 & \sin\theta_x & \cos\theta_x & 0 \\
-    0 & 0 & 0 & 1
-    \end{bmatrix}, \quad
-    \mathbf{R}_y(\theta_y) = 
-    \begin{bmatrix}
-    \cos\theta_y & 0 & \sin\theta_y & 0 \\
-    0 & 1 & 0 & 0 \\
-    -\sin\theta_y & 0 & \cos\theta_y & 0 \\
-    0 & 0 & 0 & 1
-    \end{bmatrix},
+    \overline{D}=\frac{D_{RV}+D_{MYO}+D_{LV}}{3}.
 \end{equation}
-\begin{equation}
-    \mathbf{R}_z(\theta_z) = 
-    \begin{bmatrix}
-    \cos\theta_z & -\sin\theta_z & 0 & 0 \\
-    \sin\theta_z & \cos\theta_z & 0 & 0 \\
-    0 & 0 & 1 & 0 \\
-    0 & 0 & 0 & 1
-    \end{bmatrix}.
-\end{equation}
-Similarly, for stochastic scaling to simulate volumetric variations in dilated or hypertrophic hearts, a scale factor $s$ is uniformly sampled $s \sim \mathcal{U}(0.9, 1.1)$, defining the scaling matrix $\mathbf{S}$:
-\begin{equation}
-    \mathbf{S}(s) = \text{diag}(s, s, s, 1).
-\end{equation}
-The final augmented spatial coordinate $\mathbf{v}'$ is derived via sequential matrix multiplication:
-\begin{equation}
-    \mathbf{v}' = (\mathbf{S} \cdot \mathbf{R}_z \cdot \mathbf{R}_y \cdot \mathbf{R}_x) \mathbf{v}.
-\end{equation}
-To map the discrete voxel intensities to these newly transformed continuous coordinates without inducing topological tearing, trilinear interpolation was utilized for the image tensors, and nearest-neighbor interpolation was strictly maintained for the segmentation masks to preserve categorical integrity.
+The study also reports parameter count and inference speed. Parameter count measures the number of trainable parameters in the model, while inference speed is measured as frames per second on the same hardware environment. These computational metrics are necessary because the research question concerns the trade-off between accuracy and lightweight design, not Dice score alone.
 
-\subsection{Photometric Perturbations and Gaussian Noise}
-Beyond geometric variations, the MRI sequences exhibit significant photometric inconsistencies due to fluctuating radio-frequency (RF) coil sensitivities and patient-specific magnetic susceptibilities. To regularize the network against these textural variations, stochastic Gaussian noise was injected directly into the normalized feature tensors.
+\section{Hardware and Reproducibility}
+All experiments are run using PyTorch and MONAI on a single NVIDIA RTX 4060 GPU with 8GB VRAM. The random seed is fixed to 42 for Python, NumPy, and PyTorch. CuDNN deterministic settings are enabled to improve reproducibility. The final experiment script saves the patient split, per-case validation scores, training logs, checkpoints, and summary CSV/JSON files. These outputs provide an auditable evidence chain linking the reported thesis tables to the executed code.
 
-Let $\mathcal{I}_{norm}$ represent the normalized MRI tensor. A noise matrix $\mathcal{N}$ of identical dimensions is sampled from a Gaussian probability density function (PDF):
-\begin{equation}
-    \mathcal{P}(x) = \frac{1}{\sigma \sqrt{2\pi}} \exp\left( -\frac{(x - \mu)^2}{2\sigma^2} \right),
-\end{equation}
-where $\mu = 0$ is the mean and $\sigma$ is the standard deviation, stochastically sampled between $[0.01, 0.1]$. The final photometrically augmented tensor is obtained via element-wise addition:
-\begin{equation}
-    \mathcal{I}_{aug} = \mathcal{I}_{norm} \oplus \mathcal{N}(\mu, \sigma).
-\end{equation}
-This rigorous augmentation policy forces the Nano-Mamba U-Net to rely on the overarching topological structure of the cardiac anatomy rather than overfitting to high-frequency, localized noise artifacts.
-
-\section{Sliding Window Inference and Gaussian Blending}
-While the hardware environment (RTX 4060, 8GB VRAM) was capable of handling small mini-batches during training, full-resolution volumetric inference on massive clinical MRI sequences often exceeds memory limits. To resolve this, a sliding-window inference topology was programmatically implemented during the evaluation phase.
-
-The sliding-window algorithm decomposes the continuous macroscopic MRI volume $\mathcal{V}$ into overlapping microscopic 3D patches $\mathcal{P}_i$. Let $O \in (0, 1)$ denote the overlap ratio between adjacent patches (typically set to 0.5 to ensure 50\% spatial overlap). The Nano-Mamba architecture independently generates a semantic prediction mask $\hat{\mathcal{P}}_i$ for each patch.
-
-However, simply concatenating these predicted patches results in severe boundary artifacts (checkerboard effects) due to the lack of global contextual awareness at the patch extremities. To mathematically synthesize a seamless, globally coherent volume, a Gaussian blending paradigm is utilized. For a predicted patch $\hat{\mathcal{P}}_i$ centered at coordinates $(c_x, c_y, c_z)$, an explicit Gaussian weighting matrix $\mathcal{W}$ of identical dimensions is generated:
-\begin{equation}
-    \mathcal{W}(x, y, z) = \exp \left( - \left( \frac{(x-c_x)^2}{2\sigma_x^2} + \frac{(y-c_y)^2}{2\sigma_y^2} + \frac{(z-c_z)^2}{2\sigma_z^2} \right) \right).
-\end{equation}
-This matrix assigns the maximum confidence weight (approaching 1.0) to the center voxels of the patch and exponentially decays the confidence weight (approaching 0.0) toward the patch boundaries. The final continuous volumetric prediction $\mathcal{V}_{pred}$ at any specific spatial coordinate $(x,y,z)$ is computed as the mathematically weighted average of all overlapping patches containing that coordinate:
-\begin{equation}
-    \mathcal{V}_{pred}(x,y,z) = \frac{\sum_{i} \hat{\mathcal{P}}_i(x,y,z) \cdot \mathcal{W}_i(x,y,z)}{\sum_{i} \mathcal{W}_i(x,y,z)}.
-\end{equation}
-This algorithmic synthesis ensures that the State Space representation retains extreme topological continuity across the entire cardiac cycle, eliminating localized edge artifacts and contributing directly to the superior Hausdorff Distance ($HD_{95}$) metrics achieved by the architecture.
-
-\section{Formulation of the Objective Function}
-Medical image segmentation inherently poses a severe class imbalance problem \cite{jadon2020survey}. Within a volumetric cardiac MRI tensor, the anatomical structures of interest (RV, MYO, LV) occupy a disproportionately minuscule fraction of the spatial domain, while the irrelevant background tissue heavily dominates the voxel count. Training a neural network exclusively on standard pixel-wise metrics often leads to highly skewed decision boundaries, where the model converges to a naive local minimum by predicting everything as background.
-
-To mathematically counter this imbalance, the Nano-Mamba U-Net is optimized using a composite objective function, unifying the strengths of distribution-based and overlap-based loss metrics. The total loss $\mathcal{L}_{Total}$ is formulated as a linear amalgamation of the standard Cross-Entropy loss ($\mathcal{L}_{CE}$) and the soft Dice overlap loss ($\mathcal{L}_{Dice}$):
-\begin{equation}
-    \mathcal{L}_{Total} = \lambda_1 \mathcal{L}_{CE} + \lambda_2 \mathcal{L}_{Dice},
-\end{equation}
-with the empirical weighting coefficients standardized to $\lambda_1 = 1.0$ and $\lambda_2 = 1.0$.
-
-The Cross-Entropy component independently evaluates the voxel-level probability distribution, providing stable gradients during the initial optimization phase:
-\begin{equation}
-    \mathcal{L}_{CE} = - \frac{1}{N} \sum_{i=1}^{N} \sum_{c=1}^{C} g_{ic} \log(p_{ic}),
-\end{equation}
-where $N$ is the voxel total, $C$ represents the four categorical classes, and $g_{ic} \in \{0, 1\}$ is the one-hot encoded clinical ground truth.
-
-Conversely, the Dice Loss \cite{sudre2017generalised, milletari2016vnet} directly optimizes for structural overlap, fundamentally ignoring the absolute size of the background:
-\begin{equation}
-    \mathcal{L}_{Dice} = 1 - \frac{2 \sum_{i=1}^{N} \sum_{c=1}^{C} p_{ic} g_{ic} + \epsilon}{\sum_{i=1}^{N} \sum_{c=1}^{C} p_{ic}^2 + \sum_{i=1}^{N} \sum_{c=1}^{C} g_{ic}^2 + \epsilon}.
-\end{equation}
-The accumulated gradients derived from $\mathcal{L}_{Total}$ are backpropagated utilizing the Adam stochastic optimizer \cite{kingma2014adam}, which inherently adapts the learning rate for individual parameters using first and second moment estimates, ensuring robust convergence.
-
-\section{Comprehensive Quantitative Evaluation Framework}
-While the objective function directly optimizes the neural network's parameters during training, evaluating the clinical viability of the finalized model requires a multidimensional metric framework. Relying solely on volumetric overlap metrics is fundamentally insufficient for medical image segmentation, as they exhibit severe insensitivity to critical boundary outliers \cite{taha2015metrics}. Consequently, this research constructs a dual-faceted evaluation framework comprising spatial overlap metrics and geometric surface distance metrics.
-
-\subsection{Volumetric Overlap and Statistical Metrics}
-The primary metric for assessing region-based intersection is the Sørensen–Dice Similarity Coefficient (DSC). For binary evaluation of a specific class, let $TP$ denote True Positives, $FP$ False Positives, and $FN$ False Negatives:
-\begin{equation}
-    DSC = \frac{2 \cdot TP}{2 \cdot TP + FP + FN}.
-\end{equation}
-To provide a more granular statistical analysis of the model's diagnostic behavior, Sensitivity (Recall) and Specificity are evaluated. Sensitivity measures the proportion of actual anatomical tissue correctly identified:
-\begin{equation}
-    Sensitivity = \frac{TP}{TP + FN}.
-\end{equation}
-Conversely, Specificity evaluates the network's ability to correctly identify the background, heavily penalizing anatomical hallucinations (over-segmentation) in irrelevant tissue regions:
-\begin{equation}
-    Specificity = \frac{TN}{TN + FP}.
-\end{equation}
-
-\subsection{Geometric Surface Distance Metrics}
-Clinical diagnosis, particularly the computation of myocardial mass and ventricular ejection fractions, relies heavily on the precise localization of anatomical boundaries. A model may achieve a high DSC while predicting an aberrant, jagged boundary. 
-
-Let $S_P$ represent the set of surface points on the predicted segmentation mask, and $S_G$ represent the set of surface points on the clinical ground truth. The shortest Euclidean distance from a single point $p \in S_P$ to the ground truth surface $S_G$ is formulated as:
-\begin{equation}
-    d(p, S_G) = \min_{g \in S_G} \| p - g \|_2.
-\end{equation}
-The Average Symmetric Surface Distance (ASSD) computes the mean of all minimal distances from $S_P$ to $S_G$ and vice versa, providing a robust measure of overall contour alignment:
-\begin{equation}
-    ASSD(S_P, S_G) = \frac{1}{|S_P| + |S_G|} \left( \sum_{p \in S_P} d(p, S_G) + \sum_{g \in S_G} d(g, S_P) \right).
-\end{equation}
-
-Furthermore, to evaluate the worst-case boundary errors (e.g., a critical single-voxel leakage into an adjacent organ), the Hausdorff Distance (HD) is utilized. HD measures the maximum of all minimal distances between the two surfaces. To prevent extreme susceptibility to single-voxel noise artifacts inherent in MRI, the 95th percentile of the Hausdorff Distance ($HD_{95}$) is employed as the standard robustness metric:
-\begin{equation}
-    HD(S_P, S_G) = \max \left\{ \sup_{p \in S_P} d(p, S_G), \sup_{g \in S_G} d(g, S_P) \right\}.
-\end{equation}
-A lower $HD_{95}$ and $ASSD$ mathematically guarantee that the predicted boundaries are tightly conforming to the expert delineations.
-
-\section{Computational Environment and Accelerated Ecosystem}
-The empirical execution of state space models and massive 3D volumetric tensors necessitates a highly optimized software-hardware synergy. This research explicitly outlines the computational ecosystem designed to facilitate the rapid prototyping and edge-deployment testing of the Nano-Mamba U-Net.
-
-\subsection{Software Infrastructure and Hardware Constraints}
-The architectural implementation and automatic differentiation were facilitated by the PyTorch deep learning framework, utilizing its dynamic Directed Acyclic Graph (DAG) for the Autograd engine, which is critical for compiling the recurrent Mamba operations. 
-
-All training, validation, and computational benchmarking (e.g., FPS profiling) were strictly constrained to a single consumer-grade NVIDIA GeForce RTX 4060 GPU, equipped with 8 Gigabytes of GDDR6 Video RAM (VRAM). This deliberate hardware constraint aligns with the thesis objective of proving the feasibility of advanced SOTA cardiac diagnostic AI on portable, low-power edge clinical devices.
-
-\subsection{Mixed Precision Training and Hyperparameter Configuration}
-Processing 3D continuous MRI tensors naturally imposes a severe memory bottleneck. Standard full-precision (FP32) tensors for large batch sizes quickly induce Out-Of-Memory (OOM) failures on an 8GB VRAM architecture. To circumvent this, the training protocol employed Automatic Mixed Precision (AMP) \cite{micikevicius2017mixed}. AMP dynamically casts specific tensor operations (such as linear layer multiplications and 3D convolutions) from 32-bit floating-point (FP32) down to 16-bit half-precision (FP16), while strictly preserving critical accumulation layers and gradient updates in FP32 to prevent numerical underflow.
-\begin{equation}
-    Memory(FP16) \approx \frac{1}{2} Memory(FP32).
-\end{equation}
-
-To ensure the reproducibility of the Nano-Mamba U-Net's 95.83\% DSC performance, the training environment and hyperparameter configurations were strictly standardized. All weights were initialized using the Kaiming Uniform distribution to maintain a stable variance of activations across layers. The global hyperparameter configuration is detailed in Table \ref{tab:hyperparams}.
-
-\begin{table}[hbt!]
-\caption{Global Hyperparameter Configuration for Nano-Mamba U-Net Training.}
-\label{tab:hyperparams}
-\centering
-\begin{tabular}{l | p{8cm}}
-\hline
-\textbf{Hyperparameter} & \textbf{Selection Rationale and Value} \\
-\hline
-Initial Learning Rate & $1 \times 10^{-4}$ (Selected to ensure stable convergence in the early epochs). \\
-Batch Size & 1 (Constrained by the volumetric 3D tensor dimensions and 8GB VRAM limit). \\
-Optimizer & Adam ($\beta_1=0.9, \beta_2=0.999$, $\epsilon=1e-8$). \\
-Weight Decay & $1 \times 10^{-5}$ (Implemented to prevent spatial overfitting in the 100-patient cohort). \\
-Epochs & 150 (Total iterations required for loss stabilization). \\
-Data Augmentation & Random 3D Rotation ($\pm 15^\circ$), Scaling ($[0.9, 1.1]$), and Gaussian Noise. \\
-\hline
-\end{tabular}
-\end{table}
-
-The choice of a mini-batch size of 1 is a strategic clinical constraint. In point-of-care environments, data is often processed patient-by-patient; thus, optimizing the model for singular volumetric inference ensures its immediate readiness for edge-device deployment.
+\section{Methodological Summary}
+The methodology is designed to support a fair and cautious evaluation. The proposed Nano-Mamba U-Net is compared with several baseline and ablation models under the same patient-level split and preprocessing pipeline. The model is not evaluated using training-set performance, and it is not claimed to be a full implementation of the original Mamba selective scan. Instead, the experiment tests whether a compact Mamba-inspired bottleneck can provide competitive cardiac MRI segmentation performance with a low parameter count.
