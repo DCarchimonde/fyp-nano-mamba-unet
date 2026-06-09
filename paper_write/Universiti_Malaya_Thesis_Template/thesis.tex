@@ -12,6 +12,7 @@
 \usetikzlibrary{shapes.geometric, arrows, positioning, fit, calc}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.17}
+\usepackage{url}
 
 % Useful for including code listings
 \usepackage{listings}
@@ -31,18 +32,15 @@
 \usepackage{algorithmic}
 
 % ==========================================
-% 🌟 核心信息配置区 (姐姐已帮你全部替换为真实信息)
+% Core thesis metadata
 % ==========================================
-\author{Tong Siyuan} % 你的真实姓名，学号 25064241 通常在提交系统或特定表格填写，封面一般只写名字
+\author{Tong Siyuan}
 \title{Nano-Mamba U-Net: A Spatio-Temporal Framework for Cardiac Motion Analysis}
-
-%% 马大强制要求：英文论文必须提供马来语标题的翻译，用于摘要页
 \othertitle{Nano-Mamba U-Net: Rangka Kerja Ruang-Masa untuk Analisis Pergerakan Jantung}
-
 \university{Universiti Malaya}
-\faculty{Faculty of Computer Science and Information Technology} % 马大计算机学院
+\faculty{Faculty of Computer Science and Information Technology}
 \submissionyear{2026}
-\degree{Master of Artificial Intelligence} % 你的专业
+\degree{Master of Artificial Intelligence}
 
 % load acronym definitions from separate file
 \loadglsentries{myacronyms}
@@ -50,11 +48,6 @@
 \begin{document}
 \frontmatter
 
-%% ==========================================
-%% 🌟 封面类型选择
-%% 既然你是授课型/混合型硕士的 Project (WQF7023)，这里通常选 mastercoursework 或 mastermixedmode
-%% 姐姐先帮你设为 coursework，如果学院要求 mixedmode，你只要把下面的注释换一下就行
-%% ==========================================
 \makecoverandtitlepage{\mastercoursework}
 % \makecoverandtitlepage{\mastermixedmode}
 % \makecoverandtitlepage{\masterresearch}
@@ -62,42 +55,26 @@
 \declarationpage
 \abstractfromfile{sample-abstract}
 \msabstractfromfile{sample-msabstract}
-\acknowledgements{I would like to express my sincere gratitude to my supervisor, Dr. Uzair Iqbal, for his invaluable guidance... ()}
+\acknowledgements{I would like to express my sincere gratitude to my supervisor, Dr. Uzair Iqbal, for his guidance and feedback throughout this project. I am also grateful to the Faculty of Computer Science and Information Technology, Universiti Malaya, for providing the academic environment and resources needed to complete this research. Finally, I would like to thank my family and friends for their continuous support and encouragement.}
 
 {\clearpage
 \tableofcontents\clearpage
 \listoffigures\clearpage
 \listoftables\clearpage
-
 % \listofacronyms\clearpage
-% \listofappendices\clearpage % P1 阶段暂时不需要附录，先注释掉
+% \listofappendices\clearpage
 }
 
 \mainmatter
 
-% ==========================================
-% 🌟 论文正文结构
-% ==========================================
-% 姐姐已经帮你把模板自带的废话章节注释掉了，只留下了咱们刚才写的 Chapter 1
-% \input{umalayathesis-howtouse}
-\input{sample-chap-intro} % 这是咱们刚刚填入真实背景和问题陈述的文件
-\input{sample-chap-litreview} % 新增：咱们的文献综述（第二章）
-% \input{sample-chap-dummy}
-\input{sample-chap-methodology} % 新增：咱们的研究方法章节
-% \input{sample-chap-architecture} % 新增：咱们的系统架构章节
-% \input{sample-chap-results} % 新增：绝杀的第五章！
-\input{sample-chap-results-p2} %p2, 第五章
+\input{sample-chap-intro}
+\input{sample-chap-litreview}
+\input{sample-chap-methodology}
+\input{sample-chap-results-p2}
 \input{sample-chap-conclusion.tex}
 
-% ==========================================
-% 🌟 参考文献
-% ==========================================
-\bibliography{myrefs}
-
-%% P1 阶段暂时不需要展示“自己发表的论文”，所以把下面这大块分栏代码先注释掉，保持清爽
-% \begin{splitpubs}
-% ... (模板自带代码已省略/隐藏，后续发 paper 了再打开)
-% \end{splitpubs}
+% References. myrefs_extra contains missing or updated entries used in the revised text.
+\bibliography{myrefs,myrefs_extra}
 
 % \begin{appendices}
 % \input{sample-appen-manual}
