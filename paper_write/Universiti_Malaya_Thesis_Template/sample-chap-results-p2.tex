@@ -94,36 +94,10 @@ For Nano-Mamba U-Net, the LV Dice was 91.88\%, the RV Dice was 82.11\%, and the 
 This difference is clinically plausible because the myocardium is more difficult to delineate consistently. A small absolute boundary shift can affect a thin myocardial ring more strongly than a larger ventricular cavity. Therefore, the lower MYO score should be interpreted as a known structural challenge rather than simply as a random model failure.
 
 \begin{figure}[hbt!]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    ybar=2pt,
-    enlargelimits=0.12,
-    legend style={at={(0.5,-0.18)}, anchor=north, legend columns=3, draw=none, font=\small},
-    ylabel={Dice Similarity Coefficient (\%)},
-    symbolic x coords={RV, MYO, LV},
-    xtick=data,
-    nodes near coords,
-    nodes near coords align={vertical},
-    every node near coord/.append style={font=\scriptsize},
-    bar width=8pt,
-    width=0.95\textwidth,
-    height=7.5cm,
-    ymin=65, ymax=100,
-    major grid style={dashed, gray!30},
-    ymajorgrids=true,
-    axis x line*=bottom,
-    axis y line*=left
-]
-\addplot coordinates {(RV,78.35) (MYO,74.57) (LV,89.59)};
-\addplot coordinates {(RV,82.11) (MYO,80.35) (LV,91.88)};
-\addplot coordinates {(RV,83.26) (MYO,81.30) (LV,92.37)};
-\addplot coordinates {(RV,84.30) (MYO,82.76) (LV,93.03)};
-\legend{3D U-Net, Nano-Mamba, No Mamba, SegResNet16}
-\end{axis}
-\end{tikzpicture}
-\caption{Class-specific validation Dice scores for selected models. The figure highlights that Nano-Mamba U-Net improves over the 3D U-Net baseline, while SegResNet16 achieves the strongest overall Dice performance.}
-\label{fig:dsc_bar_chart}
+    \centering
+    \includegraphics[width=0.90\textwidth]{D:/AI_FYP/figures/class_specific_dice_scores.png}
+    \caption{Class-specific validation Dice scores for selected models. The figure highlights that Nano-Mamba U-Net improves over the 3D U-Net baseline, while SegResNet16 achieves the strongest overall Dice performance.}
+    \label{fig:dsc_bar_chart}
 \end{figure}
 
 \section{Training Dynamics}
