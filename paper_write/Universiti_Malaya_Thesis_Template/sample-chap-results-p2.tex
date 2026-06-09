@@ -161,16 +161,16 @@ The early-stage increase from 3.97\% at epoch 1 to 78.89\% at epoch 30 suggests 
 \end{figure}
 
 \section{Qualitative Visual Analysis}
-Figure \ref{fig:qualitative} provides a representative visual comparison between the input MRI slice, expert ground truth, and Nano-Mamba U-Net prediction. The purpose of this qualitative result is to illustrate the spatial form of the segmentation output, not to replace the quantitative validation table.
+Figure \ref{fig:qualitative} provides a representative visual comparison between the input MRI slice, expert ground truth, and Nano-Mamba U-Net prediction. The purpose of this qualitative result is to illustrate the spatial form of the segmentation output, not to replace the quantitative validation table. A qualitative example is useful for verifying that the model produces anatomically meaningful masks rather than only numerical scores. However, a single visual case cannot establish generalization. For this reason, the qualitative figure is treated as supplementary evidence. The main evidence remains the held-out validation table computed over all validation cases.
 
-\begin{figure}[hbt!]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{D:/AI_FYP/figures/qualitative_result.png}
     \caption{Qualitative comparison on a representative validation slice. From left to right: original MRI slice, ground truth, and Nano-Mamba U-Net prediction. Blue corresponds to RV, green to MYO, and red to LV.}
     \label{fig:qualitative}
 \end{figure}
 
-A qualitative example is useful for verifying that the model produces anatomically meaningful masks rather than only numerical scores. However, a single visual case cannot establish generalization. For this reason, the qualitative figure is treated as supplementary evidence. The main evidence remains the held-out validation table computed over all validation cases.
+\clearpage
 
 % =========================================================
 % CHAPTER 7: DISCUSSION AND LIMITATION
