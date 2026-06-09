@@ -6,17 +6,21 @@
 \chapter{CONCLUSION AND FUTURE WORK}
 \label{chap:conclusion}
 
-This chapter concludes the thesis by summarizing the final experimental findings, answering the research questions, and identifying future directions. The conclusion is based on the revised patient-level validation experiment reported in Chapter 6.
+This chapter concludes the thesis by summarizing the final experimental findings, answering the research questions, and identifying future directions. The conclusion is based on the revised patient-level validation experiment reported in Chapter 6 and the interpretation provided in Chapter 7. The purpose of this chapter is not to overstate the performance of the proposed model, but to clearly identify what was achieved, what was not achieved, and what remains open for future research.
+
+\section{Restatement of the Research Aim}
+The aim of this thesis was to design and evaluate a lightweight Mamba-inspired U-Net architecture for cardiac MRI segmentation. The motivation came from a practical research problem: cardiac segmentation models should not only achieve high Dice scores, but should also be computationally manageable and evaluated under a reproducible validation protocol. The final implementation, Nano-Mamba U-Net, integrates a sequence-processing bottleneck into a 3D U-Net-style encoder-decoder network. Compressed volumetric features are serialized into a one-dimensional sequence, processed by a lightweight gated sequence module inspired by Mamba, and reshaped back into the 3D feature space.
+
+This thesis does not claim that Nano-Mamba U-Net is a complete implementation of the original Mamba selective scan algorithm. It also does not claim official ACDC test-set performance or clinical deployment readiness. Its contribution is more specific and more defensible: it implements and evaluates a compact Mamba-inspired bottleneck for cardiac MRI segmentation, compares it against several baselines and ablations, and reports the resulting accuracy-efficiency trade-off under a patient-level validation split.
 
 \section{Summary of Research Contributions}
-The aim of this thesis was to design and evaluate a lightweight Mamba-inspired U-Net architecture for cardiac MRI segmentation. The final implementation, Nano-Mamba U-Net, integrates a sequence-processing bottleneck into a 3D U-Net-style encoder-decoder network. Compressed volumetric features are serialized into a one-dimensional sequence, processed by a lightweight gated sequence module inspired by Mamba, and reshaped back into the 3D feature space.
-
 The main contributions are summarized as follows:
 \begin{enumerate}
-    \item \textbf{Architecture implementation:} A Nano-Mamba U-Net architecture was implemented for 3D cardiac MRI segmentation of RV, MYO, and LV. The model uses a compact encoder-decoder structure and a Mamba-inspired bottleneck at the compressed latent representation.
-    \item \textbf{Rigorous validation protocol:} A deterministic patient-level 80/20 split was used to avoid leakage between training and validation patients. The final experiment used 160 training cases and 40 held-out validation cases from the ACDC training cohort.
+    \item \textbf{Architecture implementation:} A Nano-Mamba U-Net architecture was implemented for 3D cardiac MRI segmentation of RV, MYO, and LV. The model uses a compact encoder-decoder structure and a Mamba-inspired bottleneck at the compressed latent representation. This contribution is architectural integration rather than invention of the original U-Net or Mamba methods.
+    \item \textbf{Rigorous validation protocol:} A deterministic patient-level 80/20 split was used to avoid leakage between training and validation patients. The final experiment used 160 training cases and 40 held-out validation cases from the ACDC training cohort. This corrected the weakness of earlier exploratory scripts that were not sufficiently strict about held-out validation.
     \item \textbf{Accuracy-efficiency analysis:} Nano-Mamba U-Net achieved 84.78\% mean DSC with 1.46M parameters. It improved over the 3D U-Net baseline in Dice while using fewer parameters. However, it did not achieve the highest Dice score overall; SegResNet16 obtained the highest validation mean DSC of 86.70\%.
     \item \textbf{Transparent ablation findings:} The No-Mamba ablation achieved 85.64\% mean DSC, slightly higher than Nano-Mamba U-Net. This shows that the current Mamba-inspired bottleneck should be interpreted mainly as a parameter-efficiency design rather than a conclusively superior accuracy mechanism.
+    \item \textbf{Thesis-level scientific correction:} The final thesis deliberately avoids unsupported claims such as absolute state-of-the-art superiority, complete Mamba implementation, or official clinical readiness. This is important because a rigorous research project should report evidence accurately even when the results are mixed.
 \end{enumerate}
 
 \section{Answers to Research Questions}
@@ -24,28 +28,55 @@ The main contributions are summarized as follows:
 
 The project answers this question through the Nano-Mamba U-Net design. A 3D encoder first compresses the MRI volume into a lower-resolution latent feature map. This tensor is reshaped from $B \times C \times H \times W \times D$ into a one-dimensional sequence of $HWD$ tokens, processed by a lightweight Mamba-inspired gated sequence block, and then reshaped back into volumetric form before the decoder reconstructs the segmentation mask. This demonstrates a practical way to insert sequence modeling into a 3D U-Net-style segmentation pipeline.
 
+The significance of this design is that sequence processing is applied at the bottleneck, where the spatial resolution is already reduced. This keeps the computational cost manageable. If the sequence module were applied directly to the full-resolution input volume, the token length would be much larger and the memory burden would increase substantially. Therefore, the bottleneck placement reflects an engineering compromise between contextual mixing and computational feasibility.
+
+However, this design also has a limitation. Because the bottleneck operates after several down-sampling steps, some fine boundary information may already have been compressed by the encoder. The sequence module can mix the remaining latent features, but it cannot fully recover details that were lost earlier. This helps explain why the architecture is compact and competitive but not the highest-performing model in the final validation experiment.
+
 \textbf{Research Question 2: Does the proposed Nano-Mamba U-Net achieve competitive held-out validation Dice compared with 3D U-Net, Attention U-Net, SegResNet, and ablation variants?}
 
 The answer is partially yes. Nano-Mamba U-Net achieved 84.78\% mean DSC, outperforming the 3D U-Net baseline (80.83\%) and Attention U-Net (74.78\%). However, it was lower than SegResNet16 (86.70\%), No-Mamba U-Net (85.64\%), and Half-Mamba U-Net (84.95\%). Therefore, Nano-Mamba U-Net achieved competitive validation performance, but it should not be described as the top-performing model by Dice.
+
+This result is scientifically useful because it avoids a simplistic conclusion. If only the comparison against 3D U-Net were considered, Nano-Mamba U-Net would appear clearly better. If only the comparison against SegResNet16 were considered, Nano-Mamba U-Net would appear weaker. The complete interpretation requires considering all models together. The proposed model improves over some baselines, remains close to some ablations, and trails the strongest residual segmentation model.
+
+The final answer to this research question is therefore conditional: Nano-Mamba U-Net is competitive in held-out validation performance, but it is not the strongest model by absolute Dice. This conclusion is more cautious than the original thesis draft, but it is more defensible for academic assessment.
 
 \textbf{Research Question 3: What accuracy-efficiency trade-off is observed when comparing Nano-Mamba U-Net with heavier or non-Mamba alternatives?}
 
 Nano-Mamba U-Net achieved the smallest parameter count among all evaluated models, with 1.46M parameters. It used approximately 69.6\% fewer parameters than the 3D U-Net baseline and approximately 68.9\% fewer parameters than SegResNet16. The trade-off is that this compactness came with lower Dice than SegResNet16 and the No-Mamba ablation. The final interpretation is that Nano-Mamba U-Net offers a favorable lightweight design, but not the highest absolute segmentation accuracy.
 
+This trade-off is central to the thesis. The project should not be judged only by whether it wins a single Dice ranking. A lightweight model can still be meaningful when it provides acceptable accuracy with fewer trainable parameters. At the same time, parameter efficiency alone is not enough; the segmentation quality must remain clinically and technically reasonable. The final result suggests that Nano-Mamba U-Net sits in a useful middle ground: it is smaller than all evaluated models and more accurate than the basic 3D U-Net baseline, but it does not replace SegResNet16 as the accuracy leader.
+
+\section{Implications of the Findings}
+The findings have three main implications. First, U-Net-style architectures remain strong foundations for cardiac MRI segmentation. The success of SegResNet16 and the No-Mamba ablation shows that convolutional and residual components are still highly effective on this dataset. This prevents the thesis from making an exaggerated claim that new sequence-inspired modules automatically outperform established convolutional methods.
+
+Second, lightweight sequence-inspired modules remain worth exploring. Nano-Mamba U-Net achieved competitive validation performance with the lowest parameter count. This suggests that compact sequence processing at the bottleneck can be integrated into medical segmentation architectures without causing severe performance collapse. The result is not a final proof of superiority, but it is a reasonable experimental basis for further study.
+
+Third, the validation protocol matters as much as the architecture. The revised patient-level split produced more conservative and more credible results than earlier exploratory evaluations. This is an important lesson for medical AI research: high Dice scores are less meaningful if the evaluation protocol is not strict. A lower but properly validated score is more useful than an inflated score obtained from a weak experimental design.
+
 \section{Future Work}
 Several directions can strengthen this work further.
 
 \subsection{Evaluation on External and Official Test Sets}
-Future experiments should evaluate the model on the official ACDC test set or on independent external cardiac MRI datasets. This would provide stronger evidence of generalization beyond the internal patient-level validation split.
+Future experiments should evaluate the model on the official ACDC test set or on independent external cardiac MRI datasets. This would provide stronger evidence of generalization beyond the internal patient-level validation split. External validation is particularly important in medical imaging because scanner vendor, acquisition protocol, image resolution, and patient population can all affect model performance.
 
 \subsection{Pathology-Specific Validation}
-The ACDC dataset includes diagnostic categories such as NOR, DCM, HCM, MINF, and ARV. A future version should parse the diagnostic metadata and report pathology-specific Dice scores. This would allow a more clinically meaningful analysis of where the model performs well and where it fails.
+The ACDC dataset includes diagnostic categories such as NOR, DCM, HCM, MINF, and ARV. A future version should parse the diagnostic metadata and report pathology-specific Dice scores. This would allow a more clinically meaningful analysis of where the model performs well and where it fails. For example, RV segmentation may be more difficult in abnormal right ventricle cases, while myocardial segmentation may be affected by hypertrophic cardiomyopathy or myocardial infarction. Such subgroup analysis should be generated from actual patient metadata rather than assumed or manually invented.
+
+\subsection{Additional Boundary-Based Metrics}
+The current thesis focuses mainly on Dice Similarity Coefficient. Dice is suitable for overlap-based evaluation, but it does not fully describe boundary quality. Future work should report Hausdorff Distance, Average Surface Distance, or related boundary metrics. This is especially relevant for myocardium segmentation, where small boundary errors can affect clinical measurements even when overlap scores appear acceptable.
 
 \subsection{Closer Integration with Full Mamba/SSM Implementations}
-The current implementation is Mamba-inspired rather than a full selective scan implementation. Future work could compare the lightweight PyTorch block against an official or optimized Mamba implementation to determine whether a more faithful state space module improves cardiac segmentation.
+The current implementation is Mamba-inspired rather than a full selective scan implementation. Future work could compare the lightweight PyTorch block against an official or optimized Mamba implementation to determine whether a more faithful state space module improves cardiac segmentation. Such a comparison would clarify whether the current result is limited by the simplified bottleneck or by the broader suitability of sequence modeling for compressed cardiac features.
+
+\subsection{Multi-Scale Sequence Modeling}
+The present model applies the Mamba-inspired module only at the bottleneck. Future work could place sequence modules at multiple encoder or decoder resolutions. This may help preserve finer boundary information while still enabling wider contextual mixing. However, multi-scale sequence modeling would also increase memory usage and implementation complexity, so it should be evaluated carefully rather than assumed to be superior.
 
 \subsection{Scaling Toward True 4D Cardiac Motion Modeling}
 The current study processes labelled 3D cardiac frames. A natural extension is to process full 4D cine-MRI sequences, where the model receives multiple temporal phases from the cardiac cycle. This would make the title's motion-analysis direction more explicit by modeling temporal consistency across the entire cardiac cycle rather than only supporting functional analysis through segmentation.
 
+True 4D modeling would require a different evaluation design. The model would need to preserve temporal consistency, avoid unrealistic frame-to-frame segmentation jumps, and support quantitative motion-related indices. This remains outside the implemented scope of the current thesis, but it is the most direct future direction for connecting the present segmentation work to cardiac motion analysis.
+
 \section{Concluding Remarks}
 This thesis demonstrates that a compact Mamba-inspired bottleneck can be integrated into a 3D U-Net-style architecture for cardiac MRI segmentation. The final experiment does not show absolute state-of-the-art accuracy, but it does show that Nano-Mamba U-Net provides competitive validation performance with the smallest parameter count among the evaluated models. The main value of the project is therefore its exploration of lightweight sequence-inspired design for cardiac segmentation under practical hardware constraints.
+
+The most important conclusion is that the proposed model should be understood as an accuracy-efficiency trade-off model. It is not a universal replacement for stronger residual segmentation networks, and it is not a complete clinical motion-analysis system. Nevertheless, it contributes a reproducible implementation and evaluation of a compact Mamba-inspired segmentation architecture. With external validation, pathology-specific analysis, boundary-based metrics, and true 4D temporal modeling, this research direction could be extended into a stronger framework for cardiac image analysis.
