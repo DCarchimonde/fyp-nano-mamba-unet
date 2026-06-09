@@ -11,7 +11,6 @@ import os
 import glob
 from pathlib import Path
 
-import numpy as np
 import torch
 import torch.nn as nn
 import matplotlib
@@ -36,6 +35,18 @@ from nano_mamba_core import SpatioTemporalMambaBottleneck
 PROJECT_ROOT = Path(r"D:\AI_FYP")
 FIGURE_DIR = PROJECT_ROOT / "figures"
 FIGURE_DIR.mkdir(parents=True, exist_ok=True)
+
+# Candidate checkpoints are checked in order. The first existing path is used for
+# qualitative prediction. Add a new path here if your final checkpoint has a
+# different filename.
+CANDIDATE_NANOMAMBA_CHECKPOINTS = [
+    PROJECT_ROOT / "experiment_outputs" / "rigorous_patient_split" / "checkpoints" / "NanoMambaUNet_best.pth",
+    PROJECT_ROOT / "experiment_outputs" / "rigorous_patient_split" / "NanoMambaUNet_best.pth",
+    PROJECT_ROOT / "models" / "best_nanomamba_unet.pth",
+]
+
+DEFAULT_PATIENT_DIR = PROJECT_ROOT / "Data" / "ACDC" / "database" / "training" / "patient005"
+DEFAULT_FRAME_NAME = "patient005_frame01.nii"
 
 FINAL_RESULTS = [
     {"model": "3D U-Net", "mean_dsc": 80.83, "params_m": 4.81, "fps": 88.17},
@@ -133,10 +144,45 @@ def generate_tradeoff_figures() -> None:
     plt.close()
 
 
+def find_first_existing_checkpoint() -> Path | None:
+    """Return the first Nano-Mamba checkpoint that exists locally."""
+    for path in CANDIDATE_NANOMAMBA_CHECKPOINTS:
+        if path.exists():
+            return path
+    return None
+
+
+def _find_inner_nifti(container: Path) -> Path | None:
+    """Handle the local ACDC layout where .nii paths may be directories."""
+    if container.is_file() and container.stat().st_size > 0:
+        return container
+    if container.is_dir():
+        matches = sorted(container.glob("*.nii"))
+        if matches:
+            return matches[0]
+    return None
+
+
+def can_generate_qualitative_figure() -> tuple[bool, str, Path | None]:
+    """Check whether qualitative prediction can be generated on this machine."""
+    checkpoint = find_first_existing_checkpoint()
+    if checkpoint is None:
+        checked = "\n".join(str(path) for path in CANDIDATE_NANOMAMBA_CHECKPOINTS)
+        return False, f"No Nano-Mamba checkpoint found. Checked:\n{checked}", None
+
+    img_container = DEFAULT_PATIENT_DIR / DEFAULT_FRAME_NAME
+    label_container = DEFAULT_PATIENT_DIR / DEFAULT_FRAME_NAME.replace(".nii", "_gt.nii")
+    if _find_inner_nifti(img_container) is None:
+        return False, f"Image file/container not found or empty: {img_container}", checkpoint
+    if _find_inner_nifti(label_container) is None:
+        return False, f"Label file/container not found or empty: {label_container}", checkpoint
+    return True, "Ready", checkpoint
+
+
 def generate_qualitative_figure(
-    model_path: Path = PROJECT_ROOT / "models" / "best_nanomamba_unet.pth",
-    patient_dir: Path = PROJECT_ROOT / "Data" / "ACDC" / "database" / "training" / "patient005",
-    frame_name: str = "patient005_frame01.nii",
+    model_path: Path,
+    patient_dir: Path = DEFAULT_PATIENT_DIR,
+    frame_name: str = DEFAULT_FRAME_NAME,
     slice_idx: int = 8,
 ) -> None:
     """Generate the qualitative segmentation comparison used in the thesis."""
@@ -145,10 +191,10 @@ def generate_qualitative_figure(
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.eval()
 
-    img_container = glob.glob(str(patient_dir / frame_name))[0]
-    label_container = glob.glob(str(patient_dir / frame_name.replace(".nii", "_gt.nii")))[0]
-    img_file = glob.glob(os.path.join(img_container, "*.nii"))[0]
-    label_file = glob.glob(os.path.join(label_container, "*.nii"))[0]
+    img_file = _find_inner_nifti(patient_dir / frame_name)
+    label_file = _find_inner_nifti(patient_dir / frame_name.replace(".nii", "_gt.nii"))
+    if img_file is None or label_file is None:
+        raise FileNotFoundError("Could not locate the selected image/label NIfTI files.")
 
     transform = Compose(
         [
@@ -160,7 +206,7 @@ def generate_qualitative_figure(
         ]
     )
 
-    data_dict = transform({"image": img_file, "label": label_file})
+    data_dict = transform({"image": str(img_file), "label": str(label_file)})
     img_tensor = data_dict["image"].unsqueeze(0).to(device)
     label_tensor = data_dict["label"].unsqueeze(0).to(device)
 
@@ -202,6 +248,13 @@ def generate_qualitative_figure(
 
 if __name__ == "__main__":
     generate_tradeoff_figures()
-    # Uncomment the line below only when the trained checkpoint and local ACDC data are available.
-    # generate_qualitative_figure()
-    print(f"Figures saved to: {FIGURE_DIR}")
+    print(f"Trade-off figures saved to: {FIGURE_DIR}")
+
+    ready, message, checkpoint_path = can_generate_qualitative_figure()
+    if ready and checkpoint_path is not None:
+        generate_qualitative_figure(model_path=checkpoint_path)
+        print(f"Qualitative figure saved to: {FIGURE_DIR / 'qualitative_result.png'}")
+    else:
+        print("Qualitative figure was skipped.")
+        print(message)
+        print("If the thesis already has D:\\AI_FYP\\figures\\qualitative_result.png, recompilation is still fine.")
