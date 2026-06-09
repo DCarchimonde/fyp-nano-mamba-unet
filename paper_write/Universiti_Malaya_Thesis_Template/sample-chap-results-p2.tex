@@ -6,74 +6,78 @@
 \chapter{RESULTS}
 \label{chap:results}
 
-This chapter exclusively presents the objective empirical findings derived from the standardized testing of the Nano-Mamba U-Net. In strict adherence to scientific reporting protocols, this section is isolated from subjective interpretations, focusing entirely on the presentation of quantitative benchmarking metrics, empirical training convergence dynamics, and qualitative visual segmentation outputs. The objective is to establish the factual baseline upon which the subsequent discussion will be constructed.
+This chapter reports the empirical results obtained from the revised patient-level validation experiment. Unlike the earlier exploratory scripts, the final experiment used a deterministic 80/20 patient-level split of the ACDC training cohort. The split contained 80 training patients and 20 held-out validation patients, corresponding to 160 training cases and 40 validation cases. The best checkpoint for each model was selected using validation mean Dice, and the final quantitative results were reported only on the held-out validation cases.
 
-\section{Quantitative Evaluation of Segmentation Efficacy}
-To rigorously evaluate the segmentation efficacy and computational efficiency, the proposed Nano-Mamba U-Net was benchmarked against a standard 3D U-Net (Baseline), two highly complex modern State-of-the-Art (SOTA) architectures (Attention U-Net and SegResNet), and two specific ablation variants (No Mamba and Half Mamba) to justify the architectural design choices.
+\section{Experimental Setting}
+All models were trained and evaluated using the same pre-processing and validation protocol. The input volumes were resized to $256 \times 256 \times 16$, intensity-scaled, and converted to PyTorch tensors using MONAI transforms \cite{cardoso2022monai}. The evaluated anatomical classes were the Right Ventricle (RV), Myocardium (MYO), and Left Ventricle (LV). The primary segmentation metric was the Dice Similarity Coefficient (DSC).
 
-The primary evaluation metric utilized is the Sørensen–Dice Similarity Coefficient (DSC), quantified across three critical anatomical structures within the ACDC dataset: the Right Ventricle (RV), Myocardium (MYO), and Left Ventricle (LV). Table \ref{tab:final_results} catalogs the comprehensive performance outcomes alongside the computational complexity metrics (trainable parameters and inference speed).
+The comparison included a standard 3D U-Net baseline, Attention U-Net, SegResNet16, the proposed Nano-Mamba U-Net, and two ablation variants. SegResNet16 refers to the configuration with \texttt{init\_filters=16}, which was the version successfully trained under the final patient-level validation protocol. Therefore, the parameter count reported in this chapter is 4.70M for SegResNet16, not the larger 18.80M configuration explored in earlier standalone benchmarking scripts.
+
+\section{Quantitative Validation Results}
+Table \ref{tab:final_results} presents the final held-out validation performance and computational statistics. The results show that SegResNet16 achieved the highest validation mean DSC of 86.70\%. The proposed Nano-Mamba U-Net achieved a mean DSC of 84.78\% with the smallest parameter count among the evaluated models, at 1.46M parameters.
 
 \begin{table}[hbt!]
-\caption{Comprehensive Performance and Computational Complexity Benchmark on the ACDC Dataset.}
+\caption{Held-out patient-level validation results on the ACDC training cohort. The best checkpoint for each model was selected by validation mean Dice.}
 \label{tab:final_results}
 \centering
 \resizebox{\textwidth}{!}{
 \begin{tabular}{l | c c c | c | c | c}
 \hline
-\textbf{Architecture} & \textbf{RV (\%)} & \textbf{MYO (\%)} & \textbf{LV (\%)} & \textbf{Mean DSC (\%)} & \textbf{Params (M)} & \textbf{Speed (FPS)}\\ 
+\textbf{Architecture} & \textbf{RV (\%)} & \textbf{MYO (\%)} & \textbf{LV (\%)} & \textbf{Mean DSC (\%)} & \textbf{Params (M)} & \textbf{Speed (FPS)}\\
 \hline
-\textbf{Baselines \& SOTA} & & & & & & \\
-3D U-Net (Baseline) & 96.89 & 93.73 & 97.82 & 96.15 & 4.81 & 58.29 \\
-Attention U-Net & 96.11 & 93.61 & 97.19 & 95.64 & 5.91 & 12.23 \\
-SegResNet (SOTA) & 94.91 & 91.64 & 95.28 & 93.94 & 18.80 & 3.98 \\
+3D U-Net Baseline & 78.35 & 74.57 & 89.59 & 80.83 & 4.81 & 88.17 \\
+Attention U-Net & 69.43 & 72.38 & 82.53 & 74.78 & 5.91 & 22.41 \\
+SegResNet16 & \textbf{84.30} & \textbf{82.76} & \textbf{93.03} & \textbf{86.70} & 4.70 & 25.50 \\
 \hline
-\textbf{Ablation Studies} & & & & & & \\
-Ablation (No Mamba) & 94.51 & 90.97 & 95.71 & 93.73 & 2.29 & 13.69 \\
-Ablation (Half Mamba) & 80.56 & 77.09 & 83.55 & 80.40 & 1.64 & 14.38 \\
+Ablation: No Mamba & 83.26 & 81.30 & 92.37 & 85.64 & 2.29 & 28.80 \\
+Ablation: Half Mamba & 82.41 & 80.46 & 91.99 & 84.95 & 1.64 & 29.04 \\
 \hline
-\textbf{Proposed Model} & & & & & & \\
-\textbf{Nano-Mamba (Ours)} & \textbf{96.32} & \textbf{93.67} & \textbf{97.51} & \textbf{95.83} & \textbf{1.45} & \textbf{12.26} \\
+Nano-Mamba U-Net & 82.11 & 80.35 & 91.88 & 84.78 & \textbf{1.46} & 29.09 \\
 \hline
 \end{tabular}
 }
 \end{table}
 
-To visually synthesize this comparative performance across the specific SOTA models and highlight the structural discrepancies, Figure \ref{fig:dsc_bar_chart} illustrates a categorized evaluation of the Dice scores.
+Compared with the 3D U-Net baseline, Nano-Mamba U-Net improved the mean DSC by 3.95 percentage points while reducing the parameter count from 4.81M to 1.46M. Compared with SegResNet16, Nano-Mamba U-Net used approximately 68.9\% fewer parameters, but its mean DSC was 1.92 percentage points lower. These results indicate that Nano-Mamba U-Net is not the highest-accuracy model in the final experiment; instead, its main advantage lies in parameter efficiency with competitive validation performance.
+
+\section{Class-Specific Performance}
+Across most models, LV segmentation achieved the highest Dice score, while MYO segmentation was generally more difficult. This pattern is consistent with the anatomical properties of cardiac MRI: the LV cavity is usually more clearly defined, whereas the myocardium is a thinner ring-like structure affected by papillary muscles, partial volume effects, and boundary ambiguity.
 
 \begin{figure}[hbt!]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    ybar=2pt, 
-    enlargelimits=0.15,
-    legend style={at={(0.5,-0.2)}, anchor=north, legend columns=-1, draw=none, font=\small},
+    ybar=2pt,
+    enlargelimits=0.12,
+    legend style={at={(0.5,-0.18)}, anchor=north, legend columns=3, draw=none, font=\small},
     ylabel={Dice Similarity Coefficient (\%)},
-    symbolic x coords={Right Ventricle (RV), Myocardium (MYO), Left Ventricle (LV)},
+    symbolic x coords={RV, MYO, LV},
     xtick=data,
     nodes near coords,
     nodes near coords align={vertical},
-    every node near coord/.append style={font=\footnotesize},
-    bar width=20pt,
-    width=0.9\textwidth,
-    height=8cm,
-    ymin=90, ymax=100,
+    every node near coord/.append style={font=\scriptsize},
+    bar width=8pt,
+    width=0.95\textwidth,
+    height=7.5cm,
+    ymin=65, ymax=100,
     major grid style={dashed, gray!30},
     ymajorgrids=true,
     axis x line*=bottom,
     axis y line*=left
 ]
-\addplot[fill=blue!40, draw=blue!80, thick] coordinates {(Right Ventricle (RV), 96.11) (Myocardium (MYO), 93.61) (Left Ventricle (LV), 97.19)};
-\addplot[fill=gray!40, draw=gray!80, thick] coordinates {(Right Ventricle (RV), 94.91) (Myocardium (MYO), 91.64) (Left Ventricle (LV), 95.28)};
-\addplot[fill=red!40, draw=red!80, thick] coordinates {(Right Ventricle (RV), 96.32) (Myocardium (MYO), 93.67) (Left Ventricle (LV), 97.51)};
-\legend{Attention U-Net (5.91M), SegResNet (18.8M), \textbf{Nano-Mamba (1.45M)}}
+\addplot coordinates {(RV,78.35) (MYO,74.57) (LV,89.59)};
+\addplot coordinates {(RV,82.11) (MYO,80.35) (LV,91.88)};
+\addplot coordinates {(RV,83.26) (MYO,81.30) (LV,92.37)};
+\addplot coordinates {(RV,84.30) (MYO,82.76) (LV,93.03)};
+\legend{3D U-Net, Nano-Mamba, No Mamba, SegResNet16}
 \end{axis}
 \end{tikzpicture}
-\caption{A comparative graphical analysis of class-specific Dice scores. The Nano-Mamba U-Net explicitly records higher boundary fidelity scores across all categories when compared against the massively parameterized SegResNet.}
+\caption{Class-specific validation Dice scores for selected models. The figure highlights that Nano-Mamba U-Net improves over the 3D U-Net baseline, while SegResNet16 achieves the strongest overall Dice performance.}
 \label{fig:dsc_bar_chart}
 \end{figure}
 
-\section{Training Dynamics and Convergence Analysis}
-A critical dimension of empirical validation is observing the optimization stability across epochs. The Nano-Mamba U-Net was subjected to a rigorous training protocol capped at 150 epochs. Figure \ref{fig:loss_curve} illustrates the empirical progression of the composite objective function ($\mathcal{L}_{Total}$) across both the training and validation cohorts. 
+\section{Training Dynamics}
+The training logs showed that Nano-Mamba U-Net improved rapidly during the first 30 epochs and continued to improve more gradually afterwards. The best Nano-Mamba checkpoint was selected at epoch 121, where the validation mean DSC reached 84.78\%. The validation curve did not increase indefinitely, which supports the need for validation-based checkpoint selection rather than saving the model only by training loss.
 
 \begin{figure}[hbt!]
 \centering
@@ -82,77 +86,37 @@ A critical dimension of empirical validation is observing the optimization stabi
     width=0.9\textwidth,
     height=7cm,
     xlabel={Training Epochs},
-    ylabel={Composite Dice-CE Loss},
+    ylabel={Validation Mean DSC (\%)},
     xmin=0, xmax=150,
-    ymin=0.0, ymax=1.0,
-    legend pos=north east,
+    ymin=0, ymax=90,
+    legend pos=south east,
     legend style={draw=black!50, font=\small},
     grid=major,
     major grid style={dashed, gray!40},
     axis lines=left,
     thick
 ]
-% Simulated Training Loss Curve
-\addplot[
-    color=blue!80, mark=none, smooth, tension=0.3, very thick
-] coordinates {
-    (1,0.92) (10,0.51) (20,0.30) (30,0.18) (40,0.12) (50,0.08) 
-    (60,0.065) (70,0.052) (80,0.045) (90,0.040) (100,0.035) 
-    (110,0.033) (120,0.031) (130,0.030) (140,0.029) (150,0.028)
+\addplot[mark=*, thick] coordinates {
+    (1,3.97) (10,16.56) (20,59.96) (30,78.89) (40,79.04)
+    (50,81.52) (60,81.69) (70,83.65) (80,83.75) (90,83.90)
+    (100,84.13) (110,83.87) (120,84.42) (130,84.05) (140,84.67) (150,84.49)
 };
-\addlegendentry{Training Loss}
-
-% Simulated Validation Loss Curve
-\addplot[
-    color=red!80, mark=none, smooth, tension=0.3, very thick
-] coordinates {
-    (1,0.95) (10,0.58) (20,0.35) (30,0.22) (40,0.16) (50,0.11) 
-    (60,0.085) (70,0.070) (80,0.062) (90,0.055) (100,0.051) 
-    (110,0.048) (120,0.046) (130,0.045) (140,0.044) (150,0.044)
-};
-\addlegendentry{Validation Loss}
+\addlegendentry{Nano-Mamba Validation Mean DSC}
 \end{axis}
 \end{tikzpicture}
-\caption{Training and validation convergence curves of the Nano-Mamba U-Net over 150 epochs. The network exhibits a steep initial gradient descent, stabilizing asymptotically after epoch 80.}
+\caption{Validation mean DSC trend of Nano-Mamba U-Net during the 150-epoch training run. The final reported model was selected by the best validation mean Dice, not by the final epoch or training loss.}
 \label{fig:loss_curve}
 \end{figure}
 
 \section{Qualitative Visual Analysis}
-Beyond numerical metrics, the spatial logic of the model is represented through the qualitative visual outputs of the predicted cardiac structures. Figure \ref{fig:qualitative} provides a direct visual comparison between the raw MRI input, the clinical ground truth annotated by expert radiologists, and the automated segmentation mask generated by the Nano-Mamba U-Net.
+Figure \ref{fig:qualitative} provides a representative visual comparison between the input MRI slice, expert ground truth, and Nano-Mamba U-Net prediction. The purpose of this qualitative result is to illustrate the spatial form of the segmentation output, not to replace the quantitative validation table.
 
 \begin{figure}[hbt!]
     \centering
     \includegraphics[width=0.95\textwidth]{D:/AI_FYP/figures/qualitative_result.png}
-    \caption{Qualitative Comparison on a representative validation slice. From left to right: Original MRI slice, Ground Truth, and the Nano-Mamba U-Net prediction. Blue corresponds to the Right Ventricle (RV); Green represents the Myocardium (MYO); Red denotes the Left Ventricle (LV).}
+    \caption{Qualitative comparison on a representative validation slice. From left to right: original MRI slice, ground truth, and Nano-Mamba U-Net prediction. Blue corresponds to RV, green to MYO, and red to LV.}
     \label{fig:qualitative}
 \end{figure}
-
-\section{Pathology-Specific Quantitative Analysis}
-While aggregate metrics provide a macroscopic evaluation of the architectural efficacy, the clinical utility of a segmentation model is strictly determined by its robustness across varying pathophysiological conditions. The ACDC dataset uniquely facilitates this granular evaluation by categorizing the patient cohort into five distinct pathologies: Normal (NOR), Dilated Cardiomyopathy (DCM), Hypertrophic Cardiomyopathy (HCM), Myocardial Infarction (MINF), and Abnormal Right Ventricle (ARV).
-
-To rigorously assess the generalization capabilities of the Nano-Mamba U-Net against extreme anatomical deformities, the global Dice Similarity Coefficient (DSC) was systematically disaggregated based on these specific clinical diagnoses. The comprehensive pathology-specific performance matrix is detailed in Table \ref{tab:pathology_results}.
-
-\begin{table}[hbt!]
-\caption{Pathology-Specific Dice Similarity Coefficients (DSC \%) of the Nano-Mamba U-Net.}
-\label{tab:pathology_results}
-\centering
-\begin{tabular}{l | c c c | c}
-\hline
-\textbf{Clinical Pathology} & \textbf{RV (\%)} & \textbf{MYO (\%)} & \textbf{LV (\%)} & \textbf{Mean Pathological DSC (\%)} \\
-\hline
-Normal Subjects (NOR) & 97.45 & 94.82 & 98.10 & 96.79 \\
-Dilated Cardiomyopathy (DCM) & 96.80 & 93.95 & 97.85 & 96.20 \\
-Hypertrophic Cardiomyopathy (HCM) & 96.12 & 93.10 & 97.42 & 95.54 \\
-Abnormal Right Ventricle (ARV) & 94.88 & 93.75 & 97.60 & 95.41 \\
-Myocardial Infarction (MINF) & 96.35 & 92.73 & 96.58 & 95.22 \\
-\hline
-\textbf{Global Average} & \textbf{96.32} & \textbf{93.67} & \textbf{97.51} & \textbf{95.83} \\
-\hline
-\end{tabular}
-\end{table}
-
-The disaggregated empirical data explicitly reveals that the network achieves peak performance on Normal subjects (96.79\% Mean DSC), maintaining highly stable geometric boundaries. Conversely, the segmentation fidelity experiences marginal, yet mathematically significant, degradation when processing complex pathological variants, particularly Myocardial Infarction (95.22\% Mean DSC) and Abnormal Right Ventricle cases (95.41\% Mean DSC). The precise structural and physical mechanisms inducing this specific variance are comprehensively interpreted in the subsequent analytical discussion.
-
 
 % =========================================================
 % CHAPTER 7: DISCUSSION AND LIMITATION
@@ -160,42 +124,31 @@ The disaggregated empirical data explicitly reveals that the network achieves pe
 \chapter{DISCUSSION AND LIMITATION}
 \label{chap:discussion}
 
-This chapter provides a profound analytical interpretation of the objective empirical results presented in Chapter 6. Moving systematically beyond statistical reporting, this section mathematically interprets the ablation study outcomes through the lens of representation learning, discusses the anatomical intricacies influencing segmentation variance, and scientifically dissects the architectural limitations of the current study.
+This chapter interprets the final validation results and explains the implications for the proposed Nano-Mamba U-Net. The discussion is intentionally conservative: the model is evaluated as a lightweight segmentation architecture, not as an absolute state-of-the-art solution.
 
-\section{Anatomical Discrepancies in Segmentation Efficacy}
-A critical observation derived from the quantitative benchmarks is the consistent variance in segmentation accuracy across different cardiac structures. This phenomenon is not algorithmic, but fundamentally rooted in the inherent anatomical and physiological properties of the human heart \cite{bernard2018deep}. 
+\section{Accuracy-Efficiency Trade-off}
+The strongest model by Dice was SegResNet16, with a validation mean DSC of 86.70\%. Nano-Mamba U-Net achieved 84.78\%, which is 1.92 percentage points lower. Therefore, the final experiment does not support the claim that Nano-Mamba U-Net is the most accurate model overall.
 
-Across all evaluated models, the Left Ventricle (LV) consistently registers the highest DSC (e.g., 97.51\% for Nano-Mamba). This is mathematically predictable in image processing: the LV possesses a thick, well-defined myocardial wall and exhibits distinct contrast gradients against the blood pool in standard MRI physics. Conversely, the Myocardium (MYO) consistently exhibits the lowest accuracy (93.67\% for Nano-Mamba). The MYO segmentation is mathematically framed as a highly constrained topological problem; it is an annular (ring-like) structure encompassing the LV. The presence of papillary muscles—which share identical pixel intensity distributions with the myocardium but belong anatomically to the blood pool cavity—creates severe local minima in the optimization landscape, forcing all networks to struggle with precise boundary definition.
+However, Nano-Mamba U-Net achieved this performance using only 1.46M parameters, the smallest parameter count among all evaluated models. Relative to the 3D U-Net baseline, Nano-Mamba improved mean DSC by 3.95 percentage points while using substantially fewer parameters. This supports the central contribution of the thesis: Nano-Mamba U-Net provides a compact architecture with competitive validation performance, suitable for exploring lightweight cardiac segmentation.
 
-\section{Clinical Interpretation of Pathological Variance}
-The empirical results cataloged in Chapter 6 explicitly demonstrate that the Nano-Mamba U-Net's segmentation fidelity is not uniformly distributed across all patient conditions. The marginal degradation observed in Myocardial Infarction (MINF) and Abnormal Right Ventricle (ARV) cases warrants a profound multidisciplinary interpretation, merging magnetic resonance physics with clinical pathology.
+\section{Interpretation of Ablation Results}
+The ablation results require careful interpretation. The No-Mamba variant achieved 85.64\% mean DSC, slightly higher than Nano-Mamba U-Net. This indicates that the current lightweight Mamba-inspired bottleneck does not consistently improve Dice over a stronger convolutional bottleneck under the final validation split. Therefore, the Mamba-inspired module should not be presented as conclusively superior in segmentation accuracy.
 
-\subsection{Tissue Heterogeneity in Myocardial Infarction (MINF)}
-The network recorded its lowest aggregate performance on the MINF cohort (95.22\% Mean DSC), specifically struggling with the Myocardium (92.73\%). This phenomenon is mathematically and biologically predictable. Myocardial Infarction results in localized ischemic necrosis (tissue death), which is subsequently replaced by fibrotic scar tissue \cite{petitjean2011review}. 
+At the same time, Nano-Mamba U-Net reduced the parameter count compared with the No-Mamba variant, from 2.29M to 1.46M, while maintaining a close mean DSC. This suggests that the bottleneck is more valuable as a parameter-efficiency design than as a guaranteed accuracy-improving component. The Half-Mamba variant achieved 84.95\%, which is close to Nano-Mamba, further showing that channel allocation and bottleneck capacity affect the accuracy-efficiency balance.
 
-In standard SSFP cine-MRI sequences, this scar tissue drastically alters the native proton relaxation times ($T_1$ and $T_2$), causing localized hypointense (dark) or hyperintense (bright) focal artifacts within the normally homogeneous gray myocardial wall. Because convolutional neural networks inherently rely on textural homogeneity and spatial gradients to detect edges, the sudden appearance of a hyperintense scar can mathematically trick the local convolution filters into classifying the dead tissue as part of the bright blood pool. Despite the global contextual awareness provided by the Mamba bottleneck, the extreme local visual ambiguity of severe infarctions fundamentally caps the theoretical upper bound of pixel-wise accuracy, proving that pathological texture variation is a harder algorithmic challenge than pure geometric deformation.
+\section{Class-Specific Observations}
+LV segmentation was the easiest class across the main models, while MYO segmentation was more difficult. This pattern is clinically reasonable because MYO is a thinner structure and its boundary can be affected by papillary muscles and partial volume effects. RV segmentation also remains challenging because the right ventricle has a more variable shape than the left ventricle, especially in pathological cases.
 
-\subsection{The Geometric Complexity of ARV and DCM}
-Conversely, the primary challenge in Abnormal Right Ventricle (ARV) and Dilated Cardiomyopathy (DCM) cases is topological rather than textural. ARV patients typically present with severe dilation or structural dysplasias of the right ventricle, causing the DSC for the RV to drop from a baseline of 97.45\% (Normal) to 94.88\% (ARV). 
+\section{Limitations}
+Several limitations must be acknowledged.
 
-The right ventricle natively possesses a complex, asymmetric crescent-like topology that wraps around the thicker left ventricle. In ARV conditions, this shape becomes wildly erratic, often featuring pronounced trabeculations (muscular ridges) that extend deep into the blood pool. Similarly, in DCM, the extreme expansion of the ventricular cavities stretches the myocardial wall to abnormal thinness. In both scenarios, the target structures often shrink to a thickness of merely 1 to 2 voxels at certain spatial coordinates. When the spatial thickness approaches the Nyquist–Shannon sampling limit of the MRI physical resolution, the Partial Volume Effect (PVE) effectively destroys the boundary gradient. The Nano-Mamba architecture's robust performance (still exceeding 95\% DSC on average) on these extreme geometric outliers unequivocally validates the efficacy of the continuous-time sequence modeling ($\mathbf{\bar{A}}h_{k-1} + \mathbf{\bar{B}}x_k$), which successfully forces the network to maintain topological continuity even when local spatial convolutions fail.
+\begin{enumerate}
+    \item \textbf{Internal validation only:} The final experiment used a deterministic patient-level validation split of the ACDC training cohort. It does not represent the official hidden ACDC test set.
+    \item \textbf{Mamba-inspired implementation:} The implemented bottleneck is inspired by Mamba-style sequence modeling but is not a full reproduction of the original hardware-aware selective scan implementation.
+    \item \textbf{No explicit motion-field estimation:} The thesis title refers to cardiac motion analysis, but the implemented task is segmentation of cardiac MRI frames. Motion-related assessment is supported indirectly through segmentation needed for functional indices, not through dense motion tracking.
+    \item \textbf{Pathology-specific analysis not finalized:} Although ACDC contains pathology labels, the final rigorous experiment reported aggregate validation performance. Pathology-specific subgroup analysis should be generated by parsing patient diagnostic metadata before being reported as a table.
+    \item \textbf{Limited external validation:} The model was not evaluated on a separate multi-center external dataset. Generalization to other scanners and institutions remains future work.
+\end{enumerate}
 
-\section{The Overfitting Paradox of Massive Architectures}
-A highly counterintuitive result derived from the benchmark is the sub-optimal performance of the SOTA SegResNet (93.94\% Mean DSC). Operating with an immense 18.80 million parameters, it is theoretically the most expressive model evaluated. However, this massive parameter space fundamentally violates the principle of parsimony (Occam's Razor) when applied to the constrained ACDC dataset. 
-
-Given that the training cohort is restricted to 100 patients, the 18.80M parameters lead to severe spatial overfitting. The network memorizes the specific morphological idiosyncrasies of the training subjects rather than learning abstract, topology-invariant representations. This mathematically validates the necessity for ultra-lightweight architectures. The Nano-Mamba (1.45M parameters) implicitly regularizes the learning process by heavily constraining the hypothesis space, thereby achieving a superior 95.83\% DSC while avoiding the generalization gap observed in SegResNet. Furthermore, as depicted in the loss landscape curves (Figure \ref{fig:loss_curve}), the validation loss perfectly asymptotes alongside the training loss, further corroborating the absence of parameter-induced overfitting.
-
-\section{Ablation Analysis and the Information Bottleneck}
-The ablation studies deeply validate the structural necessity of the continuous-time State Space mechanism. When the Mamba module is entirely excised and replaced with standard dense convolutions (Ablation No Mamba), the Mean DSC significantly degrades to 93.73\%. This proves that relying strictly on $3 \times 3 \times 3$ localized volumetric kernels fails to capture the continuous spatio-temporal physiological motion of the cardiac cycle. 
-
-More crucially, over-compressing the Mamba bottleneck to 64 channels (Half Mamba) leads to a catastrophic loss of spatio-temporal representation, plummeting the DSC to 80.40\% while inadvertently increasing the parameter count to 1.64M due to required dimensional adapters. This phenomenon is explicitly explained through the Information Bottleneck (IB) principle in deep learning \cite{tishby2015deep}. Restricting the channel capacity to 64 excessively constricts the latent space, irreversibly destroying the high-frequency spatial boundary information during the tensor serialization process. This mathematically confirms that the 128-channel Mamba configuration is the absolute optimal bound for preserving 4D cardiac dynamics.
-
-\section{Failure Case Analysis and Architectural Limitations}
-While the overall quantitative metrics are exceptionally high, scientific transparency mandates an explicit analysis of the model's limitations. Deterministic failure modes exist within the Nano-Mamba framework, predominantly clustered in the extreme apical (bottom) and basal (top) slices of the cardiac volume \cite{zotti2018gridnet}.
-
-\subsection{The Apical Partial Volume Effect (PVE)}
-The most prominent failure cases occur at the extreme apical slices of the Left Ventricle. At the apex, the ventricular cavity tapers into a minuscule volume. Due to the inherent thickness of the MRI slices (e.g., 5mm to 8mm) and low out-of-plane resolution, the Partial Volume Effect (PVE) becomes overwhelmingly dominant. PVE occurs when a single macroscopic voxel encompasses multiple distinct tissue types (e.g., myocardium and surrounding visceral fat), resulting in an averaged, blurred intensity value that strictly defies binary classification. In these specific edge-cases, the Nano-Mamba model occasionally exhibits subtle topological hallucinations, predicting disconnected fragments. Addressing these localized failures mathematically mandates the future integration of explicit 3D shape-prior regularizations.
-
-\subsection{Cohort Size and Temporal Clinical Validation Limits}
-Beyond algorithmic constraints, the empirical validation of this study was strictly bounded by the ACDC dataset, utilizing uniform Siemens scanners from a single geographic demographic. The model's cross-vendor robustness (e.g., performance on Philips or GE scanners) remains an unverified limitation. Furthermore, while the architecture segments static 3D volumes efficiently, it lacks longitudinal temporal validation to track disease progression across months or years for a single patient, which is essential for comprehensive chronic heart failure management.
-
+\section{Summary of Findings}
+The final validation results reposition Nano-Mamba U-Net as a lightweight, parameter-efficient segmentation model. It outperformed the 3D U-Net baseline in mean DSC and used fewer parameters than all evaluated alternatives. Nevertheless, SegResNet16 achieved the highest absolute Dice score, and the No-Mamba ablation slightly exceeded Nano-Mamba in mean DSC. These findings support a balanced conclusion: the proposed model is competitive and efficient, but not definitively superior in accuracy.
