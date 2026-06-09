@@ -8,7 +8,6 @@ patient-level validation experiment reported in the thesis.
 """
 
 import os
-import glob
 from pathlib import Path
 
 import torch
@@ -55,6 +54,13 @@ FINAL_RESULTS = [
     {"model": "No-Mamba", "mean_dsc": 85.64, "params_m": 2.29, "fps": 28.80},
     {"model": "Half-Mamba", "mean_dsc": 84.95, "params_m": 1.64, "fps": 29.04},
     {"model": "Nano-Mamba", "mean_dsc": 84.78, "params_m": 1.46, "fps": 29.09},
+]
+
+CLASS_DICE_RESULTS = [
+    {"model": "3D U-Net", "RV": 78.35, "MYO": 74.57, "LV": 89.59},
+    {"model": "Nano-Mamba", "RV": 82.11, "MYO": 80.35, "LV": 91.88},
+    {"model": "No-Mamba", "RV": 83.26, "MYO": 81.30, "LV": 92.37},
+    {"model": "SegResNet16", "RV": 84.30, "MYO": 82.76, "LV": 93.03},
 ]
 
 
@@ -112,6 +118,21 @@ class NanoMambaUNet(nn.Module):
         return self.out_conv(d1)
 
 
+def _annotate_with_offsets(ax, xs, ys, labels, offsets):
+    """Annotate scatter points using fixed offsets to avoid label overlap."""
+    for x_value, y_value, label in zip(xs, ys, labels):
+        dx, dy = offsets.get(label, (8, 8))
+        ax.annotate(
+            label,
+            (x_value, y_value),
+            textcoords="offset points",
+            xytext=(dx, dy),
+            fontsize=8,
+            bbox={"boxstyle": "round,pad=0.2", "fc": "white", "ec": "0.65", "alpha": 0.9},
+            arrowprops={"arrowstyle": "-", "lw": 0.6, "color": "0.45"},
+        )
+
+
 def generate_tradeoff_figures() -> None:
     """Generate accuracy-efficiency figures from final validation results."""
     models = [item["model"] for item in FINAL_RESULTS]
@@ -119,29 +140,83 @@ def generate_tradeoff_figures() -> None:
     params = [item["params_m"] for item in FINAL_RESULTS]
     fps = [item["fps"] for item in FINAL_RESULTS]
 
-    plt.figure(figsize=(8, 5), dpi=200)
-    plt.scatter(params, dice, s=80)
-    for x_value, y_value, label in zip(params, dice, models):
-        plt.annotate(label, (x_value, y_value), textcoords="offset points", xytext=(5, 5), fontsize=8)
-    plt.xlabel("Trainable Parameters (Millions)")
-    plt.ylabel("Validation Mean DSC (%)")
-    plt.title("Accuracy-Parameter Trade-off")
-    plt.grid(True, linestyle="--", alpha=0.4)
-    plt.tight_layout()
-    plt.savefig(FIGURE_DIR / "accuracy_parameter_tradeoff.png", bbox_inches="tight")
-    plt.close()
+    fig, ax = plt.subplots(figsize=(9.2, 5.8), dpi=220)
+    ax.scatter(params, dice, s=70, zorder=3)
+    parameter_offsets = {
+        "Nano-Mamba": (-82, 10),
+        "Half-Mamba": (-80, -18),
+        "No-Mamba": (12, 12),
+        "SegResNet16": (12, 8),
+        "3D U-Net": (-62, -22),
+        "Attention U-Net": (-92, 10),
+    }
+    _annotate_with_offsets(ax, params, dice, models, parameter_offsets)
+    ax.set_xlabel("Trainable Parameters (Millions)")
+    ax.set_ylabel("Validation Mean DSC (%)")
+    ax.set_title("Accuracy-Parameter Trade-off")
+    ax.set_xlim(1.0, 6.4)
+    ax.set_ylim(73.5, 87.6)
+    ax.grid(True, linestyle="--", alpha=0.35)
+    fig.tight_layout()
+    fig.savefig(FIGURE_DIR / "accuracy_parameter_tradeoff.png", bbox_inches="tight")
+    plt.close(fig)
 
-    plt.figure(figsize=(8, 5), dpi=200)
-    plt.scatter(fps, dice, s=80)
-    for x_value, y_value, label in zip(fps, dice, models):
-        plt.annotate(label, (x_value, y_value), textcoords="offset points", xytext=(5, 5), fontsize=8)
-    plt.xlabel("Inference Speed (FPS)")
-    plt.ylabel("Validation Mean DSC (%)")
-    plt.title("Accuracy-Speed Trade-off")
-    plt.grid(True, linestyle="--", alpha=0.4)
-    plt.tight_layout()
-    plt.savefig(FIGURE_DIR / "accuracy_speed_tradeoff.png", bbox_inches="tight")
-    plt.close()
+    fig, ax = plt.subplots(figsize=(9.2, 5.8), dpi=220)
+    ax.scatter(fps, dice, s=70, zorder=3)
+    speed_offsets = {
+        "Nano-Mamba": (-94, -20),
+        "Half-Mamba": (14, -18),
+        "No-Mamba": (14, 10),
+        "SegResNet16": (14, 22),
+        "3D U-Net": (-62, 8),
+        "Attention U-Net": (12, 8),
+    }
+    _annotate_with_offsets(ax, fps, dice, models, speed_offsets)
+    ax.set_xlabel("Inference Speed (FPS)")
+    ax.set_ylabel("Validation Mean DSC (%)")
+    ax.set_title("Accuracy-Speed Trade-off")
+    ax.set_xlim(18, 93)
+    ax.set_ylim(73.5, 87.6)
+    ax.grid(True, linestyle="--", alpha=0.35)
+    fig.tight_layout()
+    fig.savefig(FIGURE_DIR / "accuracy_speed_tradeoff.png", bbox_inches="tight")
+    plt.close(fig)
+
+
+def generate_class_dice_figure() -> None:
+    """Generate grouped class-wise Dice figure with non-overlapping labels."""
+    classes = ["RV", "MYO", "LV"]
+    models = [item["model"] for item in CLASS_DICE_RESULTS]
+    x_positions = list(range(len(classes)))
+    bar_width = 0.18
+    offsets = [-1.5 * bar_width, -0.5 * bar_width, 0.5 * bar_width, 1.5 * bar_width]
+
+    fig, ax = plt.subplots(figsize=(9.4, 5.8), dpi=220)
+    for model_idx, item in enumerate(CLASS_DICE_RESULTS):
+        values = [item[class_name] for class_name in classes]
+        bar_positions = [x + offsets[model_idx] for x in x_positions]
+        bars = ax.bar(bar_positions, values, width=bar_width, label=models[model_idx])
+        for bar, value in zip(bars, values):
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                value + 0.55,
+                f"{value:.2f}",
+                ha="center",
+                va="bottom",
+                fontsize=7,
+                rotation=90,
+            )
+
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(classes)
+    ax.set_ylabel("Dice Similarity Coefficient (%)")
+    ax.set_title("Class-specific Validation Dice Scores")
+    ax.set_ylim(68, 98)
+    ax.grid(axis="y", linestyle="--", alpha=0.35)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=4, frameon=False, fontsize=8)
+    fig.tight_layout()
+    fig.savefig(FIGURE_DIR / "class_specific_dice_scores.png", bbox_inches="tight")
+    plt.close(fig)
 
 
 def find_first_existing_checkpoint() -> Path | None:
@@ -248,7 +323,8 @@ def generate_qualitative_figure(
 
 if __name__ == "__main__":
     generate_tradeoff_figures()
-    print(f"Trade-off figures saved to: {FIGURE_DIR}")
+    generate_class_dice_figure()
+    print(f"Trade-off and class-specific figures saved to: {FIGURE_DIR}")
 
     ready, message, checkpoint_path = can_generate_qualitative_figure()
     if ready and checkpoint_path is not None:
