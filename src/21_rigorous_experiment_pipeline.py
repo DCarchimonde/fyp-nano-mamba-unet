@@ -22,14 +22,14 @@ import random
 import re
 import time
 from pathlib import Path
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
 import torch.nn as nn
 from monai.data import DataLoader, Dataset
 from monai.losses import DiceCELoss
-from monai.networks.nets import AttentionUnet, SegResNet
+from monai.networks.nets import AttentionUnet, SegResNet, UNet
 from monai.transforms import Compose, EnsureChannelFirstd, LoadImaged, Resized, ScaleIntensityd, ToTensord
 
 from nano_mamba_core import SpatioTemporalMambaBottleneck
@@ -47,6 +47,7 @@ CHECKPOINT_DIR = OUTPUT_DIR / "checkpoints"
 SPLIT_JSON = OUTPUT_DIR / "patient_split_seed42.json"
 SUMMARY_CSV = OUTPUT_DIR / "summary_metrics.csv"
 SUMMARY_JSON = OUTPUT_DIR / "summary_metrics.json"
+DATA_DISCOVERY_JSON = OUTPUT_DIR / "data_discovery_report.json"
 
 SPATIAL_SIZE = (256, 256, 16)
 NUM_CLASSES = 4
@@ -60,6 +61,7 @@ WEIGHT_DECAY = 1e-5
 
 # SegResNet32 is the larger ~18M-parameter setting. Enable only if GPU memory allows.
 MODELS_TO_RUN = [
+    "UNet3D",
     "NanoMambaUNet",
     "Ablation_NoMamba_UNet",
     "Ablation_HalfMamba_UNet",
@@ -69,6 +71,7 @@ MODELS_TO_RUN = [
 ]
 
 TRAIN_BATCH_SIZE = {
+    "UNet3D": 2,
     "NanoMambaUNet": 2,
     "Ablation_NoMamba_UNet": 2,
     "Ablation_HalfMamba_UNet": 2,
@@ -184,6 +187,8 @@ class AblationHalfMambaUNet(nn.Module):
 
 
 def build_model(model_name: str) -> nn.Module:
+    if model_name == "UNet3D":
+        return UNet(spatial_dims=3, in_channels=1, out_channels=NUM_CLASSES, channels=(16, 32, 64, 128, 256), strides=(2, 2, 2, 2), num_res_units=2)
     if model_name == "NanoMambaUNet":
         return NanoMambaUNet(1, NUM_CLASSES)
     if model_name == "Ablation_NoMamba_UNet":
@@ -207,40 +212,122 @@ def natural_sort_key(text: str) -> List[object]:
     return [int(x) if x.isdigit() else x.lower() for x in re.split(r"(\d+)", text)]
 
 
-def label_path_for_image(image_path: Path) -> Path:
-    s = str(image_path)
+def is_nonempty_file(path: Path) -> bool:
+    try:
+        return path.is_file() and path.stat().st_size > 0
+    except OSError:
+        return False
+
+
+def make_label_container_path(image_container: Path) -> Path:
+    s = str(image_container)
     if s.endswith(".nii.gz"):
         return Path(s[:-7] + "_gt.nii.gz")
     if s.endswith(".nii"):
         return Path(s[:-4] + "_gt.nii")
-    raise ValueError(f"Unsupported extension: {image_path}")
+    return image_container.with_name(image_container.name + "_gt")
+
+
+def first_nii_inside(container: Path, want_label: bool) -> Optional[Path]:
+    """
+    Supports both data layouts seen in this project:
+    1. standard ACDC files: patient001_frame01.nii.gz + patient001_frame01_gt.nii.gz;
+    2. legacy/unusual layout used by older scripts: patient001_frame01.nii/ is a folder
+       containing the actual .nii file, and patient001_frame01_gt.nii/ contains the label.
+
+    Empty placeholder .nii files are skipped because nibabel cannot load them.
+    """
+    candidates: List[Path] = []
+
+    if container.is_dir():
+        for pattern in ("*.nii", "*.nii.gz", "**/*.nii", "**/*.nii.gz"):
+            candidates.extend(Path(p) for p in glob.glob(str(container / pattern), recursive=True))
+    elif is_nonempty_file(container):
+        candidates.append(container)
+    else:
+        return None
+
+    filtered = []
+    for p in candidates:
+        name = p.name.lower()
+        if "4d" in name:
+            continue
+        has_gt = "_gt" in name
+        if want_label and not has_gt and container.is_dir():
+            # In a label folder, the inner file can be named without _gt, so allow it below.
+            pass
+        elif want_label and not has_gt and not container.is_dir():
+            continue
+        elif not want_label and has_gt:
+            continue
+        if is_nonempty_file(p):
+            filtered.append(p)
+
+    if not filtered:
+        return None
+    return sorted(filtered, key=lambda p: natural_sort_key(str(p)))[0]
 
 
 def discover_acdc_cases(data_dir: Path) -> List[Dict[str, str]]:
     if not data_dir.exists():
         raise FileNotFoundError(f"DATA_DIR does not exist: {data_dir}")
 
-    cases = []
+    cases: List[Dict[str, str]] = []
+    skipped_empty_or_invalid: List[str] = []
+    seen_pairs = set()
+
     patient_dirs = sorted([p for p in data_dir.iterdir() if p.is_dir() and p.name.startswith("patient")], key=lambda p: natural_sort_key(p.name))
     for patient_dir in patient_dirs:
-        image_paths = sorted([
-            Path(p) for p in glob.glob(str(patient_dir / "*.nii*"))
-            if "_gt" not in Path(p).name and "4d" not in Path(p).name.lower()
+        # This intentionally mirrors the older project scripts, which looked for
+        # patient*_frame*.nii containers first and then searched inside them.
+        containers = sorted([
+            Path(p) for p in glob.glob(str(patient_dir / "patient*_frame*.nii*"))
+            if "_gt" not in Path(p).name.lower() and "4d" not in Path(p).name.lower()
         ], key=lambda p: natural_sort_key(p.name))
-        for image_path in image_paths:
-            label_path = label_path_for_image(image_path)
-            if label_path.exists():
-                frame_match = re.search(r"(frame\d+)", image_path.name)
-                frame_id = frame_match.group(1) if frame_match else image_path.stem
-                cases.append({
-                    "patient_id": patient_dir.name,
-                    "case_id": f"{patient_dir.name}_{frame_id}",
-                    "image": str(image_path),
-                    "label": str(label_path),
-                })
+
+        for image_container in containers:
+            label_container = make_label_container_path(image_container)
+            image_file = first_nii_inside(image_container, want_label=False)
+            label_file = first_nii_inside(label_container, want_label=True)
+
+            if image_file is None or label_file is None:
+                skipped_empty_or_invalid.append(str(image_container))
+                continue
+
+            pair_key = (str(image_file), str(label_file))
+            if pair_key in seen_pairs:
+                continue
+            seen_pairs.add(pair_key)
+
+            frame_match = re.search(r"(frame\d+)", image_container.name)
+            frame_id = frame_match.group(1) if frame_match else image_container.stem
+            cases.append({
+                "patient_id": patient_dir.name,
+                "case_id": f"{patient_dir.name}_{frame_id}",
+                "image": str(image_file),
+                "label": str(label_file),
+            })
+
+    report = {
+        "data_dir": str(data_dir),
+        "num_patients_with_dirs": len(patient_dirs),
+        "num_cases_found": len(cases),
+        "num_skipped_empty_or_invalid_containers": len(skipped_empty_or_invalid),
+        "first_20_skipped_empty_or_invalid_containers": skipped_empty_or_invalid[:20],
+        "first_5_cases": cases[:5],
+    }
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    with DATA_DISCOVERY_JSON.open("w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2)
+
+    print(f"Data discovery: found {len(cases)} valid image/label pairs; skipped {len(skipped_empty_or_invalid)} empty/invalid containers.")
+    print(f"Data discovery report saved at: {DATA_DISCOVERY_JSON}")
 
     if not cases:
-        raise RuntimeError("No ACDC cases found. Check DATA_DIR and file structure.")
+        raise RuntimeError(
+            "No valid ACDC cases found. The scanner skipped empty placeholder .nii files. "
+            "Open data_discovery_report.json and check whether the real images are inside nested folders."
+        )
     return cases
 
 
