@@ -1,0 +1,74 @@
+%% thesis-p1.tex
+%% Standalone P1 progress report entry point.
+%% This file intentionally reuses the stable thesis chapter modules and does not modify thesis.tex.
+
+\documentclass[english,singlespacedlisttitles]{umalayathesis}
+
+\usepackage{lipsum}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage[dvipsnames,x11names,rgb]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows, positioning, fit, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usepackage{url}
+\usepackage{float}
+
+\usepackage{listings}
+\lstset{language=[LaTeX]TeX,columns=fullflexible,
+        basicstyle=\ttfamily\SingleSpacing,
+        texcsstyle=*\bfseries\color{NavyBlue},
+        commentstyle=\itshape\color{PaleVioletRed4},
+        frame=single,framesep=6pt,
+        framexleftmargin=6pt,framexrightmargin=6pt,
+        xleftmargin=12pt,xrightmargin=12pt,
+        breaklines=true,breakatwhitespace=true,
+}
+
+\usepackage{longtable}
+\usepackage{supertabular}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\author{Tong Siyuan}
+\title{Nano-Mamba U-Net: A Spatio-Temporal Framework for Cardiac Motion Analysis}
+\othertitle{Nano-Mamba U-Net: Rangka Kerja Ruang-Masa untuk Analisis Pergerakan Jantung}
+\university{Universiti Malaya}
+\faculty{Faculty of Computer Science and Information Technology}
+\submissionyear{2026}
+\degree{Master of Artificial Intelligence}
+
+\loadglsentries{myacronyms}
+
+\begin{document}
+\frontmatter
+
+\makecoverandtitlepage{\mastercoursework}
+
+{\clearpage
+\tableofcontents\clearpage
+\listoffigures\clearpage
+\listoftables\clearpage
+}
+
+\mainmatter
+
+% P1 required scope according to the MAI project briefing:
+% Chapter 1: Introduction
+% Chapter 2: Research Problem
+% Chapter 3: Research Objectives
+% Chapter 4: Literature Review
+% Chapter 5: Research Design/Methodology
+\input{sample-chap-intro}
+\input{sample-chap-litreview}
+\input{sample-chap-methodology}
+
+% Short non-numbered progress addendum. This is not the P2 results/discussion chapter.
+\input{sample-p1-progress-status}
+
+\bibliography{myrefs,myrefs_extra}
+
+\end{document}
