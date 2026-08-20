@@ -21,6 +21,12 @@ viva answers.
   fewer reported parameters.
 - The No-Mamba ablation achieved 85.64%, 0.862 percentage points above
   Nano-Mamba, with 57.076% more reported parameters.
+- Recovered per-case rows support a post-hoc paired patient-bootstrap interval
+  of [+2.829, +5.009] percentage points for Nano-Mamba minus UNet3D.
+- The corresponding interval crosses zero for Nano-Mamba versus Half-Mamba,
+  while it lies below zero versus No-Mamba and SegResNet16.
+- Six recovered 150-epoch logs and six checkpoint metadata/hash records agree
+  with every selected epoch and mean Dice in the summary table.
 
 ## Claims that must not be made
 
@@ -33,12 +39,13 @@ viva answers.
   remain.
 - The 20 validation patients are not the official ACDC test set and not an
   independent final test set; the same set was used for checkpoint selection.
-- A single seed/split without per-case rows does not establish statistical
-  significance, robustness, pathology-specific performance, or external
-  generalization.
+- A single seed/split and post-hoc bootstrap intervals do not establish
+  statistical significance, training robustness, pathology-specific
+  performance, or external generalization. No p-values are claimed.
 - Reported FPS is not a universal architecture property; it is an
-  environment-specific batch-one random-input benchmark whose original runtime
-  metadata was not included in the supplied bundle.
+  environment-specific batch-one random-input benchmark. A current environment
+  capture exists, but its identity with the historical benchmark environment
+  is unconfirmed.
 - The legacy gate projection contains trainable channels without an output path;
   published parameter counts include those channels.
 

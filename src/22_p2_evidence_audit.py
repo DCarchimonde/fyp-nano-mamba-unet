@@ -55,6 +55,7 @@ SUMMARY_DICE_FIELDS = (
 )
 MAX_EPOCHS = 150
 LINEAGE_FILE = "historical_source_lineage.json"
+DATASET_MANIFEST_FILE = "posthoc_dataset_manifest.json"
 
 
 class EvidenceError(RuntimeError):
@@ -358,7 +359,7 @@ def validate_per_case_rows(
 
 def validate_training_log(
     rows: Sequence[Mapping[str, str]], filename: str, summary_row: Mapping[str, Any]
-) -> None:
+) -> Dict[str, Any]:
     fields = (
         "epoch",
         "train_loss",
@@ -392,6 +393,41 @@ def validate_training_log(
     for field in SUMMARY_DICE_FIELDS:
         if not close(float(best[field]), float(summary_row[field]), 1e-8):
             raise EvidenceError(f"{filename} best-row {field} differs from the summary")
+    final = rows[-1]
+    return {
+        "rows": len(rows),
+        "best_epoch": int(best["epoch"]),
+        "best_val_mean_dice": float(best["val_mean_dice"]),
+        "final_val_mean_dice": float(final["val_mean_dice"]),
+        "best_minus_final": float(best["val_mean_dice"])
+        - float(final["val_mean_dice"]),
+        "initial_train_loss": float(rows[0]["train_loss"]),
+        "final_train_loss": float(final["train_loss"]),
+        "minimum_train_loss": min(float(row["train_loss"]) for row in rows),
+    }
+
+
+def per_case_diagnostics(rows: Sequence[Mapping[str, str]]) -> Dict[str, Any]:
+    """Summarize recovered rows without inferring unrecorded label contents."""
+    class_fields = METRIC_FIELDS[:3]
+    exact_zero = {
+        field: sum(float(row[field]) == 0.0 for row in rows) for field in class_fields
+    }
+    exact_one = {
+        field: sum(float(row[field]) == 1.0 for row in rows) for field in class_fields
+    }
+    return {
+        "rows": len(rows),
+        "patients": len({row["patient_id"] for row in rows}),
+        "exact_zero_class_dice": exact_zero,
+        "exact_unity_class_dice": exact_one,
+        "empty_empty_rule_trigger_count": sum(exact_one.values()),
+        "empty_empty_scope_note": (
+            "The executed metric returns exactly 1.0 for an empty prediction and "
+            "empty reference. Zero exact-unity class scores therefore establish "
+            "that this branch did not trigger in the recovered per-case table."
+        ),
+    }
 
 
 def validate_discovery(discovery: Mapping[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
@@ -452,6 +488,174 @@ def validate_discovery(discovery: Mapping[str, Any]) -> Tuple[Dict[str, Any], Li
         },
         gaps,
     )
+
+
+def validate_posthoc_dataset_manifest(path: Path) -> Dict[str, Any]:
+    """Validate a de-identified 200-case NIfTI content manifest."""
+    manifest = read_json(path)
+    if int(manifest.get("schema_version", -1)) != 1:
+        raise EvidenceError("posthoc dataset manifest has an unsupported schema")
+    records = manifest.get("records")
+    if not isinstance(records, list) or len(records) != 200:
+        raise EvidenceError("posthoc dataset manifest must contain 200 records")
+    if int(manifest.get("patients", -1)) != 100 or int(
+        manifest.get("cases", -1)
+    ) != 200:
+        raise EvidenceError("posthoc dataset manifest cardinality is invalid")
+
+    expected_patients = {f"patient{i:03d}" for i in range(1, 101)}
+    patient_counts: MutableMapping[str, int] = defaultdict(int)
+    case_ids = set()
+    relative_paths = set()
+    file_hashes = set()
+    foreground_totals = {"1": 0, "2": 0, "3": 0}
+    for record in records:
+        patient_id = str(record.get("patient_id", ""))
+        case_id = str(record.get("case_id", ""))
+        if patient_id not in expected_patients:
+            raise EvidenceError(
+                f"invalid patient identifier in posthoc manifest: {patient_id}"
+            )
+        if not case_id.startswith(patient_id + "_") or case_id in case_ids:
+            raise EvidenceError(
+                f"invalid or duplicate posthoc dataset case: {case_id}"
+            )
+        case_ids.add(case_id)
+        patient_counts[patient_id] += 1
+        for field in ("image_relative_path", "label_relative_path"):
+            relative_path = str(record.get(field, ""))
+            if not relative_path or Path(relative_path).is_absolute() or ".." in Path(
+                relative_path
+            ).parts:
+                raise EvidenceError(
+                    f"unsafe or empty {field} in posthoc manifest: {case_id}"
+                )
+            if relative_path in relative_paths:
+                raise EvidenceError(
+                    f"duplicate NIfTI path in posthoc manifest: {relative_path}"
+                )
+            relative_paths.add(relative_path)
+        for field in ("image_sha256", "label_sha256"):
+            digest = str(record.get(field, ""))
+            if not re.fullmatch(r"[0-9a-f]{64}", digest):
+                raise EvidenceError(f"invalid {field} in posthoc manifest: {case_id}")
+            file_hashes.add(digest)
+        if int(record.get("image_bytes", 0)) <= 0 or int(
+            record.get("label_bytes", 0)
+        ) <= 0:
+            raise EvidenceError(f"non-positive file size in posthoc manifest: {case_id}")
+
+        shape = record.get("shape")
+        if (
+            not isinstance(shape, list)
+            or len(shape) != 3
+            or any(int(dimension) <= 0 for dimension in shape)
+        ):
+            raise EvidenceError(f"invalid NIfTI shape in posthoc manifest: {case_id}")
+        voxel_count = math.prod(int(dimension) for dimension in shape)
+        for field in ("image_zooms", "label_zooms"):
+            zooms = record.get(field)
+            if (
+                not isinstance(zooms, list)
+                or len(zooms) != len(shape)
+                or any(
+                    not math.isfinite(float(value)) or float(value) <= 0
+                    for value in zooms
+                )
+            ):
+                raise EvidenceError(
+                    f"invalid {field} in posthoc manifest: {case_id}"
+                )
+        if any(
+            not close(float(a), float(b), 1e-5)
+            for a, b in zip(record["image_zooms"], record["label_zooms"])
+        ):
+            raise EvidenceError(f"image/label spacing mismatch: {case_id}")
+        for field in ("image_orientation", "label_orientation"):
+            orientation = record.get(field)
+            if (
+                not isinstance(orientation, list)
+                or len(orientation) != 3
+                or any(
+                    value not in {"L", "R", "A", "P", "S", "I"}
+                    for value in orientation
+                )
+            ):
+                raise EvidenceError(
+                    f"invalid {field} in posthoc manifest: {case_id}"
+                )
+        if record["image_orientation"] != record["label_orientation"]:
+            raise EvidenceError(f"image/label orientation mismatch: {case_id}")
+        affine = record.get("affine")
+        if (
+            not isinstance(affine, list)
+            or len(affine) != 4
+            or any(not isinstance(row, list) or len(row) != 4 for row in affine)
+            or any(
+                not math.isfinite(float(value)) for row in affine for value in row
+            )
+        ):
+            raise EvidenceError(f"invalid affine in posthoc manifest: {case_id}")
+        image_min = float(record.get("image_min", math.nan))
+        image_max = float(record.get("image_max", math.nan))
+        if (
+            not math.isfinite(image_min)
+            or not math.isfinite(image_max)
+            or image_min > image_max
+        ):
+            raise EvidenceError(f"invalid image range in posthoc manifest: {case_id}")
+        label_counts = record.get("label_voxel_counts")
+        if not isinstance(label_counts, dict) or set(label_counts) != {
+            "0",
+            "1",
+            "2",
+            "3",
+        }:
+            raise EvidenceError(f"invalid label-count fields: {case_id}")
+        converted_counts = {
+            key: int(value) for key, value in label_counts.items()
+        }
+        if any(value < 0 for value in converted_counts.values()) or sum(
+            converted_counts.values()
+        ) != voxel_count:
+            raise EvidenceError(f"invalid label voxel counts: {case_id}")
+        if sum(converted_counts[key] for key in ("1", "2", "3")) <= 0:
+            raise EvidenceError(f"no foreground labels in posthoc manifest: {case_id}")
+        for key in foreground_totals:
+            foreground_totals[key] += converted_counts[key]
+
+    if set(patient_counts) != expected_patients or any(
+        count != 2 for count in patient_counts.values()
+    ):
+        raise EvidenceError(
+            "posthoc dataset manifest must contain two cases per patient"
+        )
+    canonical = json.dumps(records, sort_keys=True, separators=(",", ":")).encode(
+        "utf-8"
+    )
+    records_hash = hashlib.sha256(canonical).hexdigest()
+    if records_hash != manifest.get("records_sha256"):
+        raise EvidenceError("posthoc dataset records_sha256 is invalid")
+    if any(total <= 0 for total in foreground_totals.values()):
+        raise EvidenceError("posthoc dataset lacks one or more foreground classes")
+
+    return {
+        "status": "validated",
+        "sha256": sha256(path),
+        "records_sha256": records_hash,
+        "patients": len(patient_counts),
+        "cases": len(records),
+        "unique_file_hashes": len(file_hashes),
+        "foreground_voxel_totals": foreground_totals,
+        "historical_dataset_snapshot_confirmed": bool(
+            manifest.get("historical_dataset_snapshot_confirmed")
+        ),
+        "scope_note": (
+            "The manifest checks the current 200 image/label pairs, including "
+            "content hashes, finite values, geometry, and labels 0--3. It binds "
+            "the historical run only when the snapshot is truthfully confirmed."
+        ),
+    }
 
 
 def validate_source_lineage(
@@ -580,6 +784,8 @@ def inspect_closure(
     closure: Dict[str, Any] = {}
     expected_val = set(val_patients)
     per_model: Dict[str, Dict[str, Dict[str, float]]] = {}
+    recovered_case_diagnostics: Dict[str, Dict[str, Any]] = {}
+    recovered_log_diagnostics: Dict[str, Dict[str, Any]] = {}
     summary_by_model = {row["model_name"]: row for row in summary_rows}
 
     for model in EXPECTED_MODELS:
@@ -596,11 +802,17 @@ def inspect_closure(
                 summary_by_model[model],
             )
             per_model[model] = means
+            recovered_case_diagnostics[model] = per_case_diagnostics(rows)
         if not training_log.is_file():
             gaps.append(training_log.name)
         else:
             rows = read_csv(training_log)
-            validate_training_log(rows, training_log.name, summary_by_model[model])
+            recovered_log_diagnostics[model] = validate_training_log(
+                rows, training_log.name, summary_by_model[model]
+            )
+
+    closure["per_case_diagnostics"] = recovered_case_diagnostics
+    closure["training_log_diagnostics"] = recovered_log_diagnostics
 
     checkpoint_manifest = evidence_dir / "checkpoint_manifest.json"
     if not checkpoint_manifest.is_file():
@@ -619,6 +831,9 @@ def inspect_closure(
             raise EvidenceError("checkpoint manifest contains duplicate model records")
         if manifest.get("all_expected_present") and set(records_by_model) != set(EXPECTED_MODELS):
             raise EvidenceError("checkpoint manifest model set differs from the audited models")
+        checkpoint_hashes = [str(record.get("sha256", "")) for record in records]
+        if len(checkpoint_hashes) != len(set(checkpoint_hashes)):
+            raise EvidenceError("checkpoint manifest contains duplicate file hashes")
         for model, record in records_by_model.items():
             if model not in EXPECTED_MODELS:
                 raise EvidenceError(f"unexpected checkpoint model record: {model}")
@@ -634,6 +849,11 @@ def inspect_closure(
                 record.get("state_dict_numel", 0)
             ) <= 0:
                 raise EvidenceError(f"checkpoint state dictionary is empty for {model}")
+            shape_hash = record.get("state_dict_shape_sha256")
+            if shape_hash is not None and not re.fullmatch(
+                r"[0-9a-f]{64}", str(shape_hash)
+            ):
+                raise EvidenceError(f"checkpoint shape hash is invalid for {model}")
             expected = summary_by_model[model]
             if int(record.get("epoch", -1)) != int(expected["best_epoch"]):
                 raise EvidenceError(f"checkpoint epoch differs from the summary for {model}")
@@ -652,6 +872,15 @@ def inspect_closure(
                 raise EvidenceError(f"checkpoint spatial size is invalid for {model}")
             if int(config.get("max_epochs", -1)) != MAX_EPOCHS:
                 raise EvidenceError(f"checkpoint max_epochs is invalid for {model}")
+        closure["checkpoint_manifest_summary"] = {
+            "schema_version": manifest.get("schema_version"),
+            "all_expected_present": bool(manifest.get("all_expected_present")),
+            "historical_checkpoint_set_confirmed": bool(
+                manifest.get("historical_checkpoint_set_confirmed")
+            ),
+            "models": sorted(records_by_model),
+            "unique_checkpoint_hashes": len(set(checkpoint_hashes)),
+        }
 
     environment_file = evidence_dir / "environment.json"
     if not environment_file.is_file():
@@ -714,6 +943,24 @@ def audit(evidence_dir: Path, bootstrap_samples: int) -> Dict[str, Any]:
     discovery, discovery_gaps = validate_discovery(
         read_json(paths["data_discovery_report.json"])
     )
+    dataset_manifest_path = evidence_dir / DATASET_MANIFEST_FILE
+    if dataset_manifest_path.is_file():
+        posthoc_dataset = validate_posthoc_dataset_manifest(dataset_manifest_path)
+        discovery["posthoc_dataset_content_audit"] = posthoc_dataset
+        discovery_gaps = [
+            gap
+            for gap in discovery_gaps
+            if not gap.startswith("data_discovery_report.json")
+        ]
+        if not posthoc_dataset["historical_dataset_snapshot_confirmed"]:
+            discovery_gaps.append(
+                "posthoc_dataset_manifest.json (current 200-case content audited; "
+                "historical dataset identity not confirmed)"
+            )
+    else:
+        discovery["posthoc_dataset_content_audit"] = {
+            "status": "not supplied"
+        }
     lineage = validate_source_lineage(evidence_dir, paths)
 
     closure, gaps = inspect_closure(
@@ -724,7 +971,7 @@ def audit(evidence_dir: Path, bootstrap_samples: int) -> Dict[str, Any]:
         initial_gaps=discovery_gaps,
     )
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "evidence_directory": str(evidence_dir.resolve()),
         "aggregate_consistency_status": "pass",
         "strict_closure_status": "pass" if not gaps else "incomplete",

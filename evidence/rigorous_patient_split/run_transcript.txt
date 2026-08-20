@@ -1,0 +1,3 @@
+﻿Historical training command: UNCONFIRMED
+Historical working directory: UNCONFIRMED
+Replace these lines only from the original terminal/PyCharm record or a reliable contemporaneous note.

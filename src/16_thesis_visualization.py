@@ -13,6 +13,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import os
 import random
 import re
@@ -32,6 +33,7 @@ DEFAULT_SPLIT_JSON = (
     / "rigorous_patient_split"
     / "patient_split_seed42.json"
 )
+DEFAULT_EVIDENCE_DIR = REPOSITORY_ROOT / "evidence" / "rigorous_patient_split"
 DEFAULT_FIGURE_DIR = REPOSITORY_ROOT / "figures"
 MAIN_RESULT_PIPELINE = REPOSITORY_ROOT / "src" / "21_rigorous_experiment_pipeline.py"
 
@@ -67,6 +69,14 @@ NUMERIC_FIELDS = [
     "latency_ms",
 ]
 EXPECTED_PATIENTS = {f"patient{i:03d}" for i in range(1, 101)}
+TRAINING_LOG_FIELDS = (
+    "epoch",
+    "train_loss",
+    "val_mean_dice",
+    "val_dice_RV",
+    "val_dice_MYO",
+    "val_dice_LV",
+)
 
 
 def sha256_file(path: Path) -> str:
@@ -123,12 +133,67 @@ def load_summary_metrics(path: Path) -> dict[str, dict[str, Any]]:
             if not 0.0 <= row[field] <= 1.0:
                 raise ValueError(f"{field} is outside [0, 1] for {model_name}")
         for field in ("params_m", "fps", "latency_ms"):
-            if row[field] <= 0.0:
+            if not math.isfinite(row[field]) or row[field] <= 0.0:
                 raise ValueError(f"{field} must be positive for {model_name}")
         reciprocal_fps = 1000.0 / row["latency_ms"]
         if abs(reciprocal_fps - row["fps"]) > 1e-6:
             raise ValueError(f"FPS/latency mismatch for {model_name}")
     return rows
+
+
+def load_training_logs(
+    evidence_dir: Path, summary_rows: dict[str, dict[str, Any]]
+) -> tuple[dict[str, list[dict[str, float]]], dict[str, Path]]:
+    """Load all recovered epoch logs and bind their best rows to the summary."""
+    logs: dict[str, list[dict[str, float]]] = {}
+    paths: dict[str, Path] = {}
+    for model_name in MODEL_ORDER:
+        path = evidence_dir / f"training_log_{model_name}.csv"
+        if not path.is_file():
+            raise FileNotFoundError(f"Training log not found: {path}")
+        with path.open(newline="", encoding="utf-8-sig") as handle:
+            reader = csv.DictReader(handle)
+            missing = set(TRAINING_LOG_FIELDS).difference(reader.fieldnames or [])
+            if missing:
+                raise ValueError(
+                    f"{path.name} is missing columns: {', '.join(sorted(missing))}"
+                )
+            rows: list[dict[str, float]] = []
+            for raw_row in reader:
+                parsed = {
+                    "epoch": int(raw_row["epoch"]),
+                    **{
+                        field: float(raw_row[field])
+                        for field in TRAINING_LOG_FIELDS[1:]
+                    },
+                }
+                rows.append(parsed)
+        if len(rows) != 150 or [row["epoch"] for row in rows] != list(
+            range(1, 151)
+        ):
+            raise ValueError(f"{path.name} must contain epochs 1 through 150")
+        for row in rows:
+            if not math.isfinite(row["train_loss"]) or row["train_loss"] < 0.0:
+                raise ValueError(f"Invalid train_loss in {path.name}")
+            for field in TRAINING_LOG_FIELDS[2:]:
+                if not 0.0 <= row[field] <= 1.0:
+                    raise ValueError(f"{field} outside [0, 1] in {path.name}")
+            class_mean = (
+                row["val_dice_RV"]
+                + row["val_dice_MYO"]
+                + row["val_dice_LV"]
+            ) / 3.0
+            if abs(class_mean - row["val_mean_dice"]) > 1e-8:
+                raise ValueError(f"Class mean mismatch in {path.name}")
+        best = max(rows, key=lambda row: row["val_mean_dice"])
+        summary = summary_rows[model_name]
+        if best["epoch"] != summary["best_epoch"] or abs(
+            best["val_mean_dice"] - summary["val_mean_dice"]
+        ) > 1e-8:
+            raise ValueError(f"Best row in {path.name} differs from summary_metrics.csv")
+        logs[model_name] = rows
+        paths[model_name] = path
+    return logs, paths
 
 
 def _load_pyplot():
@@ -280,11 +345,85 @@ def generate_quantitative_figures(
     return outputs
 
 
+def generate_training_curve_figure(
+    logs: dict[str, list[dict[str, float]]], output_dir: Path
+) -> Path:
+    """Plot all recovered raw validation traces and selected checkpoints."""
+    plt = _load_pyplot()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    groups = (
+        ("Reference architectures", ["UNet3D", "AttentionUNet", "SegResNet16"]),
+        (
+            "Proposed model and ablations",
+            [
+                "Ablation_NoMamba_UNet",
+                "Ablation_HalfMamba_UNet",
+                "NanoMambaUNet",
+            ],
+        ),
+    )
+    colors = {
+        "UNet3D": "#4472C4",
+        "AttentionUNet": "#70AD47",
+        "SegResNet16": "#7030A0",
+        "Ablation_NoMamba_UNet": "#5B9BD5",
+        "Ablation_HalfMamba_UNet": "#A5A5A5",
+        "NanoMambaUNet": "#C55A11",
+    }
+    figure, axes = plt.subplots(1, 2, figsize=(12.0, 5.3), dpi=220, sharey=True)
+    for axis, (title, model_names) in zip(axes, groups):
+        for model_name in model_names:
+            rows = logs[model_name]
+            epochs = [row["epoch"] for row in rows]
+            validation = [row["val_mean_dice"] * 100.0 for row in rows]
+            best = max(rows, key=lambda row: row["val_mean_dice"])
+            color = colors[model_name]
+            axis.plot(
+                epochs,
+                validation,
+                color=color,
+                linewidth=1.05,
+                alpha=0.86,
+                label=DISPLAY_NAMES[model_name],
+            )
+            axis.scatter(
+                [best["epoch"]],
+                [best["val_mean_dice"] * 100.0],
+                color=color,
+                edgecolor="white",
+                linewidth=0.6,
+                s=34,
+                zorder=4,
+            )
+            axis.annotate(
+                f"e{best['epoch']}",
+                (best["epoch"], best["val_mean_dice"] * 100.0),
+                xytext=(4, 5),
+                textcoords="offset points",
+                fontsize=7,
+                color=color,
+            )
+        axis.set_title(title)
+        axis.set_xlabel("Epoch")
+        axis.set_xlim(1, 150)
+        axis.set_ylim(0, 92)
+        axis.grid(True, linestyle="--", alpha=0.28)
+        axis.legend(loc="lower right", frameon=True, fontsize=8)
+    axes[0].set_ylabel("Validation mean DSC (%)")
+    figure.suptitle("Recovered 150-epoch validation traces (raw, unsmoothed)")
+    figure.tight_layout(rect=(0, 0, 1, 0.95))
+    path = output_dir / "training_validation_curves.png"
+    figure.savefig(path, bbox_inches="tight")
+    plt.close(figure)
+    return path
+
+
 def write_quantitative_manifest(
     summary_csv: Path,
     rows: dict[str, dict[str, Any]],
     outputs: list[Path],
     output_dir: Path,
+    training_log_paths: dict[str, Path],
 ) -> Path:
     """Write hashes that tie quantitative plots to their source table and code."""
     try:
@@ -301,8 +440,15 @@ def write_quantitative_manifest(
         "generator_sha256": sha256_file(SCRIPT_PATH),
         "models": MODEL_ORDER,
         "results": [rows[name] for name in MODEL_ORDER],
+        "training_logs": {
+            model_name: {
+                "path": str(path.resolve().relative_to(REPOSITORY_ROOT)),
+                "sha256": sha256_file(path),
+            }
+            for model_name, path in training_log_paths.items()
+        },
         "outputs": {path.name: sha256_file(path) for path in outputs},
-        "provenance_note": "Plot values are loaded from the audited CSV; no result values are embedded in the plotting code.",
+        "provenance_note": "Trade-off and class-score values are loaded from the audited summary CSV. The training figure is loaded from the six recovered 150-epoch CSVs and shows raw, unsmoothed validation traces. No result values are embedded in the plotting code.",
     }
     manifest_path = output_dir / "quantitative_figure_provenance.json"
     with manifest_path.open("w", encoding="utf-8") as handle:
@@ -605,6 +751,7 @@ def generate_qualitative_figure(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--summary-csv", type=Path, default=DEFAULT_SUMMARY_CSV)
+    parser.add_argument("--evidence-dir", type=Path, default=DEFAULT_EVIDENCE_DIR)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_FIGURE_DIR)
     parser.add_argument(
         "--skip-quantitative",
@@ -641,11 +788,14 @@ def main() -> None:
     if not args.skip_quantitative:
         rows = load_summary_metrics(args.summary_csv)
         outputs = generate_quantitative_figures(rows, args.output_dir)
+        logs, training_log_paths = load_training_logs(args.evidence_dir, rows)
+        outputs.append(generate_training_curve_figure(logs, args.output_dir))
         manifest = write_quantitative_manifest(
             args.summary_csv,
             rows,
             outputs,
             args.output_dir,
+            training_log_paths,
         )
         print("Generated quantitative figures:")
         for path in [*outputs, manifest]:

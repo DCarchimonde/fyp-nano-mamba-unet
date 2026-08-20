@@ -1,0 +1,128 @@
+{
+  "all_expected_present": true,
+  "checkpoints": [
+    {
+      "bytes": 19255738,
+      "config": {
+        "max_epochs": 150,
+        "seed": 42,
+        "spatial_size": [
+          256,
+          256,
+          16
+        ],
+        "val_fraction": 0.2
+      },
+      "epoch": 105,
+      "filename": "best_UNet3D.pth",
+      "model_name": "UNet3D",
+      "sha256": "6ea7ec76dc2e4bd4eb7b90b13fe4f1fb2569a78e7723ddfaa979821e1f06513d",
+      "state_dict_numel": 4808537,
+      "state_dict_tensors": 63,
+      "val_mean_dice": 0.808338041479389
+    },
+    {
+      "bytes": 5866563,
+      "config": {
+        "max_epochs": 150,
+        "seed": 42,
+        "spatial_size": [
+          256,
+          256,
+          16
+        ],
+        "val_fraction": 0.2
+      },
+      "epoch": 121,
+      "filename": "best_NanoMambaUNet.pth",
+      "model_name": "NanoMambaUNet",
+      "sha256": "b9d432dac8bc29e86596a6c118486f609ba34e05b3ebbb867e206886cf29a7b8",
+      "state_dict_numel": 1457747,
+      "state_dict_tensors": 114,
+      "val_mean_dice": 0.847791743526856
+    },
+    {
+      "bytes": 9196265,
+      "config": {
+        "max_epochs": 150,
+        "seed": 42,
+        "spatial_size": [
+          256,
+          256,
+          16
+        ],
+        "val_fraction": 0.2
+      },
+      "epoch": 134,
+      "filename": "best_Ablation_NoMamba_UNet.pth",
+      "model_name": "Ablation_NoMamba_UNet",
+      "sha256": "c2b70093564fa859aa2260c2cbe8acd73f9cf7e35933ef2215f1955e3e6a4b03",
+      "state_dict_numel": 2289460,
+      "state_dict_tensors": 120,
+      "val_mean_dice": 0.8564119135340054
+    },
+    {
+      "bytes": 6601917,
+      "config": {
+        "max_epochs": 150,
+        "seed": 42,
+        "spatial_size": [
+          256,
+          256,
+          16
+        ],
+        "val_fraction": 0.2
+      },
+      "epoch": 149,
+      "filename": "best_Ablation_HalfMamba_UNet.pth",
+      "model_name": "Ablation_HalfMamba_UNet",
+      "sha256": "46ece6c2d32c8f929ff3182e0619ec8a18fb6260d89836e50231e4e3c0304a0f",
+      "state_dict_numel": 1640149,
+      "state_dict_tensors": 128,
+      "val_mean_dice": 0.8495289287219446
+    },
+    {
+      "bytes": 23714533,
+      "config": {
+        "max_epochs": 150,
+        "seed": 42,
+        "spatial_size": [
+          256,
+          256,
+          16
+        ],
+        "val_fraction": 0.2
+      },
+      "epoch": 62,
+      "filename": "best_AttentionUNet.pth",
+      "model_name": "AttentionUNet",
+      "sha256": "c0adc612b7e16b6ff6ff29ef8665cac277ccd4e9c72abde333eaeddee788b0cb",
+      "state_dict_numel": 5912142,
+      "state_dict_tensors": 196,
+      "val_mean_dice": 0.7477815767391197
+    },
+    {
+      "bytes": 18830795,
+      "config": {
+        "max_epochs": 150,
+        "seed": 42,
+        "spatial_size": [
+          256,
+          256,
+          16
+        ],
+        "val_fraction": 0.2
+      },
+      "epoch": 112,
+      "filename": "best_SegResNet16.pth",
+      "model_name": "SegResNet16",
+      "sha256": "9d3449d46b02aa0b0cfcb465a5d92b9c6828eafa155a9a00f9e864ad55126d5f",
+      "state_dict_numel": 4700948,
+      "state_dict_tensors": 83,
+      "val_mean_dice": 0.8669763974845409
+    }
+  ],
+  "historical_checkpoint_set_confirmed": false,
+  "missing": [],
+  "schema_version": 1
+}

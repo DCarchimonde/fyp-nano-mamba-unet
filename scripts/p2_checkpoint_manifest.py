@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
 
@@ -38,10 +39,14 @@ def json_safe(value: Any) -> Any:
 
 
 def inspect_checkpoint(path: Path) -> Dict[str, Any]:
+    stat = path.stat()
     record: Dict[str, Any] = {
         "filename": path.name,
-        "bytes": path.stat().st_size,
+        "bytes": stat.st_size,
         "sha256": sha256(path),
+        "file_mtime_utc": datetime.fromtimestamp(
+            stat.st_mtime, timezone.utc
+        ).isoformat(),
     }
     try:
         import torch
@@ -51,6 +56,19 @@ def inspect_checkpoint(path: Path) -> Dict[str, Any]:
         except TypeError:
             checkpoint = torch.load(path, map_location="cpu")
         state = checkpoint.get("model_state_dict", {})
+        shape_records = [
+            {
+                "key": str(key),
+                "shape": list(tensor.shape),
+                "dtype": str(tensor.dtype),
+                "numel": int(tensor.numel()),
+            }
+            for key, tensor in sorted(state.items())
+            if hasattr(tensor, "numel") and hasattr(tensor, "shape")
+        ]
+        shape_bytes = json.dumps(
+            shape_records, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
         record.update(
             {
                 "model_name": checkpoint.get("model_name"),
@@ -61,6 +79,8 @@ def inspect_checkpoint(path: Path) -> Dict[str, Any]:
                 "state_dict_numel": int(
                     sum(tensor.numel() for tensor in state.values() if hasattr(tensor, "numel"))
                 ),
+                "state_dict_shape_sha256": hashlib.sha256(shape_bytes).hexdigest(),
+                "checkpoint_top_level_keys": sorted(str(key) for key in checkpoint),
             }
         )
     except Exception as exc:  # The hash remains useful if metadata loading fails.
@@ -84,7 +104,7 @@ def main() -> int:
         else:
             missing.append(path.name)
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "historical_checkpoint_set_confirmed": args.historical_checkpoint_set_confirmed,
         "all_expected_present": not missing,
         "missing": missing,

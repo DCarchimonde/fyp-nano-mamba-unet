@@ -18,11 +18,11 @@ python -m py_compile \
   src/nano_mamba_core.py
 ```
 
-Expected result: the aggregate-consistency audit passes; the nine data-free
-audit tests pass; PyTorch-dependent architecture tests pass when PyTorch is
-installed and otherwise skip explicitly. This default pass is not an
-end-to-end provenance claim. Strict closure remains incomplete until the
-original experiment artefacts are added.
+Expected result: the aggregate-consistency audit passes; seventeen data-free audit
+and visualization tests pass; three PyTorch-dependent architecture tests pass
+when PyTorch is installed and otherwise skip explicitly. This default pass is
+not an end-to-end provenance claim. Strict closure remains incomplete only on
+the four historical confirmations listed in Section 4.
 
 The repository enforces LF for audited text through `.gitattributes`. The
 lineage validator also canonicalizes CRLF to LF for current source files, so a
@@ -38,8 +38,9 @@ python src/16_thesis_visualization.py \
   --output-dir figures
 ```
 
-This writes three PNG files and `quantitative_figure_provenance.json`. The
-manifest binds the figures to the audited CSV and plotting-script hashes.
+This writes four PNG files and `quantitative_figure_provenance.json`. Three
+figures read the audited summary CSV; the fourth reads the six recovered
+150-epoch logs. The manifest binds every source and output to SHA-256 hashes.
 
 Qualitative inference is deliberately optional and fail-closed. It requires an
 explicit rigorous checkpoint, audited split, ACDC path, validation patient, and
@@ -72,18 +73,33 @@ Clean-build acceptance criteria:
 - no undefined citations or references;
 - no overfull boxes;
 - title exactly matches the registered title; and
-- all 71 pages visually inspected after rendering.
+- all 73 pages visually inspected after rendering.
 
-## 4. What cannot be reproduced from the public evidence alone
+## 4. Recovered scope and remaining historical boundaries
 
-The supplied final-audit bundle omitted original per-case CSVs, epoch logs,
-checkpoint files/metadata, saved predictions, and confirmed runtime metadata.
-Therefore, the repository does not claim that it can independently reconstruct
-the reported weights, learning curves, speed environment, confidence intervals,
-or a qualitative validation image. `historical_source_lineage.json` records the
-limited source/ZIP timeline that Git and archive hashes can establish, but it
-does not close those run-level gaps. Use the Windows closure collector described
-in `RIGOROUS_EXPERIMENTS.md` on the original machine.
+The recovered closure bundle now supplies every original-format per-case table
+and epoch log plus a metadata/hash record for each checkpoint. The validator
+reconstructs the main table, checkpoint-selection epochs, training curves,
+empty-class-rule impact, patient-level intervals, and paired differences.
+
+Four boundaries remain: the checkpoint directory is not yet confirmed
+unchanged from the historical run; the current Conda/GPU capture is not yet
+confirmed as the historical environment; the exact training command is not
+confirmed; and the old discovery JSON lacks a full 200-case content manifest.
+Saved prediction arrays are also absent, so no qualitative image is claimed.
+These gaps do not invalidate the recovered numerical checks, but they prevent a
+claim of complete historical run attestation.
+
+To audit the current 200-case dataset without training:
+
+```powershell
+python scripts\p2_dataset_manifest.py `
+  --data-dir D:\AI_FYP\Data\ACDC\database\training `
+  --output experiment_outputs\rigorous_patient_split\posthoc_dataset_manifest.json
+```
+
+Do not add `--historical-dataset-snapshot-confirmed` unless the current dataset
+snapshot is known to be the one used on 2026-06-09.
 
 ## 5. Main result interpretation
 

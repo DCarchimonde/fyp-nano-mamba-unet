@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "recovery_date": "2026-08-21",
+  "collector_source_commit": "a4054d6e3b04d7749072466f8f3a9337d7624014",
+  "source_archive": {
+    "filename": "p2_closure_20260821_020939.zip",
+    "sha256": "16fbbe31db97e9695fc78aadbb46e9cf04f99fa1e1fd2d9e735f03d75d14a3b3",
+    "entries": 21,
+    "uncompressed_bytes": 141196
+  },
+  "raw_member_hashes": {
+    "file": "RECOVERED_CLOSURE_SHA256SUMS.txt",
+    "entries": 19,
+    "verification": "All 19 listed members passed SHA-256 verification after extraction and after placement in the evidence directory."
+  },
+  "collector_audit_report": {
+    "file": "recovered_collector_audit_report.json",
+    "sha256": "001134ee927c25397a985ed5572a211f6288f45eb39326962b8569c747e3da11",
+    "note": "The original collector calculated SHA256SUMS before writing this report, so this separate digest closes that packaging omission."
+  },
+  "recovered_primary_records": {
+    "per_case_csv_files": 6,
+    "per_case_rows_per_model": 40,
+    "training_log_csv_files": 6,
+    "epochs_per_model": 150,
+    "checkpoint_manifest_records": 6
+  },
+  "archive_member_timeline": {
+    "data_discovery_report": "2026-06-09 08:53:22 (ZIP member time; timezone not encoded)",
+    "UNet3D_completion": "2026-06-09 09:16:02",
+    "NanoMambaUNet_completion": "2026-06-09 10:20:28",
+    "Ablation_NoMamba_UNet_completion": "2026-06-09 11:25:50",
+    "Ablation_HalfMamba_UNet_completion": "2026-06-09 12:31:14",
+    "AttentionUNet_completion": "2026-06-09 13:39:02",
+    "SegResNet16_completion": "2026-06-09 15:11:20",
+    "final_summary": "2026-06-09 15:11:22"
+  },
+  "confirmation_status": {
+    "historical_checkpoint_set": false,
+    "historical_environment": false,
+    "historical_training_command": false,
+    "full_200_case_content_manifest": false
+  },
+  "scope_note": "The recovered files materially strengthen numerical and temporal provenance. Confirmation flags remain false until supported by user attestation and additional checks; the archive timeline alone is not cryptographic proof of the historical run environment."
+}

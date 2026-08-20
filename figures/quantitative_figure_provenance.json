@@ -5,7 +5,7 @@
   "summary_metrics": "evidence/rigorous_patient_split/summary_metrics.csv",
   "summary_metrics_sha256": "db5d2109f5195ad0ae7ea82d970dd57edaa9767f3b9a915e038a412a0e9cce5a",
   "generator": "src/16_thesis_visualization.py",
-  "generator_sha256": "21d89de52027700dcbe182376e010b00bed083a9a8840afbc495941d75b9c9ee",
+  "generator_sha256": "65c4de4d10d8940ba214793ec247040392d804761d4532665727b6a8f7e184f1",
   "models": [
     "UNet3D",
     "AttentionUNet",
@@ -82,10 +82,37 @@
       "latency_ms": 34.37859000017245
     }
   ],
+  "training_logs": {
+    "UNet3D": {
+      "path": "evidence/rigorous_patient_split/training_log_UNet3D.csv",
+      "sha256": "f3272cfe1c0ae0167454c8e6f73643c9d3e630054c5f42589304b6ef1fd92d68"
+    },
+    "AttentionUNet": {
+      "path": "evidence/rigorous_patient_split/training_log_AttentionUNet.csv",
+      "sha256": "406ced4260b684ce13ce60da5f2e4d358420f0207e39f4b53930d80d9f6efd27"
+    },
+    "SegResNet16": {
+      "path": "evidence/rigorous_patient_split/training_log_SegResNet16.csv",
+      "sha256": "a8e8fa729e6e69a07ced80f66241b97d96aa88da9854331949637c9c5a5634d3"
+    },
+    "Ablation_NoMamba_UNet": {
+      "path": "evidence/rigorous_patient_split/training_log_Ablation_NoMamba_UNet.csv",
+      "sha256": "60df306045fa6c779ae66f6d799869764f7588cda4ea587eeed2ca5c7456d163"
+    },
+    "Ablation_HalfMamba_UNet": {
+      "path": "evidence/rigorous_patient_split/training_log_Ablation_HalfMamba_UNet.csv",
+      "sha256": "60c5ac8a6b3f94d2b3d1f22ccf96974d9b2bca074fbac49dc1ebadc5dea12099"
+    },
+    "NanoMambaUNet": {
+      "path": "evidence/rigorous_patient_split/training_log_NanoMambaUNet.csv",
+      "sha256": "933a8bd0f385d5651e293f0d8f69bc89c096094aadae98de8dd64cb306a15bab"
+    }
+  },
   "outputs": {
     "accuracy_parameter_tradeoff.png": "c6a36e3368a840a771cd1dfb718cf88c8fe7f72f517e6baa744bbb337d8751c4",
     "accuracy_speed_tradeoff.png": "ff38ab006819c79a448de0c42b89827c604fbc87dd54bb180ef8de16d3bd3745",
-    "class_specific_dice_scores.png": "d9b7d758b63bcafc311129d299d39f57bbd461be09ead2e3a217cbace64724fc"
+    "class_specific_dice_scores.png": "d9b7d758b63bcafc311129d299d39f57bbd461be09ead2e3a217cbace64724fc",
+    "training_validation_curves.png": "e887baaafa539d6f8b8efceaa18ec341dca0fb34f9f0bb80d8eb5d31e77c8608"
   },
-  "provenance_note": "Plot values are loaded from the audited CSV; no result values are embedded in the plotting code."
+  "provenance_note": "Trade-off and class-score values are loaded from the audited summary CSV. The training figure is loaded from the six recovered 150-epoch CSVs and shows raw, unsmoothed validation traces. No result values are embedded in the plotting code."
 }

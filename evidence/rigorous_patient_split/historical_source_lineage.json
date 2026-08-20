@@ -29,8 +29,8 @@
   "current_hardened_sources": {
     "src/21_rigorous_experiment_pipeline.py": "64e9266eff9df9591a37730b46740bff5ba4c00473165e867ffa262ce1ce9361",
     "src/nano_mamba_core.py": "00a8270c109e7747a45b9ac613e3d319d380b01222149461f6364ae783803b96",
-    "src/16_thesis_visualization.py": "21d89de52027700dcbe182376e010b00bed083a9a8840afbc495941d75b9c9ee",
-    "src/22_p2_evidence_audit.py": "fde46d7a9bcaccbdd652d264cb53fd3d132a7392d13f00f5f1672c5678329f2e"
+    "src/16_thesis_visualization.py": "65c4de4d10d8940ba214793ec247040392d804761d4532665727b6a8f7e184f1",
+    "src/22_p2_evidence_audit.py": "e59fde636f363ba5181af9dd999f8bd1add4f35da74e3d2d8a67d98e081b1931"
   },
   "reviewed_relationship": {
     "historical_pipeline_precedes_summary_archive_member": true,
@@ -40,9 +40,9 @@
   },
   "limitations": [
     "Git and ZIP timestamps establish a plausible temporal lineage, not proof of the command that produced the summary files.",
-    "The supplied archive omits original epoch logs, per-case rows, checkpoints, confirmed environment metadata, and the command transcript.",
+    "The original June audit archive omitted epoch logs, per-case rows, checkpoints, confirmed environment metadata, and the command transcript; a later byte-hashed closure ZIP recovered the six epoch logs, six per-case tables, and metadata/hash records for all six checkpoints.",
     "The ZIP timestamp has no encoded timezone and is not a cryptographic attestation.",
     "This reconstructed record must not be used to mark strict evidence closure as complete."
   ],
-  "audit_conclusion": "Temporal/source lineage is partially reconstructed and consistent with the reported pipeline, but end-to-end historical run provenance remains incomplete."
+  "audit_conclusion": "Temporal/source lineage and the recovered numerical/checkpoint records are mutually consistent with the reported pipeline. Historical checkpoint-set identity, the exact command, the historical software environment, and the complete historical dataset identity remain unconfirmed."
 }

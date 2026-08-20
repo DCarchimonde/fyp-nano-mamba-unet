@@ -1,34 +1,67 @@
 # Rigorous Patient-Split Evidence
 
-These four files are byte-for-byte copies of the result artefacts supplied in the P2 final-audit bundle. They are the only quantitative source for the main result table and CSV-derived thesis figures.
+This directory is the public, metadata-only evidence record for the reported
+experiment. It contains the original four aggregate artefacts plus records
+recovered from `p2_closure_20260821_020939.zip` on 2026-08-21.
 
-## Source of truth
+## Recovered evidence
 
-- Experiment pipeline: `src/21_rigorous_experiment_pipeline.py`
-- Main table: `summary_metrics.csv`
-- Machine-readable equivalent: `summary_metrics.json`
-- Patient allocation: `patient_split_seed42.json`
-- Discovery summary: `data_discovery_report.json`
+- six `per_case_*.csv` files: 40 cases and 20 patients per model;
+- six `training_log_*.csv` files: contiguous epochs 1--150 per model;
+- `checkpoint_manifest.json`: six readable checkpoint metadata records and six
+  unique full-file SHA-256 hashes (weights are not committed);
+- `environment.json`: a current-machine capture whose historical identity is
+  not yet confirmed;
+- `run_transcript.txt`: explicitly unconfirmed rather than reconstructed; and
+- the collector report, receipt, and raw-byte checksum list.
 
-The split was independently checked during the 2026-08-20 audit: it contains 80 train patients and 20 validation patients, has no overlap, covers patient IDs 001–100 exactly once, and is reproduced by Python's `random.Random(42)` logic in the main pipeline. The result rows were also checked for arithmetic consistency between the three class Dice values and the reported mean, and between FPS and latency.
+`RECOVERED_CLOSURE_SHA256SUMS.txt` preserves the hashes supplied inside the ZIP.
+The path-specific `.gitattributes` rules prevent CRLF conversion from changing
+these recovered bytes. `RECOVERED_CLOSURE_RECEIPT.json` records the source ZIP
+SHA-256, archive timeline, and confirmation boundaries.
 
-## Known evidence gaps
+## Verified numerical chain
 
-The supplied bundle did **not** contain the `per_case_*.csv` files, `training_log_*.csv` files, checkpoint metadata/hashes, saved predictions, or software/hardware environment capture referenced by the result JSON. Consequently:
+The validator independently establishes all of the following:
 
-- no confidence intervals or paired patient-level comparisons can yet be computed;
-- exact intermediate training-curve claims cannot be verified;
-- the metric convention for classes absent from both prediction and ground truth cannot be audited case by case;
-- checkpoint identity and speed-test environment cannot be independently reconstructed; and
-- no qualitative figure is accepted as rigorous evidence until it is regenerated from `best_NanoMambaUNet.pth` on a patient listed in the validation split.
+- each model covers the same 40 validation cases, exactly two per patient;
+- every case mean is the arithmetic mean of RV, MYO, and LV Dice;
+- each per-case aggregate equals `summary_metrics.csv` and its JSON mirror;
+- each log contains 150 finite, contiguous epoch rows and its best row equals
+  the summary;
+- each checkpoint record has the matching model, epoch, Dice, split seed,
+  validation fraction, input size, and epoch budget; and
+- none of the 720 recovered foreground class scores equals 1.0, so the
+  executed empty-prediction/empty-reference branch did not affect the table.
 
-These gaps do not authorize invented replacement values. See `paper_write/P2_FINAL_AUDIT.md` for the closure plan.
+The audit also computes post-hoc patient-level percentile-bootstrap intervals
+with 10,000 replicates and seed 20260820. The paired Nano-Mamba differences in
+percentage points are:
 
-## SHA-256
+| Reference | Difference | 95% interval |
+|---|---:|---:|
+| UNet3D | +3.945 | [+2.829, +5.009] |
+| Attention U-Net | +10.001 | [+3.508, +18.294] |
+| SegResNet16 | -1.918 | [-3.010, -0.884] |
+| No-Mamba | -0.862 | [-1.482, -0.230] |
+| Half-Mamba | -0.174 | [-0.909, +0.551] |
 
-```text
-51122867753c24fa29edb4a906d44b1d6e0a9097f52e29d107e0cf6fb1885585  data_discovery_report.json
-e79f1c238d73389900364ea32a92d954458e17e461e1c81a2e595ba653456280  patient_split_seed42.json
-db5d2109f5195ad0ae7ea82d970dd57edaa9767f3b9a915e038a412a0e9cce5a  summary_metrics.csv
-04d5023d659b9688de72cc198d32d43c66af6108eb329a302648117c3bd8aaa6  summary_metrics.json
-```
+These are descriptive intervals on the validation patients used for checkpoint
+selection, not pre-registered significance tests or independent test results.
+
+## Remaining historical-provenance gaps
+
+Strict closure truthfully remains incomplete for four reasons:
+
+1. the currently found checkpoint set has not been confirmed unchanged from
+   the original run;
+2. the current environment capture has not been confirmed as the historical
+   training/benchmark environment;
+3. the exact historical command and working directory remain unconfirmed; and
+4. the historical discovery report contains only five example paths rather
+   than a full 200-case content manifest.
+
+`scripts/p2_dataset_manifest.py` can now audit all 200 current NIfTI pairs,
+including content hashes, geometry, finite values, and labels 0--3. It binds the
+historical experiment only if the candidate can truthfully confirm that the
+current dataset tree is the same snapshot used for training.

@@ -150,6 +150,109 @@ class P2EvidenceAuditTests(unittest.TestCase):
             self.assertEqual(changed.returncode, 1, changed.stdout + changed.stderr)
             self.assertIn("current-source mismatch", changed.stderr)
 
+    def test_recovered_closure_records_are_reported_and_empty_rule_did_not_fire(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = Path(temp_dir) / "audit.json"
+            result = self.run_audit("--output", str(output))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            report = json.loads(output.read_text(encoding="utf-8"))
+            closure = report["closure"]
+            case_diagnostics = closure["per_case_diagnostics"]
+            log_diagnostics = closure["training_log_diagnostics"]
+            self.assertEqual(len(case_diagnostics), 6)
+            self.assertEqual(len(log_diagnostics), 6)
+            self.assertTrue(
+                all(
+                    record["empty_empty_rule_trigger_count"] == 0
+                    for record in case_diagnostics.values()
+                )
+            )
+            self.assertTrue(
+                all(record["rows"] == 150 for record in log_diagnostics.values())
+            )
+            self.assertEqual(
+                closure["checkpoint_manifest_summary"]["unique_checkpoint_hashes"],
+                6,
+            )
+            self.assertIn("model_intervals", closure["posthoc_patient_bootstrap"])
+
+    def test_confirmed_posthoc_dataset_manifest_closes_full_manifest_gap(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            copied = Path(temp_dir) / "evidence"
+            shutil.copytree(EVIDENCE, copied)
+            records = []
+            for patient_index in range(1, 101):
+                patient_id = f"patient{patient_index:03d}"
+                for frame_index in (1, 2):
+                    case_id = f"{patient_id}_frame{frame_index:02d}"
+                    records.append(
+                        {
+                            "patient_id": patient_id,
+                            "case_id": case_id,
+                            "image_relative_path": f"{patient_id}/{case_id}.nii.gz",
+                            "label_relative_path": f"{patient_id}/{case_id}_gt.nii.gz",
+                            "image_bytes": 100,
+                            "label_bytes": 50,
+                            "image_sha256": hashlib.sha256(
+                                (case_id + "image").encode()
+                            ).hexdigest(),
+                            "label_sha256": hashlib.sha256(
+                                (case_id + "label").encode()
+                            ).hexdigest(),
+                            "shape": [1, 1, 4],
+                            "image_dtype": "float32",
+                            "label_dtype": "uint8",
+                            "image_zooms": [1.0, 1.0, 1.0],
+                            "label_zooms": [1.0, 1.0, 1.0],
+                            "image_orientation": ["R", "A", "S"],
+                            "label_orientation": ["R", "A", "S"],
+                            "affine": [
+                                [1.0, 0.0, 0.0, 0.0],
+                                [0.0, 1.0, 0.0, 0.0],
+                                [0.0, 0.0, 1.0, 0.0],
+                                [0.0, 0.0, 0.0, 1.0],
+                            ],
+                            "image_min": 0.0,
+                            "image_max": 1.0,
+                            "label_voxel_counts": {
+                                "0": 1,
+                                "1": 1,
+                                "2": 1,
+                                "3": 1,
+                            },
+                        }
+                    )
+            canonical = json.dumps(
+                records, sort_keys=True, separators=(",", ":")
+            ).encode()
+            manifest = {
+                "schema_version": 1,
+                "historical_dataset_snapshot_confirmed": True,
+                "patients": 100,
+                "cases": 200,
+                "records_sha256": hashlib.sha256(canonical).hexdigest(),
+                "records": records,
+            }
+            (copied / "posthoc_dataset_manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8"
+            )
+            output = Path(temp_dir) / "report.json"
+            result = self.run_audit(
+                "--evidence-dir", str(copied), "--output", str(output)
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            report = json.loads(output.read_text(encoding="utf-8"))
+            self.assertNotIn(
+                "full 200-case manifest unavailable",
+                "\n".join(report["closure"]["missing_artefacts"]),
+            )
+            self.assertEqual(
+                report["discovery"]["posthoc_dataset_content_audit"]["cases"],
+                200,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

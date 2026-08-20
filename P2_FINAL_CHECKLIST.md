@@ -5,23 +5,24 @@
 | Item | Status | Evidence / final action |
 |---|---|---|
 | Registered title exact and unchanged | Pass | Canonical LaTeX title and PDF cover |
-| Chapters 1--8 and references present | Pass | 71-page canonical PDF |
+| Chapters 1--8 and references present | Pass | 73-page canonical PDF |
 | Main table tied to rigorous CSV | Pass | Aggregate-consistency audit and committed evidence copies |
 | Patient split is deterministic, disjoint, and complete | Pass | Seed 42; 80/20 patients; 160/40 cases |
-| Quantitative figures read the audited CSV | Pass | Three PNGs plus provenance manifest |
-| Unsupported training curve removed | Pass | Only best epoch/final values retained |
+| Quantitative figures use audited evidence | Pass | Three summary-derived PNGs, one six-log training plot, and provenance manifest |
+| Recovered training curves | Pass | Six byte-hashed 150-epoch logs; every best row matches summary/checkpoint |
 | Invalid qualitative validation figure removed | Pass | Restoration requires explicit checkpoint and validation case |
 | False/malformed reference removed | Pass | 27 active citations; 27 verified bibliography keys |
 | Clean thesis build | Pass | Exit 0; A4; no undefined references/citations; no overfull boxes |
-| Full PDF visual QA | Pass | 71 pages rendered and reviewed |
+| Full PDF visual QA | Pass | 73 pages rendered and reviewed |
 | Final artifact manifest | Pass | Source commit, hashes, build command, versions, page/slide counts |
 | 15-minute defence package | Pass | 13-slide deck with notes plus 25-question viva bank |
 | Public-repository privacy cleanup | Partial | Current copies removed; Git-history purge remains separate |
-| Original per-case rows and training logs | Missing | Collect on original experiment machine |
+| Original per-case rows and training logs | Pass | Six 40-case tables and six 150-epoch logs recovered and cross-validated |
 | Full historical 200-case discovery manifest | Missing | Historical report retained only five examples; future pipeline records all cases |
-| Checkpoint hashes/metadata | Missing | Run closure collector on original machine |
-| Confirmed historical environment/command | Missing | Run closure collector with truthful confirmations |
-| Patient-level CIs/paired differences | Not computed | Validator computes only after all six per-case CSVs are supplied |
+| Checkpoint hashes/metadata | Partial | Six unique hashes and matching metadata recovered; historical set identity not confirmed |
+| Confirmed historical environment/command | Missing | Current environment captured; historical identity and exact command remain unconfirmed |
+| Patient-level CIs/paired differences | Pass | 10,000-replicate patient bootstrap, seed 20260820; explicitly post-hoc/descriptive |
+| Empty-empty Dice impact | Pass | Zero exact-unity values among 720 recovered class scores; branch did not affect table |
 | Independent/official test evaluation | Not performed | Explicit limitation/future work |
 
 ## Private fields before upload

@@ -7,34 +7,281 @@
     "summary_metrics.json": "04d5023d659b9688de72cc198d32d43c66af6108eb329a302648117c3bd8aaa6"
   },
   "closure": {
-    "missing_artefacts": [
-      "checkpoint_manifest.json",
-      "data_discovery_report.json (full 200-case manifest unavailable)",
-      "environment.json",
-      "per_case_Ablation_HalfMamba_UNet.csv",
-      "per_case_Ablation_NoMamba_UNet.csv",
-      "per_case_AttentionUNet.csv",
-      "per_case_NanoMambaUNet.csv",
-      "per_case_SegResNet16.csv",
-      "per_case_UNet3D.csv",
-      "run_transcript.txt",
-      "training_log_Ablation_HalfMamba_UNet.csv",
-      "training_log_Ablation_NoMamba_UNet.csv",
-      "training_log_AttentionUNet.csv",
-      "training_log_NanoMambaUNet.csv",
-      "training_log_SegResNet16.csv",
-      "training_log_UNet3D.csv"
-    ],
-    "posthoc_patient_bootstrap": {
-      "reason": "original per-case CSVs were not supplied",
-      "status": "not computed"
+    "checkpoint_manifest_summary": {
+      "all_expected_present": true,
+      "historical_checkpoint_set_confirmed": false,
+      "models": [
+        "Ablation_HalfMamba_UNet",
+        "Ablation_NoMamba_UNet",
+        "AttentionUNet",
+        "NanoMambaUNet",
+        "SegResNet16",
+        "UNet3D"
+      ],
+      "schema_version": 1,
+      "unique_checkpoint_hashes": 6
     },
-    "status": "incomplete"
+    "missing_artefacts": [
+      "checkpoint_manifest.json (historical set not confirmed)",
+      "data_discovery_report.json (full 200-case manifest unavailable)",
+      "environment.json (historical environment not confirmed)",
+      "run_transcript.txt (historical command not confirmed)"
+    ],
+    "per_case_diagnostics": {
+      "Ablation_HalfMamba_UNet": {
+        "empty_empty_rule_trigger_count": 0,
+        "empty_empty_scope_note": "The executed metric returns exactly 1.0 for an empty prediction and empty reference. Zero exact-unity class scores therefore establish that this branch did not trigger in the recovered per-case table.",
+        "exact_unity_class_dice": {
+          "dice_LV": 0,
+          "dice_MYO": 0,
+          "dice_RV": 0
+        },
+        "exact_zero_class_dice": {
+          "dice_LV": 0,
+          "dice_MYO": 0,
+          "dice_RV": 0
+        },
+        "patients": 20,
+        "rows": 40
+      },
+      "Ablation_NoMamba_UNet": {
+        "empty_empty_rule_trigger_count": 0,
+        "empty_empty_scope_note": "The executed metric returns exactly 1.0 for an empty prediction and empty reference. Zero exact-unity class scores therefore establish that this branch did not trigger in the recovered per-case table.",
+        "exact_unity_class_dice": {
+          "dice_LV": 0,
+          "dice_MYO": 0,
+          "dice_RV": 0
+        },
+        "exact_zero_class_dice": {
+          "dice_LV": 0,
+          "dice_MYO": 0,
+          "dice_RV": 0
+        },
+        "patients": 20,
+        "rows": 40
+      },
+      "AttentionUNet": {
+        "empty_empty_rule_trigger_count": 0,
+        "empty_empty_scope_note": "The executed metric returns exactly 1.0 for an empty prediction and empty reference. Zero exact-unity class scores therefore establish that this branch did not trigger in the recovered per-case table.",
+        "exact_unity_class_dice": {
+          "dice_LV": 0,
+          "dice_MYO": 0,
+          "dice_RV": 0
+        },
+        "exact_zero_class_dice": {
+          "dice_LV": 0,
+          "dice_MYO": 0,
+          "dice_RV": 0
+        },
+        "patients": 20,
+        "rows": 40
+      },
+      "NanoMambaUNet": {
+        "empty_empty_rule_trigger_count": 0,
+        "empty_empty_scope_note": "The executed metric returns exactly 1.0 for an empty prediction and empty reference. Zero exact-unity class scores therefore establish that this branch did not trigger in the recovered per-case table.",
+        "exact_unity_class_dice": {
+          "dice_LV": 0,
+          "dice_MYO": 0,
+          "dice_RV": 0
+        },
+        "exact_zero_class_dice": {
+          "dice_LV": 0,
+          "dice_MYO": 0,
+          "dice_RV": 0
+        },
+        "patients": 20,
+        "rows": 40
+      },
+      "SegResNet16": {
+        "empty_empty_rule_trigger_count": 0,
+        "empty_empty_scope_note": "The executed metric returns exactly 1.0 for an empty prediction and empty reference. Zero exact-unity class scores therefore establish that this branch did not trigger in the recovered per-case table.",
+        "exact_unity_class_dice": {
+          "dice_LV": 0,
+          "dice_MYO": 0,
+          "dice_RV": 0
+        },
+        "exact_zero_class_dice": {
+          "dice_LV": 0,
+          "dice_MYO": 0,
+          "dice_RV": 0
+        },
+        "patients": 20,
+        "rows": 40
+      },
+      "UNet3D": {
+        "empty_empty_rule_trigger_count": 0,
+        "empty_empty_scope_note": "The executed metric returns exactly 1.0 for an empty prediction and empty reference. Zero exact-unity class scores therefore establish that this branch did not trigger in the recovered per-case table.",
+        "exact_unity_class_dice": {
+          "dice_LV": 0,
+          "dice_MYO": 0,
+          "dice_RV": 0
+        },
+        "exact_zero_class_dice": {
+          "dice_LV": 0,
+          "dice_MYO": 0,
+          "dice_RV": 0
+        },
+        "patients": 20,
+        "rows": 40
+      }
+    },
+    "posthoc_patient_bootstrap": {
+      "method": "patient-level percentile bootstrap; post-hoc descriptive only",
+      "model_intervals": {
+        "Ablation_HalfMamba_UNet": {
+          "bootstrap_95_ci": [
+            0.8184699310362339,
+            0.872112266238158
+          ],
+          "patient_macro_mean_dice": 0.8495289287219444
+        },
+        "Ablation_NoMamba_UNet": {
+          "bootstrap_95_ci": [
+            0.8308404910936952,
+            0.8763850560908516
+          ],
+          "patient_macro_mean_dice": 0.8564119135340056
+        },
+        "AttentionUNet": {
+          "bootstrap_95_ci": [
+            0.6537413486822575,
+            0.8243819855898619
+          ],
+          "patient_macro_mean_dice": 0.7477815767391196
+        },
+        "NanoMambaUNet": {
+          "bootstrap_95_ci": [
+            0.8205345893899599,
+            0.8690434884652495
+          ],
+          "patient_macro_mean_dice": 0.847791743526856
+        },
+        "SegResNet16": {
+          "bootstrap_95_ci": [
+            0.8425943728163838,
+            0.8854930505901576
+          ],
+          "patient_macro_mean_dice": 0.8669763974845409
+        },
+        "UNet3D": {
+          "bootstrap_95_ci": [
+            0.7777653939959903,
+            0.8346087632204097
+          ],
+          "patient_macro_mean_dice": 0.8083380414793888
+        }
+      },
+      "paired_differences": {
+        "NanoMambaUNet_minus_Ablation_HalfMamba_UNet": {
+          "bootstrap_95_ci": [
+            -0.009093583306918555,
+            0.005513017239669938
+          ],
+          "paired_patient_difference": -0.0017371851950883864
+        },
+        "NanoMambaUNet_minus_Ablation_NoMamba_UNet": {
+          "bootstrap_95_ci": [
+            -0.014824927033235642,
+            -0.002301521257807831
+          ],
+          "paired_patient_difference": -0.00862017000714938
+        },
+        "NanoMambaUNet_minus_AttentionUNet": {
+          "bootstrap_95_ci": [
+            0.03508059933121936,
+            0.18294182527162775
+          ],
+          "paired_patient_difference": 0.10001016678773642
+        },
+        "NanoMambaUNet_minus_SegResNet16": {
+          "bootstrap_95_ci": [
+            -0.030098362316687888,
+            -0.00884008624901373
+          ],
+          "paired_patient_difference": -0.019184653957684837
+        },
+        "NanoMambaUNet_minus_UNet3D": {
+          "bootstrap_95_ci": [
+            0.028286012395595493,
+            0.050089749237522484
+          ],
+          "paired_patient_difference": 0.03945370204746723
+        }
+      },
+      "samples": 10000,
+      "seed": 20260820
+    },
+    "status": "incomplete",
+    "training_log_diagnostics": {
+      "Ablation_HalfMamba_UNet": {
+        "best_epoch": 149,
+        "best_minus_final": 0.006222291414936687,
+        "best_val_mean_dice": 0.8495289287219446,
+        "final_train_loss": 0.04118949859403074,
+        "final_val_mean_dice": 0.843306637307008,
+        "initial_train_loss": 2.1337774232029916,
+        "minimum_train_loss": 0.04118949859403074,
+        "rows": 150
+      },
+      "Ablation_NoMamba_UNet": {
+        "best_epoch": 134,
+        "best_minus_final": 0.005592208107312424,
+        "best_val_mean_dice": 0.8564119135340054,
+        "final_train_loss": 0.04588228417560458,
+        "final_val_mean_dice": 0.8508197054266929,
+        "initial_train_loss": 2.3226087510585787,
+        "minimum_train_loss": 0.04568950249813497,
+        "rows": 150
+      },
+      "AttentionUNet": {
+        "best_epoch": 62,
+        "best_minus_final": 0.030504786319215715,
+        "best_val_mean_dice": 0.7477815767391197,
+        "final_train_loss": 0.021749082254245877,
+        "final_val_mean_dice": 0.717276790419904,
+        "initial_train_loss": 1.9198788210749627,
+        "minimum_train_loss": 0.021035867842147126,
+        "rows": 150
+      },
+      "NanoMambaUNet": {
+        "best_epoch": 121,
+        "best_minus_final": 0.002880750472346927,
+        "best_val_mean_dice": 0.847791743526856,
+        "final_train_loss": 0.04229844650253654,
+        "final_val_mean_dice": 0.8449109930545091,
+        "initial_train_loss": 2.0012173876166344,
+        "minimum_train_loss": 0.04147048483137041,
+        "rows": 150
+      },
+      "SegResNet16": {
+        "best_epoch": 112,
+        "best_minus_final": 0.00427538814644024,
+        "best_val_mean_dice": 0.8669763974845409,
+        "final_train_loss": 0.04314944610232487,
+        "final_val_mean_dice": 0.8627010093381007,
+        "initial_train_loss": 1.4480290949344634,
+        "minimum_train_loss": 0.04230436242651194,
+        "rows": 150
+      },
+      "UNet3D": {
+        "best_epoch": 105,
+        "best_minus_final": 0.002867765600482741,
+        "best_val_mean_dice": 0.808338041479389,
+        "final_train_loss": 0.03564389010425657,
+        "final_val_mean_dice": 0.8054702758789063,
+        "initial_train_loss": 1.950578945875168,
+        "minimum_train_loss": 0.035611126525327566,
+        "rows": 150
+      }
+    }
   },
   "discovery": {
     "full_case_manifest": "not supplied in historical bundle",
     "paired_paths": 200,
     "patient_directories": 100,
+    "posthoc_dataset_content_audit": {
+      "status": "not supplied"
+    },
     "scope_note": "Discovery establishes non-empty paired paths, not independent NIfTI content, label-set, orientation, or spacing validation.",
     "skipped_containers": 0
   },
@@ -60,10 +307,10 @@
   "reconstructed_source_lineage": {
     "git_objects_checked": true,
     "scope": "Temporal/source context only; the lineage file explicitly does not close missing run-level provenance.",
-    "sha256": "52974fe8c25b8e06b10ad36447fcf2c3fcfa6adb3075e6cdfe2e171e5a1b4d34",
+    "sha256": "fc37e621ccc98ffd5abe3c94149329df4c8d516cb98f9395ac80b5226e9adb0e",
     "status": "validated reconstructed context"
   },
-  "schema_version": 2,
+  "schema_version": 3,
   "scope_note": "A pass establishes internal consistency of the supplied aggregate files. Only strict closure attempts to bind them to original case rows, epoch logs, checkpoints, environment, and command evidence.",
   "split": {
     "coverage": 100,

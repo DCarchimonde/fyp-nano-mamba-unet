@@ -13,9 +13,11 @@ will correctly keep the corresponding evidence gap open.
 param(
     [string]$ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path,
     [string]$ExperimentOutput = "",
+    [string]$DataDir = "",
     [string]$TrainingCommand = "",
     [switch]$ConfirmHistoricalEnvironment,
-    [switch]$ConfirmCheckpointSet
+    [switch]$ConfirmCheckpointSet,
+    [switch]$ConfirmHistoricalDatasetSnapshot
 )
 
 Set-StrictMode -Version Latest
@@ -26,6 +28,9 @@ if ([string]::IsNullOrWhiteSpace($ExperimentOutput)) {
 }
 if (-not (Test-Path -LiteralPath $ExperimentOutput -PathType Container)) {
     throw "Experiment output directory does not exist: $ExperimentOutput"
+}
+if ([string]::IsNullOrWhiteSpace($DataDir)) {
+    $DataDir = Join-Path $ProjectRoot "Data\ACDC\database\training"
 }
 
 $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -93,6 +98,23 @@ if ($LASTEXITCODE -ne 0) {
     throw "Environment capture failed with exit code $LASTEXITCODE"
 }
 
+if (Test-Path -LiteralPath $DataDir -PathType Container) {
+    $datasetArgs = @(
+        (Join-Path $ProjectRoot "scripts\p2_dataset_manifest.py"),
+        "--data-dir", $DataDir,
+        "--output", (Join-Path $stage "posthoc_dataset_manifest.json")
+    )
+    if ($ConfirmHistoricalDatasetSnapshot) {
+        $datasetArgs += "--historical-dataset-snapshot-confirmed"
+    }
+    & $python @datasetArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "Dataset manifest command failed with exit code $LASTEXITCODE"
+    }
+} else {
+    Write-Warning "ACDC data directory unavailable; no post-hoc content manifest: $DataDir"
+}
+
 $transcriptPath = Join-Path $stage "run_transcript.txt"
 if ([string]::IsNullOrWhiteSpace($TrainingCommand)) {
     @(
@@ -107,15 +129,23 @@ if ([string]::IsNullOrWhiteSpace($TrainingCommand)) {
     ) | Set-Content -LiteralPath $transcriptPath -Encoding UTF8
 }
 
-$hashLines = Get-ChildItem -LiteralPath $stage -File | Sort-Object Name | ForEach-Object {
-    $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-    "$hash  $($_.Name)"
-}
-$hashLines | Set-Content -LiteralPath (Join-Path $stage "SHA256SUMS.txt") -Encoding ASCII
-
 $auditScript = Join-Path $ProjectRoot "src\22_p2_evidence_audit.py"
 & $python $auditScript --evidence-dir $stage --output (Join-Path $stage "evidence_audit_report.json") --strict-closure
 $auditExit = $LASTEXITCODE
+if ($auditExit -notin @(0, 2)) {
+    throw "Evidence audit failed because supplied files are invalid (exit $auditExit)"
+}
+
+# Hash only after the audit report exists so every collected evidence file is
+# covered. SHA256SUMS.txt itself is deliberately excluded to avoid recursion.
+$hashLines = Get-ChildItem -LiteralPath $stage -File |
+    Where-Object { $_.Name -ne "SHA256SUMS.txt" } |
+    Sort-Object Name |
+    ForEach-Object {
+        $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+        "$hash  $($_.Name)"
+    }
+$hashLines | Set-Content -LiteralPath (Join-Path $stage "SHA256SUMS.txt") -Encoding ASCII
 
 Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zipPath -CompressionLevel Optimal
 Write-Host "Closure bundle: $zipPath"
@@ -123,4 +153,5 @@ if ($auditExit -eq 0) {
     Write-Host "Strict closure audit: PASS"
 } else {
     Write-Warning "Strict closure audit is still incomplete (exit $auditExit). Read evidence_audit_report.json and console warnings."
+    exit 2
 }

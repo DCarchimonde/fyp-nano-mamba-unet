@@ -89,7 +89,9 @@ systems but does not isolate a pure causal effect of the gate.
 
 The pipeline assigns Dice equal to 1.0 when both masks are empty. This convention
 is implemented consistently, but it can increase class averages for truly absent
-structures and should be reported explicitly.
+structures and should be reported explicitly. The recovered 240 case rows contain
+720 foreground class scores, none exactly equal to 1.0, so that special branch did
+not affect the reported table.
 
 ### 13. Why report parameter count and FPS together?
 
@@ -100,10 +102,11 @@ that parameter count alone does not predict measured latency.
 
 ### 14. Can the FPS numbers be reproduced exactly?
 
-Not from the supplied bundle alone. The benchmark procedure is known—batch one,
-random 256×256×16 input, five warm-ups, and 30 timed runs—but the original
-hardware and software environment record is missing. I therefore treat FPS as a
-recorded benchmark, not a portable hardware-independent property.
+Not exactly. The benchmark procedure is known—batch one, random 256×256×16
+input, five warm-ups, and 30 timed runs. A current-machine capture records
+PyTorch 2.7.1, MONAI 1.5.2, CUDA 11.8, cuDNN 9.1, and an RTX 4060 Laptop GPU,
+but it has not been confirmed as the historical benchmark environment. I
+therefore treat FPS as a recorded benchmark, not a portable property.
 
 ## Results and interpretation
 
@@ -135,9 +138,9 @@ conclusion.
 ### 19. What did the Half-Mamba ablation show?
 
 Half-Mamba achieved 84.95%, 0.174 percentage points above Nano-Mamba in the
-aggregate table. The difference is small and cannot be treated as statistically
-meaningful without patient-level paired uncertainty estimates and repeated
-seeds.
+aggregate table. The recovered paired patient-bootstrap interval for Nano minus
+Half-Mamba is -0.91 to +0.55 percentage points, so it crosses zero. The ordering
+is not resolved by this single split, and repeated seeds are still needed.
 
 ### 20. Which anatomical class was hardest?
 
@@ -149,35 +152,40 @@ explanation directly.
 
 ### 21. Are the differences statistically significant?
 
-That cannot be concluded from the available aggregate CSV. The original
-per-patient rows were not supplied, so paired confidence intervals and
-hypothesis tests cannot be reconstructed. The final thesis therefore reports
-descriptive differences only.
+No significance claim is made. The recovered per-case rows support post-hoc
+patient-level bootstrap intervals: Nano minus UNet is +2.83 to +5.01 percentage
+points; Nano minus No-Mamba is -1.48 to -0.23; and Nano minus Half-Mamba is
+-0.91 to +0.55. These are descriptive intervals on the validation patients
+used for checkpoint selection, not pre-registered tests or independent-test
+evidence, and no p-values are reported.
 
 ## Reproducibility and limitations
 
 ### 22. What evidence has been independently audited?
 
-The aggregate CSV and JSON agree arithmetically; the seed-42 patient split is
-complete and disjoint; data-discovery counts agree with the split; and all final
-quantitative figures are regenerated from the audited CSV. The audit script
-reports an aggregate-consistency pass. That result is deliberately narrower
-than an end-to-end provenance or reproducibility claim.
+The aggregate CSV/JSON, seed-42 split, six 40-case tables, six 150-epoch logs,
+and six checkpoint metadata/hash records agree. Every best log row and
+checkpoint epoch/Dice matches the table. The audit also verifies that the empty
+class branch did not fire and regenerates patient-level intervals and figures
+from the recovered records. This is stronger than aggregate arithmetic, but it
+is still narrower than complete historical run attestation.
 
 ### 23. What remains missing from the original experiment evidence?
 
-The supplied bundle lacks the original per-case metric rows, epoch logs,
-checkpoint-identity manifest, confirmed environment capture, and a complete
-rerun transcript. The strict evidence-closure audit therefore remains
-incomplete, and the thesis states these limitations explicitly.
+Four historical links remain open: the currently found checkpoint directory is
+not confirmed unchanged from training day; the current environment is not
+confirmed as historical; the exact command is unconfirmed; and the old
+discovery report lacks a complete 200-case content manifest. The strict audit
+therefore remains incomplete even though the numerical and checkpoint-metadata
+consistency checks now pass.
 
 ### 24. How would you strengthen the study next?
 
-I would recover or regenerate per-patient outputs; run multiple seeds; use a
-separate test cohort; add matched-capacity ablations; report paired bootstrap
-confidence intervals, surface-distance metrics, and pathology-stratified
-results; and validate externally. Only after that would I extend the model to
-full cine sequences and evaluate temporal consistency or motion-related outputs.
+I would confirm the remaining historical provenance, run multiple seeds, use a
+separate test cohort, add matched-capacity ablations, report surface-distance
+and pathology-stratified results, and validate externally. Only after that
+would I extend the model to full cine sequences and evaluate temporal
+consistency or motion-related outputs.
 
 ### 25. What is the one-sentence conclusion you can defend?
 

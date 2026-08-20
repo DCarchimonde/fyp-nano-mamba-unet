@@ -26,3 +26,13 @@
 *.pth binary
 *.pt binary
 *.zip binary
+
+# Preserve byte-identical recovered Windows evidence (including CRLF/BOM).
+evidence/rigorous_patient_split/per_case_*.csv -text
+evidence/rigorous_patient_split/training_log_*.csv -text
+evidence/rigorous_patient_split/checkpoint_manifest.json -text
+evidence/rigorous_patient_split/environment.json -text
+evidence/rigorous_patient_split/run_transcript.txt -text
+evidence/rigorous_patient_split/RECOVERED_CLOSURE_SHA256SUMS.txt -text
+evidence/rigorous_patient_split/recovered_collector_audit_report.json -text
+evidence/rigorous_patient_split/posthoc_dataset_manifest.json -text

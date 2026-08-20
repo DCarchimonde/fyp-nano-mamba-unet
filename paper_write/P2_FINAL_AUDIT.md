@@ -30,20 +30,23 @@ The deadline strategy is therefore:
 **Status: CONDITIONALLY READY FOR PRIVATE SUBMISSION.**
 
 The audited branch now has no open code, thesis, result-table, figure, or
-presentation P0 defect. Unsupported qualitative and learning-curve claims were
-removed; the bibliography, scientific terminology, canonical PDF, quantitative
+presentation P0 defect. Unsupported qualitative evidence remains removed; the
+learning curve has been restored only after recovery of six byte-hashed epoch
+logs. The bibliography, scientific terminology, canonical PDF, quantitative
 figures, privacy posture, evidence validator, reproducibility guide, and defence
-materials were corrected and verified. The aggregate-consistency audit passes;
-this establishes arithmetic and cross-file consistency, not end-to-end run
-provenance.
+materials were corrected and verified. The aggregate-consistency audit plus
+recovered case/log/checkpoint checks pass; this establishes a strong cross-file
+chain, not complete historical run attestation.
 
-The qualification is deliberate: strict evidence closure remains incomplete
-because the supplied bundle did not contain the original per-case rows,
-training logs, checkpoint manifest, confirmed historical environment, or
-confirmed command transcript. These gaps are recorded as accepted limitations,
-not reconstructed. Before portal upload, the candidate must create a private,
-ignored metadata file, fill the institution-required declaration fields, sign
-through the accepted workflow, rebuild, and visually inspect that private PDF.
+The qualification is deliberate but narrower after recovery of
+`p2_closure_20260821_020939.zip`. All six original-format per-case tables, all
+six 150-epoch logs, and metadata plus unique hashes for all six checkpoints now
+pass cross-file validation. Strict evidence closure remains incomplete only
+because the historical checkpoint-set identity, environment identity, exact
+command, and full 200-case dataset snapshot are unconfirmed. Before portal
+upload, the candidate must also create a private, ignored metadata file, fill
+the institution-required declaration fields, sign through the accepted
+workflow, rebuild, and visually inspect that private PDF.
 
 ## 2. Non-negotiable scientific boundaries
 
@@ -69,6 +72,10 @@ through the accepted workflow, rebuild, and visually inspect that private PDF.
 | Patient split | Seed 42; 80 train patients and 20 validation patients; no overlap; all patient IDs 001–100 assigned; reproduced exactly with `random.Random(42)` |
 | Discovery report | Reports 100 patient directories, 200 cases, and zero skipped containers, but records only five example cases rather than a complete manifest |
 | Reconstructed source lineage | Git contains the rigorous pipeline and bottleneck source before the ZIP summary timestamp; hashes and commits are recorded in `historical_source_lineage.json`. This supports a plausible timeline but does not prove which command/checkpoints generated the aggregate files. |
+| Recovered closure ZIP | `p2_closure_20260821_020939.zip`, SHA-256 `16fbbe31db97e9695fc78aadbb46e9cf04f99fa1e1fd2d9e735f03d75d14a3b3`; all 19 ZIP checksum entries pass. It supplies six per-case tables, six epoch logs, six checkpoint records, a current environment capture, and an explicitly unconfirmed transcript. |
+| Per-case validation | Six files × 40 cases; identical 20-patient/two-case coverage; every class mean and aggregate exactly reproduces the main table. |
+| Epoch logs | Six files × 150 contiguous epochs; every best row matches the summary and checkpoint metadata. |
+| Checkpoint records | Six readable, internally consistent records with unique full-file SHA-256 hashes; historical directory identity is not yet user-confirmed. |
 
 ### 3.2 Verified main results
 
@@ -86,7 +93,14 @@ Exact comparisons relevant to the thesis:
 - Nano-Mamba U-Net exceeds UNet3D by **3.945 percentage points** in validation mean Dice and uses **69.714% fewer** reported parameters.
 - SegResNet16 exceeds Nano-Mamba U-Net by **1.918 percentage points**; Nano-Mamba uses **69.021% fewer** reported parameters.
 - No-Mamba exceeds Nano-Mamba by **0.862 percentage points** while using **57.076% more** reported parameters.
-- Half-Mamba exceeds Nano-Mamba by **0.174 percentage points**. Without per-case uncertainty, this difference must not be described as meaningful.
+- Half-Mamba exceeds Nano-Mamba by **0.174 percentage points**. The paired post-hoc interval for Nano minus Half-Mamba is **[-0.909, +0.551] percentage points**, so this small ordering is unresolved.
+
+Recovered post-hoc patient-level paired intervals (10,000 percentile-bootstrap
+replicates, seed 20260820) are **[+2.829, +5.009]** percentage points for Nano
+minus UNet3D, **[+3.508, +18.294]** for Nano minus Attention U-Net,
+**[-3.010, -0.884]** for Nano minus SegResNet16, and **[-1.482, -0.230]** for
+Nano minus No-Mamba. They are descriptive intervals on the validation patients
+used for checkpoint selection, not pre-registered significance tests.
 
 All values above are rounded only for presentation; the audited CSV remains the sole numerical source.
 
@@ -162,18 +176,24 @@ Every cited entry must pass all of the following before submission:
 5. Duplicate and uncited records are removed from the submission bibliography database.
 6. The PDF reference list is visually inspected after a clean BibTeX rebuild.
 
-## 9. Evidence still required from the original experiment machine
+## 9. Remaining confirmations from the original experiment machine
 
-To close P0 without retraining, collect the following original artefacts in one operation:
+The numerical artefacts, epoch logs, and checkpoint metadata/hashes have now
+been recovered. Complete historical attestation still requires evidence or a
+truthful candidate confirmation for four links:
 
-- every `per_case_<model>.csv` and `training_log_<model>.csv` generated by the rigorous pipeline;
-- `patient_split_seed42.json`, `summary_metrics.csv`, `summary_metrics.json`, and the complete discovery report;
-- checkpoint metadata and SHA-256 for every `best_<model>.pth` (the large weight files need not be committed publicly);
-- Python, PyTorch, MONAI, NumPy, CUDA/cuDNN, driver, OS, CPU, GPU, and RAM information;
-- the exact command and working-directory paths used for the final experiment;
-- if a qualitative figure is retained, the rigorous Nano-Mamba checkpoint and a validation case accessible on the local machine.
+- the six current checkpoint files are unchanged from the 9 June run;
+- the current `nanomamba` environment is the historical training/benchmark
+  environment;
+- the exact command and working directory are recovered from terminal, IDE, or
+  contemporaneous notes; and
+- the current ACDC tree is the historical dataset snapshot, after the new
+  200-case NIfTI content-manifest tool passes.
 
-If the original artefacts cannot be recovered before the deadline, the defensible fallback is to remove unsupported learning-curve and qualitative claims, label uncertainty/statistical analysis as unavailable, and submit only claims directly supported by the audited summary table and split.
+If any link cannot be established, leave its confirmation flag false. The
+thesis already reports the boundary, so no reconstruction or guessed command is
+permitted. A qualitative figure remains optional and excluded from the current
+submission evidence.
 
 ## 10. Final status matrix
 
@@ -182,30 +202,30 @@ If the original artefacts cannot be recovered before the deadline, the defensibl
 | ID | Final status | Resolution or retained boundary |
 |---|---|---|
 | P0-01 | Closed | Visualisation now fails closed on checkpoint/split/case provenance; the invalid qualitative figure and caption were removed. |
-| P0-02 | Closed | Unsupported exact learning-curve values and curve figure were removed. |
+| P0-02 | Closed | Six recovered 150-epoch logs are byte-hashed and cross-validated; the new curve is generated directly from them. |
 | P0-03 | Closed | The false record was removed; 27 active citations map to 27 cleaned bibliography entries. |
-| P0-04 | Closed | One canonical 71-page PDF is built from the audited source; `FINAL_ARTIFACT_MANIFEST.json` binds source commit and hashes. |
-| P0-05 | Closed | Figure paths are relative; all three quantitative figures are CSV-derived and present. |
+| P0-04 | Closed | One canonical 73-page PDF is built from the audited source; `FINAL_ARTIFACT_MANIFEST.json` binds source commit and hashes. |
+| P0-05 | Closed | Figure paths are relative; three summary-derived figures and one six-log training figure are present with hash provenance. |
 | P0-06 | Accepted limitation | Sensitive current-branch copies were removed. Historical Git objects remain recoverable until a separately coordinated history rewrite. |
-| P0-07 | Accepted limitation | The empty-empty Dice convention is disclosed. Original per-case rows were not supplied, so its historical aggregate impact cannot be measured. |
-| P0-08 | Accepted limitation | A strict validator and Windows closure collector now exist, but the original-machine artefacts remain unavailable in the supplied bundle. |
+| P0-07 | Closed | The convention is disclosed; zero of 720 recovered class scores equals 1.0, so the empty-empty branch did not affect the reported table. |
+| P0-08 | Partially closed | Case rows, logs, and checkpoint records are recovered and validated. Four historical identity/command/data links remain accepted limitations. |
 
 ### P1
 
 | ID | Final status | Resolution or retained boundary |
 |---|---|---|
 | P1-01 | Closed | All final materials use “held-out validation” and explicitly deny an independent test estimate. |
-| P1-02 | Accepted limitation | No significance claim is made; bootstrap analysis activates only after all original per-case files are recovered. |
+| P1-02 | Closed with boundary | Deterministic patient-level paired bootstrap intervals are reported as post-hoc descriptive analyses; no significance or independent-test claim is made. |
 | P1-03 | Closed | Exact batch sizes and BatchNorm/fairness limitations are disclosed. |
 | P1-04 | Closed | No-Mamba is presented as a non-parameter-matched architectural ablation, not a causal gate test. |
 | P1-05 | Closed | Historical resize preprocessing and geometry limitations are documented without altering reported weights. |
-| P1-06 | Accepted limitation | Future runs record a full de-identified manifest and reject invalid cached splits; the historical bundle retains only five example cases, so the strict audit keeps this gap open. |
+| P1-06 | Accepted limitation | A new post-hoc 200-case NIfTI content-manifest tool is provided; historical dataset identity remains open until the candidate runs it and truthfully confirms the snapshot. |
 | P1-07 | Closed | Data/output/project/model locations are CLI arguments; historical paths remain compatibility defaults only. |
-| P1-08 | Closed | Quantitative figures read the audited CSV using a headless backend and write hash provenance. |
+| P1-08 | Closed | Quantitative figures read the audited CSV/logs using a headless backend and write hash provenance. |
 | P1-09 | Closed | Code and thesis now describe an implementation-faithful Mamba-inspired gate, preserve checkpoint aliases, and disclose unused projection outputs. |
-| P1-10 | Closed | Future checkpoints and runs record expanded provenance; unavailable historical fields remain explicitly unknown. |
-| P1-11 | Accepted limitation | Benchmark procedure and scope are disclosed, but the original runtime environment was not supplied. |
-| P1-12 | Closed | Data-free evidence regression tests and optional PyTorch shape/compatibility tests were added. |
+| P1-10 | Partially closed | Six checkpoint hashes/metadata are recovered and internally consistent; historical set identity remains unconfirmed. Future manifests also capture shape fingerprints and mtimes. |
+| P1-11 | Accepted limitation | A detailed current RTX 4060/PyTorch environment capture exists, but its identity with the historical benchmark environment is unconfirmed. |
+| P1-12 | Closed | Seventeen data-free evidence/collection/visualisation regression tests and three optional PyTorch shape/compatibility tests were added. |
 | P1-13 | Closed | Architecture caption and equations now match the executed augmenting gate and residual graph. |
 
 ### P2
@@ -216,7 +236,7 @@ If the original artefacts cannot be recovered before the deadline, the defensibl
 | P2-02 | Closed | The canonical thesis selects the new `noglossaries` class option and no longer creates an unused glossary. |
 | P2-03 | Closed | Duplicate, unused, malformed, and false bibliography entries were removed; the final PDF was rebuilt and inspected. |
 | P2-04 | Closed | Obsolete P1 entry point/chapters and conflicting P1 binaries were removed; historical exploratory scripts are quarantined by a non-evidence notice. |
-| P2-05 | Closed | Invalid float content was removed; all 71 final pages were rendered and reviewed. |
+| P2-05 | Closed | Invalid float content was removed; all 73 final pages were rendered and reviewed. |
 | P2-06 | Closed | `WORD_COUNT.md` records the command, chapter counts, total, and counting boundary. |
 | P2-07 | Closed | Thesis, boundary sheet, slides, and Q&A all give the same fixed-title scope defence. |
 | P2-08 | Accepted limitation | Active final scripts were professionalised; informal exploratory code remains only under the clearly labelled `src/legacy/` archive. |
@@ -244,9 +264,39 @@ added the following corrections without changing the reported result values:
   conversion while retaining rejection of every substantive source change, and
   added repository line-ending policy plus a dedicated regression test; and
 - isolated TeX font caches in the temporary build directory and rechecked all
-  71 pages, including the corrected page break at the end of the limitations.
+  73 pages, including the corrected page break at the end of the limitations.
 
-## 12. Resolution log
+## 12. Recovered closure re-review (2026-08-21)
+
+The uploaded closure ZIP was unpacked without trusting filenames, verified
+against its internal checksum list, and audited independently of the collector
+report. The following additional checks now pass:
+
+- all 240 case rows have identical validation-case coverage across models and
+  exactly reproduce the four summary Dice values;
+- all 900 epoch rows are finite and contiguous, and each selected best row
+  matches both the summary and recovered checkpoint record;
+- all six checkpoint records have unique hashes, readable state dictionaries,
+  expected model/config metadata, and matching selected epoch/Dice values;
+- a 100,000-replicate independent NumPy cross-check reproduced the direction
+  and approximate intervals of the validator's deterministic 10,000-replicate
+  patient bootstrap;
+- zero exact-unity scores among 720 class entries close the empty-empty metric
+  concern for this result table; and
+- ZIP member times form a plausible sequential run from discovery through the
+  six models and final summary, while explicitly remaining non-attestational
+  because ZIP timestamps encode no timezone or signer.
+
+The collector was also corrected so future `SHA256SUMS.txt` files include the
+generated audit report, checkpoint manifests include state-dictionary shape
+fingerprints and mtimes, environment captures include Conda history and
+`nvidia-smi` with credentials/user-home paths redacted, and a new dataset tool
+audits all 200 three-dimensional NIfTI pairs without copying patient data. The
+collector now returns exit 2 after writing an incomplete bundle and rejects an
+unexpected audit exit as invalid evidence, so automation cannot report false
+strict closure.
+
+## 13. Resolution log
 
 | Commit | Date | Issues changed | Verification |
 |---|---|---|---|

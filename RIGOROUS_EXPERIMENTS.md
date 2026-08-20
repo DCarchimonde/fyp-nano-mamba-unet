@@ -24,12 +24,12 @@ python src\22_p2_evidence_audit.py `
 python -m unittest discover -s tests -v
 ```
 
-The first command must print `AGGREGATE CONSISTENCY PASS`. `Strict closure
-status: incomplete` is the expected truthful result until the original
-experiment machine supplies the full discovery manifest, per-case CSVs,
-training logs, checkpoint manifest, confirmed environment, and confirmed
-historical command. The default pass establishes internal consistency only. To
-make the provenance gaps fail a CI/submission gate:
+The first command must print `AGGREGATE CONSISTENCY PASS`. The recovered six
+per-case tables, six logs, and six checkpoint records are now validated by this
+command. `Strict closure status: incomplete` remains the expected truthful
+result until checkpoint-set identity, the historical environment, the exact
+command, and the complete historical dataset snapshot are confirmed. To make
+those remaining provenance gaps fail a CI/submission gate:
 
 ```powershell
 python src\22_p2_evidence_audit.py --strict-closure
@@ -55,29 +55,36 @@ metadata for the already reported experiment.
 
 ## Collect the original closure evidence on Windows
 
-Run this from the original experiment environment. Confirm the switches only
-if the current environment and checkpoint directory are the historical ones:
+Run this first without confirmation switches. It collects the current facts and
+also audits all 200 NIfTI image/label pairs when `-DataDir` exists:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\collect_p2_closure_bundle.ps1 `
   -ProjectRoot D:\AI_FYP `
-  -TrainingCommand "python src\21_rigorous_experiment_pipeline.py" `
-  -ConfirmHistoricalEnvironment `
-  -ConfirmCheckpointSet
+  -ExperimentOutput D:\AI_FYP\experiment_outputs\rigorous_patient_split `
+  -DataDir D:\AI_FYP\Data\ACDC\database\training
 ```
 
-The collector copies small CSV/JSON records, hashes checkpoints without placing
-weights in the ZIP, captures software/hardware details, runs the strict audit,
-and writes a closure ZIP under the rigorous output directory. A normal Git
-commit should not include ACDC data or checkpoint weights.
+Inspect checkpoint timestamps, Conda history, and terminal/PyCharm history
+before adding any of `-ConfirmCheckpointSet`,
+`-ConfirmHistoricalEnvironment`, `-TrainingCommand`, or
+`-ConfirmHistoricalDatasetSnapshot`. The collector copies only small
+CSV/JSON/metadata records, hashes checkpoints without placing weights in the
+ZIP, and never copies ACDC data.
+
+The ZIP is written even when historical confirmation remains incomplete, but
+the collector then returns exit code 2 so automation cannot mistake a partial
+bundle for strict closure. Exit code 1 or another unexpected audit failure is
+treated as invalid evidence and stops collection.
 
 ## Statistical scope
 
-If all six original `per_case_*.csv` files are recovered, the validator computes
-deterministic patient-level percentile-bootstrap 95% confidence intervals and
-paired Nano-Mamba differences. These are explicitly post-hoc descriptive
-analyses. They do not turn the single 80/20 split into an independent test set
-and do not replace multi-seed or external validation.
+All six original `per_case_*.csv` files have been recovered. The validator now
+computes deterministic patient-level percentile-bootstrap 95% confidence
+intervals and paired Nano-Mamba differences (10,000 replicates, seed 20260820).
+These are explicitly post-hoc descriptive analyses. They do not turn the
+single 80/20 split into an independent test set and do not replace multi-seed
+or external validation.
 
 ## Historical reporting language
 
