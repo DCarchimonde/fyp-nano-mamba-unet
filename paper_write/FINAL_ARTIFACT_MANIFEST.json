@@ -1,8 +1,8 @@
 {
-  "schema_version": 1,
-  "audit_date": "2026-08-20",
+  "schema_version": 2,
+  "audit_date": "2026-08-21",
   "branch": "p2-final-audit-2026-08-20",
-  "audited_source_commit": "81e41f0bb185db616851a3bac9ccde83cb49693c",
+  "audited_source_commit": "73507db054c09efabf1a746a1111fe79ac1d9b64",
   "registered_title": "Nano-Mamba U-Net: A Spatio-Temporal Framework for Cardiac Motion Analysis",
   "scientific_scope": {
     "task": "Four-class 3D cardiac MRI segmentation of independently processed ED and ES volumes",
@@ -14,20 +14,23 @@
   },
   "main_result_evidence": {
     "pipeline": "src/21_rigorous_experiment_pipeline.py",
-    "pipeline_sha256": "fb9a3a7c0b7ace76cad9d15e57609561ac7c9fcd8a583cf6392e1c13150a4a0d",
+    "pipeline_sha256": "64e9266eff9df9591a37730b46740bff5ba4c00473165e867ffa262ce1ce9361",
     "summary_csv": "evidence/rigorous_patient_split/summary_metrics.csv",
     "summary_csv_sha256": "db5d2109f5195ad0ae7ea82d970dd57edaa9767f3b9a915e038a412a0e9cce5a",
     "split_json": "evidence/rigorous_patient_split/patient_split_seed42.json",
     "split_json_sha256": "e79f1c238d73389900364ea32a92d954458e17e461e1c81a2e595ba653456280",
     "audit_report": "evidence/rigorous_patient_split/evidence_audit_report.json",
-    "audit_report_sha256": "6ed5cbcf576d15c36e28929ad80e48fc9d1778cbcca2c256f63b512f54636761",
-    "core_evidence_status": "pass",
+    "audit_report_sha256": "bc8f872c5e7eda96fbb8d23d3f3411b564b554ca856917b379fe2f912d53a3a3",
+    "aggregate_consistency_status": "pass",
     "strict_closure_status": "incomplete",
-    "strict_closure_reason": "Original per-case rows, training logs, checkpoint manifest, confirmed historical environment, and confirmed command transcript were not supplied."
+    "strict_closure_reason": "The historical bundle lacks the full 200-case discovery manifest, original per-case rows, training logs, checkpoint manifest, confirmed historical environment, and confirmed command transcript.",
+    "historical_source_lineage": "evidence/rigorous_patient_split/historical_source_lineage.json",
+    "historical_source_lineage_sha256": "fb4e0997079dcc8fc28464438a23de08dc26a0c2f33ecbd3d22e39bfff19a516",
+    "lineage_scope": "Validated temporal/source context only; not end-to-end run provenance."
   },
   "quantitative_figures": {
     "provenance_manifest": "figures/quantitative_figure_provenance.json",
-    "provenance_manifest_sha256": "cee34e49e07451ce0bac9a88342ab4e22b51cd34f18566fcde1b1d1f149bc768",
+    "provenance_manifest_sha256": "31613b2bc47daa2dcce160ea7af725f4857b48e41a918378c25d1c212604ab28",
     "source": "Audited summary CSV",
     "count": 3
   },
@@ -35,14 +38,15 @@
     "entry_point": "paper_write/Universiti_Malaya_Thesis_Template/thesis.tex",
     "entry_point_sha256": "4da4aa15fcfd68288fa01e7e89855bcb3905ae670095b75f63ea31391eca84d5",
     "bibliography": "paper_write/Universiti_Malaya_Thesis_Template/myrefs.bib",
-    "bibliography_sha256": "a53e57cf204e9e654c69a16ea8b24341c44cd9083ca0e0fda47f74319ba9a034",
+    "bibliography_sha256": "79edb4432a8efc74da2f4177c237fcf09faef68637d4b03a5347fe2ba7271ba7",
     "pdf": "paper_write/Universiti_Malaya_Thesis_Template/thesis.pdf",
-    "pdf_sha256": "eeb4ce4cfef3696df1a0779f537138329b74fac30e3f4cd1685030a08a483fe6",
-    "bytes": 544834,
+    "pdf_sha256": "4f7b3f89bafdd858fe7cd45c0853fa0f7dc43f6b64ddd997203cf379f1a3d141",
+    "bytes": 546049,
     "pages": 71,
     "page_size": "A4 (595.276 x 841.89 pt)",
     "pdf_version": "1.5",
     "build_command": "bash scripts/build_thesis.sh",
+    "build_script_sha256": "507a02c7f1e07cb72ee3ac28ce238846a1a9275991822fabd76e36c5f64e2793",
     "acceptance_checks": [
       "Build exit status 0",
       "No undefined citations or references",
@@ -51,6 +55,12 @@
       "All 71 pages rendered and visually reviewed"
     ]
   },
+  "word_count": {
+    "method": "detex over the five active body-chapter sources, then wc -w",
+    "active_body_words": 11563,
+    "cross_check_pdf_body_words": 11667,
+    "scope": "Excludes abstracts, front matter, references, and inactive legacy files."
+  },
   "presentation": {
     "deck": "presentation/P2_Final_Defense_Tong_Siyuan.pptx",
     "deck_sha256": "f420eeb28170d218f6abef003afe0a1223fc3395e73e410965577717e6fb586f",
@@ -58,7 +68,7 @@
     "slides": 13,
     "target_duration_minutes": 15,
     "viva_bank": "presentation/P2_VIVA_QA.md",
-    "viva_bank_sha256": "f61aea5578c6399f801f06954ad6a199dd582d6246a238eb0523328d66b7943e",
+    "viva_bank_sha256": "fb037c860cf9f8bda4f61bbc6c6a1dac56a024c473aa08aad7539aa9e148c1c7",
     "qa": "Rendered all slides; slide-layout test reported no overflow; montage and individual slides visually reviewed"
   },
   "tool_versions": {
@@ -71,8 +81,10 @@
     "artifact_tool": "2.8.43"
   },
   "verification": {
-    "evidence_tests": "3 passed",
+    "data_free_tests": "8 passed",
     "pytorch_architecture_tests": "3 skipped because PyTorch is not installed in the audit environment",
+    "strict_closure_test": "expected exit 2 on documented historical evidence gaps",
+    "pdf_visual_review": "all 71 pages reviewed; final page-break correction re-rendered at full size",
     "presentation_overflow_test": "pass",
     "git_diff_check": "pass"
   },
