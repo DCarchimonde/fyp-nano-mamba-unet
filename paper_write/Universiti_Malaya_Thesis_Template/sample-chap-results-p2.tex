@@ -46,19 +46,19 @@ Nano-Mamba U-Net & 82.11 & 80.35 & 91.88 & 84.78 & \textbf{1.46} & 29.09 \\
 }
 \end{table}
 
-Compared with the 3D U-Net baseline, Nano-Mamba U-Net improved the mean DSC by 3.95 percentage points while reducing the parameter count from 4.81M to 1.46M. The parameter reduction relative to 3D U-Net is:
+Compared with the 3D U-Net baseline, Nano-Mamba U-Net improved the mean DSC by 3.95 percentage points while reducing the parameter count from 4.81M to 1.46M. Using the unrounded parameter counts from the result CSV, the reduction relative to 3D U-Net is:
 \begin{equation}
-    \frac{4.81-1.46}{4.81}\times100\% \approx 69.6\%.
+    \frac{4.808537-1.456325}{4.808537}\times100\% \approx 69.7\%.
 \end{equation}
-Compared with SegResNet16, Nano-Mamba U-Net used approximately 68.9\% fewer parameters, but its mean DSC was 1.92 percentage points lower. These results indicate that Nano-Mamba U-Net is not the highest-accuracy model in the final experiment; instead, its main advantage lies in parameter efficiency with competitive validation performance.
+Compared with SegResNet16, Nano-Mamba U-Net used approximately 69.0\% fewer parameters, but its mean DSC was 1.92 percentage points lower. These results indicate that Nano-Mamba U-Net is not the highest-accuracy model in the final experiment; instead, its main advantage lies in parameter efficiency with competitive validation performance.
 
 \section{Accuracy-Efficiency Visualization}
 Since the research question concerns both segmentation accuracy and model efficiency, the results should not be interpreted from Table \ref{tab:final_results} alone. Figure \ref{fig:accuracy_parameter_tradeoff} visualizes the relationship between validation mean Dice and trainable parameter count. A model positioned higher on the vertical axis has stronger Dice performance, while a model positioned further left has fewer parameters.
 
 \begin{figure}[hbt!]
     \centering
-    \includegraphics[width=0.85\textwidth]{D:/AI_FYP/figures/accuracy_parameter_tradeoff.png}
-    \caption{Accuracy-parameter trade-off across evaluated models. SegResNet16 obtains the highest Dice score, while Nano-Mamba U-Net occupies the lowest-parameter region with competitive validation performance.}
+    \includegraphics[width=0.85\textwidth]{accuracy_parameter_tradeoff.png}
+    \caption{Accuracy-parameter trade-off generated directly from the audited summary CSV. SegResNet16 obtains the highest held-out validation Dice score, while Nano-Mamba U-Net occupies the lowest-parameter region.}
     \label{fig:accuracy_parameter_tradeoff}
 \end{figure}
 
@@ -68,8 +68,8 @@ Figure \ref{fig:accuracy_speed_tradeoff} visualizes the relationship between val
 
 \begin{figure}[hbt!]
     \centering
-    \includegraphics[width=0.85\textwidth]{D:/AI_FYP/figures/accuracy_speed_tradeoff.png}
-    \caption{Accuracy-speed trade-off across evaluated models. The figure provides an engineering view of validation Dice relative to inference speed on the experimental hardware.}
+    \includegraphics[width=0.85\textwidth]{accuracy_speed_tradeoff.png}
+    \caption{Accuracy-speed trade-off generated directly from the audited summary CSV. The figure provides an engineering view of held-out validation Dice relative to batch-one inference speed in the recorded experiment.}
     \label{fig:accuracy_speed_tradeoff}
 \end{figure}
 
@@ -80,9 +80,9 @@ Attention U-Net achieved the lowest mean DSC among the evaluated models, at 74.7
 
 SegResNet16 achieved the highest mean DSC, with the best RV, MYO, and LV scores. This suggests that residual convolutional modeling remains very strong for this dataset. Since SegResNet16 outperformed Nano-Mamba U-Net by 1.92 percentage points, the thesis must not describe Nano-Mamba U-Net as the best model by Dice. Instead, SegResNet16 should be acknowledged as the accuracy leader in the final experiment.
 
-The No-Mamba ablation achieved 85.64\% mean DSC, which is slightly higher than Nano-Mamba U-Net. This is a particularly important result because it prevents over-claiming the Mamba-inspired module. The current bottleneck design did not produce the strongest Dice among the ablations. However, Nano-Mamba U-Net retained the smallest parameter count, so the ablation still supports an efficiency-oriented interpretation.
+The No-Mamba ablation achieved 85.64\% mean DSC, which is 0.86 percentage points higher than Nano-Mamba U-Net. This is a particularly important negative result because it prevents over-claiming the Mamba-inspired module. The No-Mamba design is not parameter matched and uses 2.29M parameters compared with Nano-Mamba's 1.46M, so the comparison does not isolate sequence gating as the cause of the difference. It shows only that the executed No-Mamba architecture obtained higher Dice while Nano-Mamba retained the smaller reported parameter count.
 
-The Half-Mamba variant achieved 84.95\% mean DSC, close to Nano-Mamba U-Net. The small difference between the Half-Mamba and full Nano-Mamba variants suggests that simply increasing bottleneck capacity does not automatically produce better validation Dice. The relationship between bottleneck size, sequence modeling, and segmentation accuracy appears to be non-linear and should be investigated further in future work.
+The Half-Mamba variant achieved 84.95\% mean DSC, 0.17 percentage points above Nano-Mamba U-Net. In the absence of per-patient uncertainty or paired confidence intervals, this small difference should be reported descriptively and not interpreted as evidence that one variant is meaningfully better. A matched-capacity, multi-seed experiment would be required to study bottleneck size more reliably.
 
 \section{Class-Specific Performance}
 Across most models, LV segmentation achieved the highest Dice score, while MYO segmentation was generally more difficult. This pattern is consistent with the anatomical properties of cardiac MRI: the LV cavity is usually more clearly defined, whereas the myocardium is a thinner ring-like structure affected by papillary muscles, partial volume effects, and boundary ambiguity.
@@ -95,54 +95,13 @@ This difference is clinically plausible because the myocardium is more difficult
 
 \begin{figure}[hbt!]
     \centering
-    \includegraphics[width=0.90\textwidth]{D:/AI_FYP/figures/class_specific_dice_scores.png}
-    \caption{Class-specific validation Dice scores for selected models. The figure highlights that Nano-Mamba U-Net improves over the 3D U-Net baseline, while SegResNet16 achieves the strongest overall Dice performance.}
+    \includegraphics[width=0.90\textwidth]{class_specific_dice_scores.png}
+    \caption{Class-specific held-out validation Dice scores generated directly from the audited summary CSV. Nano-Mamba U-Net improves over the evaluated 3D U-Net baseline, while SegResNet16 achieves the strongest scores.}
     \label{fig:dsc_bar_chart}
 \end{figure}
 
-\section{Training Dynamics}
-The training logs showed that Nano-Mamba U-Net improved rapidly during the first 30 epochs and continued to improve more gradually afterwards. The best Nano-Mamba checkpoint was selected at epoch 121, where the validation mean DSC reached 84.78\%. The validation curve did not increase indefinitely, which supports the need for validation-based checkpoint selection rather than saving the model only by training loss.
-
-The early-stage increase from 3.97\% at epoch 1 to 78.89\% at epoch 30 suggests that the network learned the main anatomical structures relatively quickly. After epoch 30, improvements became smaller and more variable. This is typical in segmentation training: once the model has learned coarse localization, later epochs refine boundaries and class-specific details rather than producing large jumps in mean Dice.
-
-\begin{figure}[hbt!]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    width=0.9\textwidth,
-    height=7cm,
-    xlabel={Training Epochs},
-    ylabel={Validation Mean DSC (\%)},
-    xmin=0, xmax=150,
-    ymin=0, ymax=90,
-    legend pos=south east,
-    legend style={draw=black!50, font=\small},
-    grid=major,
-    major grid style={dashed, gray!40},
-    axis lines=left,
-    thick
-]
-\addplot[mark=*, thick] coordinates {
-    (1,3.97) (10,16.56) (20,59.96) (30,78.89) (40,79.04)
-    (50,81.52) (60,81.69) (70,83.65) (80,83.75) (90,83.90)
-    (100,84.13) (110,83.87) (120,84.42) (130,84.05) (140,84.67) (150,84.49)
-};
-\addlegendentry{Nano-Mamba Validation Mean DSC}
-\end{axis}
-\end{tikzpicture}
-\caption{Validation mean DSC trend of Nano-Mamba U-Net during the 150-epoch training run. The final reported model was selected by the best validation mean Dice, not by the final epoch or training loss.}
-\label{fig:loss_curve}
-\end{figure}
-
-\section{Qualitative Visual Analysis}
-Figure \ref{fig:qualitative} provides a representative visual comparison between the input MRI slice, expert ground truth, and Nano-Mamba U-Net prediction. The purpose of this qualitative result is to illustrate the spatial form of the segmentation output, not to replace the quantitative validation table. A qualitative example is useful for verifying that the model produces anatomically meaningful masks rather than only numerical scores. However, a single visual case cannot establish generalization. For this reason, the qualitative figure is treated as supplementary evidence. The main evidence remains the held-out validation table computed over all validation cases.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{D:/AI_FYP/figures/qualitative_result.png}
-    \caption{Qualitative comparison on a representative validation slice. From left to right: original MRI slice, ground truth, and Nano-Mamba U-Net prediction. Blue corresponds to RV, green to MYO, and red to LV.}
-    \label{fig:qualitative}
-\end{figure}
+\section{Checkpoint Selection Evidence}
+The audited summary records that the selected Nano-Mamba U-Net checkpoint was obtained at epoch 121 with a held-out validation mean DSC of 84.78\%. The full per-epoch training log was not present in the final-audit bundle, so this thesis does not reproduce intermediate learning-curve points that cannot be checked against the primary CSV. Likewise, the available legacy qualitative image could not be tied to both the rigorous checkpoint and a validation patient, so it is not presented as evidence. These omissions preserve a clear distinction between verified results and unsupported illustrations. The main empirical evidence remains Table \ref{tab:final_results}, generated from all 40 held-out validation cases.
 
 \clearpage
 
@@ -178,7 +137,7 @@ LV segmentation was the easiest class across the main models, while MYO segmenta
 The class-specific findings support the need for reporting RV, MYO, and LV separately. If only mean Dice were reported, the relatively strong LV score could hide weaker MYO performance. Since cardiac measurements such as myocardial mass depend on MYO segmentation, MYO accuracy cannot be treated as a secondary detail. A future version of the project should therefore include additional metrics such as Hausdorff Distance or Average Surface Distance to better evaluate boundary quality.
 
 \section{Relevance to Cardiac Motion Analysis}
-The thesis title includes cardiac motion analysis, but the implemented experiment is segmentation-based. This is scientifically acceptable only if the relationship is clearly stated. The model does not estimate a dense displacement field, optical flow, or temporal deformation map. Instead, it segments labelled 3D frames corresponding to clinically meaningful cardiac phases. These masks can support motion-related functional measurements such as volume change between ED and ES.
+The thesis title includes cardiac motion analysis, but the implemented experiment is segmentation-based. The model does not estimate a dense displacement field, optical flow, temporal deformation map, or temporal consistency. Instead, it segments labelled ED and ES 3D volumes as separate cases. In the input tensor, $D$ denotes anatomical slice depth rather than time. The resulting masks could support later computation of phase-specific volumes, but this experiment does not calculate ejection fraction or other motion-related clinical indices.
 
 This limitation does not invalidate the project, but it narrows the claim. The correct interpretation is that Nano-Mamba U-Net contributes to segmentation as a prerequisite for cardiac functional analysis. A stronger future version would process complete 4D cine-MRI sequences and evaluate temporal consistency directly.
 
@@ -186,15 +145,20 @@ This limitation does not invalidate the project, but it narrows the claim. The c
 Several limitations must be acknowledged.
 
 \begin{enumerate}
-    \item \textbf{Internal validation only:} The final experiment used a deterministic patient-level validation split of the ACDC training cohort. It does not represent the official hidden ACDC test set. Therefore, the reported Dice scores should be interpreted as internal validation results rather than official challenge performance.
+    \item \textbf{Internal validation and checkpoint reuse:} The final experiment used a deterministic patient-level validation split of the ACDC training cohort. The same validation patients were inspected across epochs to select each checkpoint and were then used for the descriptive result table. This is not an independent test set and does not represent official ACDC challenge performance.
+    \item \textbf{Single split and seed:} Only seed 42 and one 80/20 patient split were reported. The evidence package did not contain per-case CSVs, so patient-level confidence intervals and paired model differences could not be calculated. Small score gaps should therefore not be treated as statistically established.
     \item \textbf{Mamba-inspired implementation:} The implemented bottleneck is inspired by Mamba-style sequence modeling but is not a full reproduction of the original hardware-aware selective scan implementation. This distinction is important because the thesis must not attribute the full original Mamba mechanism to the implemented model.
-    \item \textbf{No explicit motion-field estimation:} The thesis title refers to cardiac motion analysis, but the implemented task is segmentation of cardiac MRI frames. Motion-related assessment is supported indirectly through segmentation needed for functional indices, not through dense motion tracking.
+    \item \textbf{Legacy projection parameters:} The historical gate projection produces $2d_{state}+1$ channels but uses only the first. The reported parameter count includes the unused outputs. They were retained to preserve checkpoint compatibility, but a redesigned block would need retraining.
+    \item \textbf{No explicit temporal modeling:} The implemented task segments ED and ES 3D MRI volumes independently. It performs neither dense motion tracking nor sequence-level consistency analysis, and the depth dimension is not time.
+    \item \textbf{Non-matched training and ablations:} Memory constraints required batch size 1 for Attention U-Net and SegResNet16 and batch size 2 for the other models. The No-Mamba ablation also has more parameters and a structurally different bottleneck. These factors limit causal attribution of performance differences to one architectural mechanism.
+    \item \textbf{Array-size preprocessing:} The pipeline resizes arrays to $256\times256\times16$ but does not explicitly canonicalize orientation or preserve a common physical voxel spacing. This may distort geometry and limits cross-scanner interpretation.
+    \item \textbf{Metric convention and missing case evidence:} An empty prediction and empty reference for one class are assigned Dice 1 in the executed metric. The absent per-case outputs prevent checking whether this convention affected any aggregate value.
     \item \textbf{Pathology-specific analysis not finalized:} Although ACDC contains pathology labels, the final rigorous experiment reported aggregate validation performance. Pathology-specific subgroup analysis should be generated by parsing patient diagnostic metadata before being reported as a table.
     \item \textbf{Limited external validation:} The model was not evaluated on a separate multi-center external dataset. Generalization to other scanners and institutions remains future work.
-    \item \textbf{Limited metric diversity:} The main reported metric is Dice. Dice is suitable for overlap evaluation, but it does not fully capture boundary errors. Surface distance metrics should be added in future experiments.
+    \item \textbf{Limited metric and runtime provenance:} The main reported metric is Dice; no Hausdorff or average surface distance is available. The software/driver versions for the recorded FPS measurement were also not archived, so speed is an environment-specific engineering indicator rather than a universal benchmark.
 \end{enumerate}
 
-These limitations are not merely formal disclaimers. They define the correct boundary of the thesis contribution. The project demonstrates a reproducible internal validation experiment and a lightweight architectural exploration, but it does not claim clinical deployment readiness.
+These limitations define the thesis boundary. The supplied aggregate files support an internally consistent validation summary and lightweight architectural exploration, but missing original run artefacts preclude complete end-to-end reproducibility or clinical deployment claims.
 
 \section{Summary of Findings}
 The final validation results reposition Nano-Mamba U-Net as a lightweight, parameter-efficient segmentation model. It outperformed the 3D U-Net baseline in mean DSC and used fewer parameters than all evaluated alternatives. Nevertheless, SegResNet16 achieved the highest absolute Dice score, and the No-Mamba ablation slightly exceeded Nano-Mamba in mean DSC. These findings support a balanced conclusion: the proposed model is competitive and efficient, but not definitively superior in accuracy.

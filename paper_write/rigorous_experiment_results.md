@@ -27,10 +27,17 @@ These results were produced with `src/21_rigorous_experiment_pipeline.py` using 
 
 ## Interpretation for thesis writing
 
-The rigorous validation results show that SegResNet16 achieved the highest mean Dice score. NanoMambaUNet did not achieve the highest absolute Dice score, but it achieved a competitive mean Dice of 84.78% with only 1.46M parameters. Compared with UNet3D, NanoMambaUNet improved mean Dice by 3.95 percentage points while using about 69.6% fewer parameters. Compared with SegResNet16, NanoMambaUNet used about 68.9% fewer parameters but had 1.92 percentage points lower mean Dice.
+The rigorous validation results show that SegResNet16 achieved the highest mean Dice score. NanoMambaUNet did not achieve the highest absolute Dice score, but it achieved a competitive mean Dice of 84.78% with 1.456M reported parameters. Compared with UNet3D, NanoMambaUNet improved mean Dice by 3.945 percentage points while using 69.714% fewer reported parameters. Compared with SegResNet16, NanoMambaUNet used 69.021% fewer reported parameters but had 1.918 percentage points lower mean Dice.
 
 The safest thesis claim is therefore:
 
 > NanoMambaUNet provides a lightweight and parameter-efficient cardiac MRI segmentation model with competitive held-out validation performance, rather than the highest absolute Dice score among all compared models.
 
 Avoid claiming that NanoMambaUNet is the best-performing model by Dice. Also avoid using the earlier training-set evaluation results as the main quantitative table.
+
+These aggregate validation results do not establish statistical significance.
+The supplied evidence bundle does not contain the original per-case metric rows,
+training logs, checkpoint hashes, or confirmed runtime environment needed to
+reconstruct confidence intervals, learning curves, model identity, or timing
+conditions. Run `src/22_p2_evidence_audit.py --strict-closure` to check whether
+those evidence gaps have been closed.

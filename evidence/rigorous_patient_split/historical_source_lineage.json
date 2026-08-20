@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "audit_date": "2026-08-21",
+  "purpose": "Reconstruct the source/archive timeline that can be established from Git objects and the supplied P2 audit ZIP.",
+  "supplied_archive": {
+    "filename": "P2_final_audit_bundle(1).zip",
+    "sha256": "49525c8127ed905721767626d1238351d11ab557279237930eb5395928be8d33",
+    "summary_member_timestamp": "2026-06-09 15:11 (ZIP member time; timezone not encoded)",
+    "summary_metrics_csv_sha256": "db5d2109f5195ad0ae7ea82d970dd57edaa9767f3b9a915e038a412a0e9cce5a",
+    "summary_metrics_json_sha256": "04d5023d659b9688de72cc198d32d43c66af6108eb329a302648117c3bd8aaa6",
+    "patient_split_sha256": "e79f1c238d73389900364ea32a92d954458e17e461e1c81a2e595ba653456280",
+    "data_discovery_sha256": "51122867753c24fa29edb4a906d44b1d6e0a9097f52e29d107e0cf6fb1885585",
+    "committed_copies_are_byte_identical": true
+  },
+  "historical_sources_present_before_the_summary_timestamp": {
+    "rigorous_pipeline": {
+      "path": "src/21_rigorous_experiment_pipeline.py",
+      "commit": "a56067dd2671b8bab1c1bb41e4834d2ab5a35b5e",
+      "commit_time": "2026-06-09T08:52:33+08:00",
+      "sha256": "6b4ff4b9de09096787782c8c02a222c840a358c1efe31a1ca0d2ed36fecd084b"
+    },
+    "nano_mamba_core": {
+      "path": "src/nano_mamba_core.py",
+      "commit": "1f48e929b4c9bf2536df987725adee309d67f041",
+      "commit_time": "2026-06-09T07:54:03+08:00",
+      "sha256": "8d568d956952df20cc867ea2b1be817ca635a5230a76bf33464c8be88863e21d"
+    }
+  },
+  "current_hardened_sources": {
+    "src/21_rigorous_experiment_pipeline.py": "64e9266eff9df9591a37730b46740bff5ba4c00473165e867ffa262ce1ce9361",
+    "src/nano_mamba_core.py": "00a8270c109e7747a45b9ac613e3d319d380b01222149461f6364ae783803b96",
+    "src/16_thesis_visualization.py": "21d89de52027700dcbe182376e010b00bed083a9a8840afbc495941d75b9c9ee",
+    "src/22_p2_evidence_audit.py": "261a1363486e3a538078fe99884a2f723dcbcf5f868c73fedfaa1d8320c09c39"
+  },
+  "reviewed_relationship": {
+    "historical_pipeline_precedes_summary_archive_member": true,
+    "historical_core_precedes_summary_archive_member": true,
+    "current_pipeline_changes": "Path configuration, split validation, exact patient/case cardinality checks, discovery manifesting, provenance capture, professional wording, and CLI controls; the model definitions, transforms, loss call, optimizer, epoch budget, checkpoint criterion, evaluation metric, and benchmark calculation used for the reported table were not intentionally altered.",
+    "current_core_changes": "Documentation and class-name professionalization with backward-compatible aliases; parameter names, tensor shapes, and executed forward operations remain unchanged."
+  },
+  "limitations": [
+    "Git and ZIP timestamps establish a plausible temporal lineage, not proof of the command that produced the summary files.",
+    "The supplied archive omits original epoch logs, per-case rows, checkpoints, confirmed environment metadata, and the command transcript.",
+    "The ZIP timestamp has no encoded timezone and is not a cryptographic attestation.",
+    "This reconstructed record must not be used to mark strict evidence closure as complete."
+  ],
+  "audit_conclusion": "Temporal/source lineage is partially reconstructed and consistent with the reported pipeline, but end-to-end historical run provenance remains incomplete."
+}

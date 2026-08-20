@@ -1,0 +1,169 @@
+{
+  "aggregate_consistency_status": "pass",
+  "aggregate_sha256": {
+    "data_discovery_report.json": "51122867753c24fa29edb4a906d44b1d6e0a9097f52e29d107e0cf6fb1885585",
+    "patient_split_seed42.json": "e79f1c238d73389900364ea32a92d954458e17e461e1c81a2e595ba653456280",
+    "summary_metrics.csv": "db5d2109f5195ad0ae7ea82d970dd57edaa9767f3b9a915e038a412a0e9cce5a",
+    "summary_metrics.json": "04d5023d659b9688de72cc198d32d43c66af6108eb329a302648117c3bd8aaa6"
+  },
+  "closure": {
+    "missing_artefacts": [
+      "checkpoint_manifest.json",
+      "data_discovery_report.json (full 200-case manifest unavailable)",
+      "environment.json",
+      "per_case_Ablation_HalfMamba_UNet.csv",
+      "per_case_Ablation_NoMamba_UNet.csv",
+      "per_case_AttentionUNet.csv",
+      "per_case_NanoMambaUNet.csv",
+      "per_case_SegResNet16.csv",
+      "per_case_UNet3D.csv",
+      "run_transcript.txt",
+      "training_log_Ablation_HalfMamba_UNet.csv",
+      "training_log_Ablation_NoMamba_UNet.csv",
+      "training_log_AttentionUNet.csv",
+      "training_log_NanoMambaUNet.csv",
+      "training_log_SegResNet16.csv",
+      "training_log_UNet3D.csv"
+    ],
+    "posthoc_patient_bootstrap": {
+      "reason": "original per-case CSVs were not supplied",
+      "status": "not computed"
+    },
+    "status": "incomplete"
+  },
+  "discovery": {
+    "full_case_manifest": "not supplied in historical bundle",
+    "paired_paths": 200,
+    "patient_directories": 100,
+    "scope_note": "Discovery establishes non-empty paired paths, not independent NIfTI content, label-set, orientation, or spacing validation.",
+    "skipped_containers": 0
+  },
+  "evidence_directory": "/workspace/scratch/c9b513e20108/fyp-nano-mamba-unet/evidence/rigorous_patient_split",
+  "nano_comparisons": {
+    "Ablation_HalfMamba_UNet": {
+      "nano_minus_other_dice_pp": -0.17371851950885864,
+      "nano_parameter_reduction_pct": 11.116719327616199
+    },
+    "Ablation_NoMamba_UNet": {
+      "nano_minus_other_dice_pp": -0.8620170007149319,
+      "nano_parameter_reduction_pct": 36.33618707388424
+    },
+    "SegResNet16": {
+      "nano_minus_other_dice_pp": -1.9184653957684872,
+      "nano_parameter_reduction_pct": 69.02061031094154
+    },
+    "UNet3D": {
+      "nano_minus_other_dice_pp": 3.945370204746701,
+      "nano_parameter_reduction_pct": 69.7137611710173
+    }
+  },
+  "reconstructed_source_lineage": {
+    "git_objects_checked": true,
+    "scope": "Temporal/source context only; the lineage file explicitly does not close missing run-level provenance.",
+    "sha256": "fb4e0997079dcc8fc28464438a23de08dc26a0c2f33ecbd3d22e39bfff19a516",
+    "status": "validated reconstructed context"
+  },
+  "schema_version": 2,
+  "scope_note": "A pass establishes internal consistency of the supplied aggregate files. Only strict closure attempts to bind them to original case rows, epoch logs, checkpoints, environment, and command evidence.",
+  "split": {
+    "coverage": 100,
+    "overlap": 0,
+    "seed": 42,
+    "train_patients": 80,
+    "val_fraction": 0.2,
+    "val_patients": 20
+  },
+  "strict_closure_status": "incomplete",
+  "summary_rows": [
+    {
+      "best_epoch": 105,
+      "checkpoint_path": "D:\\AI_FYP\\experiment_outputs\\rigorous_patient_split\\checkpoints\\best_UNet3D.pth",
+      "fps": 88.16683516365563,
+      "latency_ms": 11.34213333328565,
+      "model_name": "UNet3D",
+      "num_train_cases": 160,
+      "num_val_cases": 40,
+      "params_m": 4.808537,
+      "peak_vram_mb": 199.60302734375,
+      "val_dice_LV": 0.8958681032061577,
+      "val_dice_MYO": 0.7456675879657269,
+      "val_dice_RV": 0.7834784332662821,
+      "val_mean_dice": 0.808338041479389
+    },
+    {
+      "best_epoch": 121,
+      "checkpoint_path": "D:\\AI_FYP\\experiment_outputs\\rigorous_patient_split\\checkpoints\\best_NanoMambaUNet.pth",
+      "fps": 29.087871259262922,
+      "latency_ms": 34.37859000017245,
+      "model_name": "NanoMambaUNet",
+      "num_train_cases": 160,
+      "num_val_cases": 40,
+      "params_m": 1.456325,
+      "peak_vram_mb": 601.232421875,
+      "val_dice_LV": 0.9187987610697746,
+      "val_dice_MYO": 0.80349001288414,
+      "val_dice_RV": 0.8210864566266537,
+      "val_mean_dice": 0.847791743526856
+    },
+    {
+      "best_epoch": 134,
+      "checkpoint_path": "D:\\AI_FYP\\experiment_outputs\\rigorous_patient_split\\checkpoints\\best_Ablation_NoMamba_UNet.pth",
+      "fps": 28.797273244483797,
+      "latency_ms": 34.72550999916469,
+      "model_name": "Ablation_NoMamba_UNet",
+      "num_train_cases": 160,
+      "num_val_cases": 40,
+      "params_m": 2.287524,
+      "peak_vram_mb": 618.65283203125,
+      "val_dice_LV": 0.9237010598182678,
+      "val_dice_MYO": 0.8129808619618416,
+      "val_dice_RV": 0.832553818821907,
+      "val_mean_dice": 0.8564119135340054
+    },
+    {
+      "best_epoch": 149,
+      "checkpoint_path": "D:\\AI_FYP\\experiment_outputs\\rigorous_patient_split\\checkpoints\\best_Ablation_HalfMamba_UNet.pth",
+      "fps": 29.037763998593345,
+      "latency_ms": 34.437913334113546,
+      "model_name": "Ablation_HalfMamba_UNet",
+      "num_train_cases": 160,
+      "num_val_cases": 40,
+      "params_m": 1.638469,
+      "peak_vram_mb": 605.974609375,
+      "val_dice_LV": 0.9198702543973922,
+      "val_dice_MYO": 0.8046074733138084,
+      "val_dice_RV": 0.8241090584546328,
+      "val_mean_dice": 0.8495289287219446
+    },
+    {
+      "best_epoch": 62,
+      "checkpoint_path": "D:\\AI_FYP\\experiment_outputs\\rigorous_patient_split\\checkpoints\\best_AttentionUNet.pth",
+      "fps": 22.40720448421343,
+      "latency_ms": 44.62850333269065,
+      "model_name": "AttentionUNet",
+      "num_train_cases": 160,
+      "num_val_cases": 40,
+      "params_m": 5.909164,
+      "peak_vram_mb": 703.552734375,
+      "val_dice_LV": 0.8252916462719441,
+      "val_dice_MYO": 0.7237662978470325,
+      "val_dice_RV": 0.6942867860983825,
+      "val_mean_dice": 0.7477815767391197
+    },
+    {
+      "best_epoch": 112,
+      "checkpoint_path": "D:\\AI_FYP\\experiment_outputs\\rigorous_patient_split\\checkpoints\\best_SegResNet16.pth",
+      "fps": 25.497314495494432,
+      "latency_ms": 39.219816666445695,
+      "model_name": "SegResNet16",
+      "num_train_cases": 160,
+      "num_val_cases": 40,
+      "params_m": 4.700948,
+      "peak_vram_mb": 575.37890625,
+      "val_dice_LV": 0.9302908614277839,
+      "val_dice_MYO": 0.8276072323322297,
+      "val_dice_RV": 0.8430310986936093,
+      "val_mean_dice": 0.8669763974845409
+    }
+  ]
+}

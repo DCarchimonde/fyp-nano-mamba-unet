@@ -18,7 +18,7 @@ The ACDC dataset is useful for this thesis because it includes multiple cardiac 
 \section{Traditional Medical Image Segmentation Methods}
 Before deep learning became dominant, medical image segmentation commonly relied on intensity thresholding, deformable models, graph-based optimization, and level-set methods. These approaches remain important historically because they clarify why learning-based segmentation became attractive.
 
-A simple thresholding method assumes that the target object can be separated from the background by intensity. Otsu's method, for example, selects a threshold $T$ by maximizing the between-class variance. If the two classes have probabilities $\omega_0(T)$ and $\omega_1(T)$, and means $\mu_0(T)$ and $\mu_1(T)$, the objective can be written as:
+A simple thresholding method assumes that the target object can be separated from the background by intensity. Otsu's method, for example, selects a threshold $T$ by maximizing the between-class variance \cite{otsu1979threshold}. If the two classes have probabilities $\omega_0(T)$ and $\omega_1(T)$, and means $\mu_0(T)$ and $\mu_1(T)$, the objective can be written as:
 \begin{equation}
     \sigma_B^2(T) = \omega_0(T)\omega_1(T)\left[\mu_0(T)-\mu_1(T)\right]^2.
 \end{equation}
@@ -34,7 +34,7 @@ Level-set methods represent the contour implicitly as the zero level of a higher
 \begin{equation}
     \frac{\partial \phi}{\partial t} + F|\nabla \phi| = 0.
 \end{equation}
-The implicit representation allows topology changes more naturally than parametric snakes. However, iterative numerical optimization and sensitivity to image forces remain practical limitations. For this reason, traditional methods are useful background, but they do not remove the need for robust data-driven segmentation in heterogeneous CMR datasets \cite{peng2020review}.
+The implicit representation allows topology changes more naturally than parametric snakes. However, iterative numerical optimization and sensitivity to image forces remain practical limitations. For this reason, traditional methods are useful background, but they do not remove the need for robust data-driven segmentation in heterogeneous CMR datasets \cite{chen2020cardiacreview}.
 
 \section{Deep Learning Segmentation Architectures}
 \subsection{Fully Convolutional Networks and U-Net}
@@ -91,7 +91,7 @@ Residual learning was introduced to make deeper networks easier to optimize \cit
 \begin{equation}
     y = \mathcal{F}(x) + x.
 \end{equation}
-This identity shortcut improves gradient flow and can make deeper convolutional models more trainable. SegResNet-style medical segmentation architectures use residual blocks in an encoder-decoder setting and have become strong baselines in medical image segmentation practice. In this thesis, SegResNet16 serves as an important comparison model because it represents a strong residual convolutional alternative to the proposed Nano-Mamba U-Net. The final results show that SegResNet16 achieved the highest mean Dice, which must be acknowledged rather than hidden.
+This identity shortcut improves gradient flow and can make deeper convolutional models more trainable. SegResNet-style medical segmentation architectures use residual blocks in an encoder-decoder setting \cite{myronenko2019segresnet}. In this thesis, the MONAI SegResNet configuration with 16 initial filters serves as a residual convolutional alternative to the proposed Nano-Mamba U-Net. The final results show that SegResNet16 achieved the highest mean Dice, which must be acknowledged rather than hidden.
 
 \section{Transformers and Sequence Modeling in Medical Imaging}
 Transformers introduced self-attention as a way to model long-range dependencies \cite{vaswani2017attention}. Vision Transformer adapted this idea to image classification by treating image patches as tokens \cite{dosovitskiy2020image}. In medical imaging, UNETR used transformer encoders for 3D segmentation \cite{hatamizadeh2022unetr}, while Swin Transformer and Swin UNETR introduced hierarchical shifted-window attention to reduce the cost of global attention \cite{liu2021swin,hatamizadeh2022swin}.

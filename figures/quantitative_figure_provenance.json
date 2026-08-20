@@ -1,0 +1,91 @@
+{
+  "artifact_type": "quantitative_thesis_figures",
+  "main_result_pipeline": "src/21_rigorous_experiment_pipeline.py",
+  "main_result_pipeline_sha256": "64e9266eff9df9591a37730b46740bff5ba4c00473165e867ffa262ce1ce9361",
+  "summary_metrics": "evidence/rigorous_patient_split/summary_metrics.csv",
+  "summary_metrics_sha256": "db5d2109f5195ad0ae7ea82d970dd57edaa9767f3b9a915e038a412a0e9cce5a",
+  "generator": "src/16_thesis_visualization.py",
+  "generator_sha256": "21d89de52027700dcbe182376e010b00bed083a9a8840afbc495941d75b9c9ee",
+  "models": [
+    "UNet3D",
+    "AttentionUNet",
+    "SegResNet16",
+    "Ablation_NoMamba_UNet",
+    "Ablation_HalfMamba_UNet",
+    "NanoMambaUNet"
+  ],
+  "results": [
+    {
+      "model_name": "UNet3D",
+      "best_epoch": 105,
+      "val_dice_RV": 0.7834784332662821,
+      "val_dice_MYO": 0.7456675879657269,
+      "val_dice_LV": 0.8958681032061577,
+      "val_mean_dice": 0.808338041479389,
+      "params_m": 4.808537,
+      "fps": 88.16683516365563,
+      "latency_ms": 11.34213333328565
+    },
+    {
+      "model_name": "AttentionUNet",
+      "best_epoch": 62,
+      "val_dice_RV": 0.6942867860983825,
+      "val_dice_MYO": 0.7237662978470325,
+      "val_dice_LV": 0.8252916462719441,
+      "val_mean_dice": 0.7477815767391197,
+      "params_m": 5.909164,
+      "fps": 22.40720448421343,
+      "latency_ms": 44.62850333269065
+    },
+    {
+      "model_name": "SegResNet16",
+      "best_epoch": 112,
+      "val_dice_RV": 0.8430310986936093,
+      "val_dice_MYO": 0.8276072323322297,
+      "val_dice_LV": 0.9302908614277839,
+      "val_mean_dice": 0.8669763974845409,
+      "params_m": 4.700948,
+      "fps": 25.497314495494432,
+      "latency_ms": 39.219816666445695
+    },
+    {
+      "model_name": "Ablation_NoMamba_UNet",
+      "best_epoch": 134,
+      "val_dice_RV": 0.832553818821907,
+      "val_dice_MYO": 0.8129808619618416,
+      "val_dice_LV": 0.9237010598182678,
+      "val_mean_dice": 0.8564119135340054,
+      "params_m": 2.287524,
+      "fps": 28.797273244483797,
+      "latency_ms": 34.72550999916469
+    },
+    {
+      "model_name": "Ablation_HalfMamba_UNet",
+      "best_epoch": 149,
+      "val_dice_RV": 0.8241090584546328,
+      "val_dice_MYO": 0.8046074733138084,
+      "val_dice_LV": 0.9198702543973922,
+      "val_mean_dice": 0.8495289287219446,
+      "params_m": 1.638469,
+      "fps": 29.037763998593345,
+      "latency_ms": 34.437913334113546
+    },
+    {
+      "model_name": "NanoMambaUNet",
+      "best_epoch": 121,
+      "val_dice_RV": 0.8210864566266537,
+      "val_dice_MYO": 0.80349001288414,
+      "val_dice_LV": 0.9187987610697746,
+      "val_mean_dice": 0.847791743526856,
+      "params_m": 1.456325,
+      "fps": 29.087871259262922,
+      "latency_ms": 34.37859000017245
+    }
+  ],
+  "outputs": {
+    "accuracy_parameter_tradeoff.png": "c6a36e3368a840a771cd1dfb718cf88c8fe7f72f517e6baa744bbb337d8751c4",
+    "accuracy_speed_tradeoff.png": "ff38ab006819c79a448de0c42b89827c604fbc87dd54bb180ef8de16d3bd3745",
+    "class_specific_dice_scores.png": "d9b7d758b63bcafc311129d299d39f57bbd461be09ead2e3a217cbace64724fc"
+  },
+  "provenance_note": "Plot values are loaded from the audited CSV; no result values are embedded in the plotting code."
+}

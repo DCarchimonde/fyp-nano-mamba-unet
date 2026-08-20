@@ -126,6 +126,7 @@
 \newif\if@umthesis@uppercasetoc@\@umthesis@uppercasetoc@false
 \newif\if@umthesis@singlespacedlists@\@umthesis@singlespacedlists@false
 \newif\if@umthesis@noindenttocchap@\@umthesis@noindenttocchap@false
+\newif\if@umthesis@glossaries@\@umthesis@glossaries@true
 \DeclareOption{apacite}{\@apacitethesis@true\@newapathesis@false}
 \DeclareOption{newapa}{\@apacitethesis@false\@newapathesis@true}
 \DeclareOption{custombib}{\@apacitethesis@false\@newapathesis@false}
@@ -137,6 +138,7 @@
 \DeclareOption{uppercasetoc}{\@umthesis@uppercasetoc@true}
 \DeclareOption{singlespacedlisttitles}{\@umthesis@singlespacedlists@true}
 \DeclareOption{noindenttocchap}{\@umthesis@noindenttocchap@true}
+\DeclareOption{noglossaries}{\@umthesis@glossaries@false}
 
 \ExecuteOptions{english,apacite}
 \ProcessOptions\relax
@@ -207,11 +209,21 @@
 %%%%%%%%%%%%
 \RequirePackage[T1]{fontenc}
 \RequirePackage[scaled]{helvet}
-\RequirePackage{newtxtext,newtxmath}
-%\RequirePackage{mathptmx}
-%\RequirePackage{courier}
-% \renewcommand\ttdefault{lmvtt}
-\RequirePackage{inconsolata}
+% Prefer the template's original New TX fonts.  Minimal TeX installations do
+% not always ship texlive-fonts-extra, so retain a metrically compatible Times
+% fallback instead of making an otherwise reproducible build fail.
+\IfFileExists{newtxtext.sty}{%
+  \RequirePackage{newtxtext,newtxmath}%
+}{%
+  \ClassWarning{umalayathesis}{newtx fonts unavailable; using mathptmx fallback}%
+  \RequirePackage{mathptmx}%
+}
+\IfFileExists{inconsolata.sty}{%
+  \RequirePackage{inconsolata}%
+}{%
+  \ClassWarning{umalayathesis}{inconsolata unavailable; using Courier fallback}%
+  \RequirePackage{courier}%
+}
 \RequirePackage{bm}
 
 \AddToHook{begindocument/before}{%
@@ -810,17 +822,25 @@
 %%%%%%%%%%%%
 % v1.3: Refactor this to make it easier to switch bibliography styles
 \if@apacitethesis@
-  \RequirePackage[nosectionbib,natbibapa]{apacite}
-  % v1.5.1: per APA7 stop expanding long authors on 1st citation
-  \NAT@longnamesfalse
-  \bibliographystyle{apacite}
+  \IfFileExists{apacite.sty}{%
+    \RequirePackage[nosectionbib,natbibapa]{apacite}
+    % v1.5.1: per APA7 stop expanding long authors on 1st citation
+    \NAT@longnamesfalse
+    \bibliographystyle{apacite}
+    %\renewcommand\bibliographytypesize{\footnotesize}
+    \setlength\bibitemsep{2\onelineskip}
+    % May 16, 2016: explicitly set to 0.5in hang
+    \setlength\bibleftmargin{0.5in}
+    \setlength\bibindent{-0.5in}
+  }{%
+    % Portable fallback for minimal TeX Live installations.  Full submission
+    % environments should install apacite and will keep the original style.
+    \ClassWarning{umalayathesis}{apacite unavailable; using natbib/plainnat fallback}%
+    \RequirePackage[authoryear,round]{natbib}
+    \bibliographystyle{plainnat}
+  }
   \let\cite\citep
   \let\citeA\citet
-  %\renewcommand\bibliographytypesize{\footnotesize}
-  \setlength\bibitemsep{2\onelineskip}
-  % May 16, 2016: explicitly set to 0.5in hang
-  \setlength\bibleftmargin{0.5in}
-  \setlength\bibindent{-0.5in}
 \fi
 
 \if@newapathesis@
@@ -855,7 +875,6 @@
 
 %% October 01: Added list of own publications
 %% October 26 2018: Added option for splitting into journals and conference proceedings
-\RequirePackage[resetlabels]{multibib}
 \if@englishthesis@
   \newcommand{\listpubname}{List of Publications and Papers Presented}
   \newcommand{\listjourname}{Journal Articles}
@@ -865,17 +884,28 @@
   \newcommand{\listjourname}{Artikel Jurnal}
   \newcommand{\listconfname}{Prosiding Persidangan}
 \fi
-\newcites{own,ownjour,ownconf}{\listpubname,\listjourname,\listconfname}
-\if@apacitethesis@
-  \bibliographystyleown{apacite}
-  \bibliographystyleownjour{apacite}
-  \bibliographystyleownconf{apacite}
-\fi
-\if@newapathesis@
-  \bibliographystyleown{newapa}
-  \bibliographystyleownjour{newapa}
-  \bibliographystyleownconf{newapa}
-\fi
+\IfFileExists{multibib.sty}{%
+  \RequirePackage[resetlabels]{multibib}
+  \newcites{own,ownjour,ownconf}{\listpubname,\listjourname,\listconfname}
+  \if@apacitethesis@
+    \IfFileExists{apacite.sty}{%
+      \bibliographystyleown{apacite}
+      \bibliographystyleownjour{apacite}
+      \bibliographystyleownconf{apacite}
+    }{%
+      \bibliographystyleown{plainnat}
+      \bibliographystyleownjour{plainnat}
+      \bibliographystyleownconf{plainnat}
+    }
+  \fi
+  \if@newapathesis@
+    \bibliographystyleown{newapa}
+    \bibliographystyleownjour{newapa}
+    \bibliographystyleownconf{newapa}
+  \fi
+}{%
+  \ClassWarning{umalayathesis}{multibib unavailable; own-publication lists disabled}%
+}
 
 %% Oct 28, 2018: For split list of publications
 \newenvironment{splitpubs}{%
@@ -889,7 +919,11 @@
 \RequirePackage{relsize}
 %% Sept 08, 2015: added "acronym" option
 \RequirePackage[toc,nonumberlist,shortcuts,translate=false,style=long,acronym]{glossaries}
-\RequirePackage{glossaries-babel}
+\IfFileExists{tracklang.sty}{%
+  \RequirePackage{glossaries-babel}%
+}{%
+  \ClassWarning{umalayathesis}{tracklang unavailable; glossaries-babel disabled}%
+}
 \glsdisablehyper %% Added Oct 27, 2018 to avoid hyprref warnings
 %\renewcommand*{\acrnameformat}[2]{#2 (\acronymfont{#1})}
 \renewcommand*{\glsgroupskip}{}
@@ -901,7 +935,9 @@
 \renewenvironment{theglossary}%
   {\begin{longtable}[l]{@{}lp{\glsdescwidth}}}%
   {\end{longtable}}
-\makeglossaries
+\if@umthesis@glossaries@
+  \makeglossaries
+\fi
 %\newcommand\listacrname{List of Symbols and Acronyms}
 \newcommand\listofacronyms{%
   %% Oct 02: List of acronyms is normalsized and with a colon

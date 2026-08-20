@@ -74,5 +74,11 @@ training_outputs/
 *.toc
 *.lof
 *.lot
+*.ist
+# Private submission metadata (copy from the tracked example locally)
+paper_write/Universiti_Malaya_Thesis_Template/submission-private.tex
 # Local rigorous experiment outputs
 experiment_outputs/
+# Presentation QA render outputs
+presentation/*.inspect.ndjson
+presentation/P2_Final_Defense_Tong_Siyuan/

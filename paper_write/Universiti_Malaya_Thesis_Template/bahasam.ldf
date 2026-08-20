@@ -1,0 +1,54 @@
+%% Minimal Bahasa Melayu support for portable thesis builds.
+%%
+%% The UM class requests Babel's `bahasam` language, which is distributed in
+%% TeX Live's optional `collection-langother` package.  This small fallback is
+%% intentionally limited to the captions and date strings used by the thesis;
+%% it does not provide Malay hyphenation patterns.  A full TeX installation may
+%% replace it with the upstream Babel language file.
+\ProvidesLanguage{bahasam}[2026/08/20 v1.0 portable Bahasa Melayu fallback]
+
+\LdfInit\CurrentOption{captions\CurrentOption}
+
+\ifx\l@bahasam\@undefined
+  \@nopatterns{Bahasa Melayu}
+  \adddialect\l@bahasam0
+\fi
+
+\providehyphenmins{bahasam}{\tw@\thr@@}
+
+\def\captionsbahasam{%
+  \def\prefacename{Prakata}%
+  \def\refname{Rujukan}%
+  \def\abstractname{Abstrak}%
+  \def\bibname{Rujukan}%
+  \def\chaptername{Bab}%
+  \def\appendixname{Lampiran}%
+  \def\contentsname{Kandungan}%
+  \def\listfigurename{Senarai Rajah}%
+  \def\listtablename{Senarai Jadual}%
+  \def\indexname{Indeks}%
+  \def\figurename{Rajah}%
+  \def\tablename{Jadual}%
+  \def\partname{Bahagian}%
+  \def\enclname{Lampiran}%
+  \def\ccname{Salinan kepada}%
+  \def\headtoname{Kepada}%
+  \def\pagename{Halaman}%
+  \def\seename{lihat}%
+  \def\alsoname{lihat juga}%
+  \def\proofname{Bukti}%
+  \def\glossaryname{Glosari}%
+}
+
+\def\datebahasam{%
+  \def\today{\number\day\space
+    \ifcase\month\or
+      Januari\or Februari\or Mac\or April\or Mei\or Jun\or
+      Julai\or Ogos\or September\or Oktober\or November\or Disember
+    \fi\space\number\year}%
+}
+
+\@namedef{extras\CurrentOption}{}
+\@namedef{noextras\CurrentOption}{}
+\ldf@finish\CurrentOption
+\endinput

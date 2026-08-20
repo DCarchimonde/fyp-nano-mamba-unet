@@ -11,20 +11,26 @@ It performs:
 4. final reporting on held-out validation cases only;
 5. CSV/JSON outputs for thesis evidence.
 
-Run in PyCharm:
-    python src/21_rigorous_experiment_pipeline.py
+Example:
+    python src/21_rigorous_experiment_pipeline.py --project-root D:\\AI_FYP
 """
 
+import argparse
 import csv
 import glob
+import hashlib
 import json
+import platform
 import random
 import re
+import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
+import monai
 import torch
 import torch.nn as nn
 from monai.data import DataLoader, Dataset
@@ -36,10 +42,11 @@ from nano_mamba_core import SpatioTemporalMambaBottleneck
 
 
 # =============================================================================
-# 0. EDIT HERE IF NEEDED
+# 0. DEFAULT PATHS AND EXPERIMENT CONSTANTS
 # =============================================================================
 
-PROJECT_ROOT = Path(r"D:\AI_FYP")
+DEFAULT_PROJECT_ROOT = Path(r"D:\AI_FYP")
+PROJECT_ROOT = DEFAULT_PROJECT_ROOT
 DATA_DIR = PROJECT_ROOT / "Data" / "ACDC" / "database" / "training"
 
 OUTPUT_DIR = PROJECT_ROOT / "experiment_outputs" / "rigorous_patient_split"
@@ -48,6 +55,7 @@ SPLIT_JSON = OUTPUT_DIR / "patient_split_seed42.json"
 SUMMARY_CSV = OUTPUT_DIR / "summary_metrics.csv"
 SUMMARY_JSON = OUTPUT_DIR / "summary_metrics.json"
 DATA_DISCOVERY_JSON = OUTPUT_DIR / "data_discovery_report.json"
+RUN_PROVENANCE_JSON = OUTPUT_DIR / "run_provenance.json"
 
 SPATIAL_SIZE = (256, 256, 16)
 NUM_CLASSES = 4
@@ -81,6 +89,43 @@ TRAIN_BATCH_SIZE = {
 }
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def configure_paths(data_dir: Path, output_dir: Path) -> None:
+    """Configure all derived output paths from command-line locations."""
+    global DATA_DIR, OUTPUT_DIR, CHECKPOINT_DIR, SPLIT_JSON, SUMMARY_CSV
+    global SUMMARY_JSON, DATA_DISCOVERY_JSON, RUN_PROVENANCE_JSON
+
+    DATA_DIR = data_dir.resolve()
+    OUTPUT_DIR = output_dir.resolve()
+    CHECKPOINT_DIR = OUTPUT_DIR / "checkpoints"
+    SPLIT_JSON = OUTPUT_DIR / "patient_split_seed42.json"
+    SUMMARY_CSV = OUTPUT_DIR / "summary_metrics.csv"
+    SUMMARY_JSON = OUTPUT_DIR / "summary_metrics.json"
+    DATA_DISCOVERY_JSON = OUTPUT_DIR / "data_discovery_report.json"
+    RUN_PROVENANCE_JSON = OUTPUT_DIR / "run_provenance.json"
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def current_git_commit() -> Optional[str]:
+    try:
+        completed = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=Path(__file__).resolve().parents[1],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return completed.stdout.strip() or None
 
 
 # =============================================================================
@@ -308,6 +353,35 @@ def discover_acdc_cases(data_dir: Path) -> List[Dict[str, str]]:
                 "label": str(label_file),
             })
 
+    case_ids = [case["case_id"] for case in cases]
+    if len(case_ids) != len(set(case_ids)):
+        raise RuntimeError("Duplicate case identifiers were discovered; aborting before split creation.")
+    expected_patients = {f"patient{i:03d}" for i in range(1, 101)}
+    discovered_patients = {case["patient_id"] for case in cases}
+    cases_per_patient = {
+        patient_id: sum(case["patient_id"] == patient_id for case in cases)
+        for patient_id in discovered_patients
+    }
+    if discovered_patients != expected_patients or any(
+        count != 2 for count in cases_per_patient.values()
+    ):
+        raise RuntimeError(
+            "Expected exactly two labelled cases for each patient001 through patient100; "
+            "aborting before split creation."
+        )
+
+    case_manifest = [
+        {
+            "patient_id": case["patient_id"],
+            "case_id": case["case_id"],
+            "image_name": Path(case["image"]).name,
+            "label_name": Path(case["label"]).name,
+            "image_bytes": Path(case["image"]).stat().st_size,
+            "label_bytes": Path(case["label"]).stat().st_size,
+        }
+        for case in cases
+    ]
+    manifest_bytes = json.dumps(case_manifest, sort_keys=True, separators=(",", ":")).encode("utf-8")
     report = {
         "data_dir": str(data_dir),
         "num_patients_with_dirs": len(patient_dirs),
@@ -315,27 +389,60 @@ def discover_acdc_cases(data_dir: Path) -> List[Dict[str, str]]:
         "num_skipped_empty_or_invalid_containers": len(skipped_empty_or_invalid),
         "first_20_skipped_empty_or_invalid_containers": skipped_empty_or_invalid[:20],
         "first_5_cases": cases[:5],
+        "case_manifest_schema": "deidentified filenames and byte sizes; not content hashes",
+        "case_manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
+        "case_manifest": case_manifest,
     }
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     with DATA_DISCOVERY_JSON.open("w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
 
-    print(f"Data discovery: found {len(cases)} valid image/label pairs; skipped {len(skipped_empty_or_invalid)} empty/invalid containers.")
+    print(
+        f"Data discovery: found {len(cases)} non-empty image/label path pairs; "
+        f"skipped {len(skipped_empty_or_invalid)} empty/invalid containers. "
+        "NIfTI content is loaded later by the transform pipeline."
+    )
     print(f"Data discovery report saved at: {DATA_DISCOVERY_JSON}")
 
     if not cases:
         raise RuntimeError(
-            "No valid ACDC cases found. The scanner skipped empty placeholder .nii files. "
+            "No non-empty paired ACDC paths found. The scanner skipped empty placeholder .nii files. "
             "Open data_discovery_report.json and check whether the real images are inside nested folders."
         )
     return cases
+
+
+def validate_split(split: Dict[str, object], cases: Sequence[Dict[str, str]]) -> None:
+    """Fail closed on stale, overlapping, duplicated, or partial cached splits."""
+    current_patients = {case["patient_id"] for case in cases}
+    train_list = list(split.get("train_patients", []))
+    val_list = list(split.get("val_patients", []))
+    train_patients, val_patients = set(train_list), set(val_list)
+    errors = []
+    if split.get("seed") != SEED:
+        errors.append(f"cached seed {split.get('seed')!r} differs from {SEED}")
+    if not np.isclose(float(split.get("val_fraction", -1)), VAL_FRACTION):
+        errors.append("cached validation fraction differs from the configured value")
+    if len(train_list) != len(train_patients) or len(val_list) != len(val_patients):
+        errors.append("cached split contains duplicate patient identifiers")
+    if train_patients & val_patients:
+        errors.append("cached split has patient leakage")
+    if train_patients | val_patients != current_patients:
+        errors.append("cached split does not cover the currently discovered patients exactly")
+    expected_val_count = max(1, round(len(current_patients) * VAL_FRACTION))
+    if len(val_patients) != expected_val_count:
+        errors.append(f"cached split has {len(val_patients)} validation patients; expected {expected_val_count}")
+    if errors:
+        raise RuntimeError("Invalid cached patient split: " + "; ".join(errors))
 
 
 def create_or_load_split(cases: Sequence[Dict[str, str]]) -> Dict[str, object]:
     SPLIT_JSON.parent.mkdir(parents=True, exist_ok=True)
     if SPLIT_JSON.exists():
         with SPLIT_JSON.open("r", encoding="utf-8") as f:
-            return json.load(f)
+            split = json.load(f)
+        validate_split(split, cases)
+        return split
 
     patient_ids = sorted({c["patient_id"] for c in cases}, key=natural_sort_key)
     rng = random.Random(SEED)
@@ -351,10 +458,12 @@ def create_or_load_split(cases: Sequence[Dict[str, str]]) -> Dict[str, object]:
     }
     with SPLIT_JSON.open("w", encoding="utf-8") as f:
         json.dump(split, f, indent=2)
+    validate_split(split, cases)
     return split
 
 
 def split_cases(cases: Sequence[Dict[str, str]], split: Dict[str, object]) -> Tuple[List[Dict[str, str]], List[Dict[str, str]]]:
+    validate_split(split, cases)
     train_patients = set(split["train_patients"])
     val_patients = set(split["val_patients"])
     if train_patients & val_patients:
@@ -458,6 +567,62 @@ def benchmark(model: nn.Module, runs: int = 30) -> Dict[str, float]:
     return {"params": count_params(model), "params_m": count_params(model) / 1e6, "latency_ms": latency_ms, "fps": 1000.0 / latency_ms, "peak_vram_mb": peak_vram}
 
 
+def write_run_provenance(model_names: Sequence[str]) -> None:
+    """Record provenance for future runs; this does not reconstruct old metadata."""
+    gpu = None
+    if torch.cuda.is_available():
+        properties = torch.cuda.get_device_properties(DEVICE)
+        gpu = {
+            "name": properties.name,
+            "total_memory_bytes": int(properties.total_memory),
+            "compute_capability": [properties.major, properties.minor],
+        }
+    payload = {
+        "command": sys.argv,
+        "working_directory": str(Path.cwd()),
+        "git_commit": current_git_commit(),
+        "data_dir": str(DATA_DIR),
+        "output_dir": str(OUTPUT_DIR),
+        "models": list(model_names),
+        "seed": SEED,
+        "val_fraction": VAL_FRACTION,
+        "spatial_size": SPATIAL_SIZE,
+        "num_classes": NUM_CLASSES,
+        "max_epochs": MAX_EPOCHS,
+        "learning_rate": LEARNING_RATE,
+        "weight_decay": WEIGHT_DECAY,
+        "train_batch_size": {name: TRAIN_BATCH_SIZE[name] for name in model_names},
+        "benchmark_protocol": {
+            "batch_size": 1,
+            "random_input": True,
+            "warmup_runs": 5,
+            "timed_runs": 30,
+            "precision": "framework default",
+        },
+        "software": {
+            "python": sys.version,
+            "platform": platform.platform(),
+            "numpy": np.__version__,
+            "pytorch": torch.__version__,
+            "monai": monai.__version__,
+            "cuda_runtime": torch.version.cuda,
+            "cudnn": torch.backends.cudnn.version(),
+        },
+        "device": str(DEVICE),
+        "gpu": gpu,
+        "source_sha256": {
+            "pipeline": sha256(Path(__file__)),
+            "nano_mamba_core": sha256(Path(__file__).with_name("nano_mamba_core.py")),
+        },
+        "evidence_sha256": {
+            "patient_split": sha256(SPLIT_JSON) if SPLIT_JSON.is_file() else None,
+            "data_discovery": sha256(DATA_DISCOVERY_JSON) if DATA_DISCOVERY_JSON.is_file() else None,
+        },
+    }
+    with RUN_PROVENANCE_JSON.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2)
+
+
 # =============================================================================
 # 5. TRAINING LOOP
 # =============================================================================
@@ -511,7 +676,20 @@ def train_one_model(model_name: str, train_cases: List[Dict[str, str]], val_case
                 "epoch": epoch,
                 "val_mean_dice": best_val_dice,
                 "model_state_dict": {k: v.detach().cpu() for k, v in model.state_dict().items()},
-                "config": {"seed": SEED, "val_fraction": VAL_FRACTION, "spatial_size": SPATIAL_SIZE, "max_epochs": MAX_EPOCHS},
+                "config": {
+                    "seed": SEED,
+                    "val_fraction": VAL_FRACTION,
+                    "spatial_size": SPATIAL_SIZE,
+                    "max_epochs": MAX_EPOCHS,
+                    "learning_rate": LEARNING_RATE,
+                    "weight_decay": WEIGHT_DECAY,
+                    "train_batch_size": TRAIN_BATCH_SIZE.get(model_name, 1),
+                    "git_commit": current_git_commit(),
+                    "split_sha256": sha256(SPLIT_JSON),
+                    "pipeline_sha256": sha256(Path(__file__)),
+                    "torch_version": torch.__version__,
+                    "monai_version": monai.__version__,
+                },
             }, checkpoint_path)
 
     with log_csv.open("w", newline="", encoding="utf-8") as f:
@@ -566,7 +744,33 @@ def save_summary(results: List[Dict[str, object]]) -> None:
     print(f"\nSaved: {SUMMARY_CSV}")
 
 
-def main() -> None:
+def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=DEFAULT_PROJECT_ROOT,
+        help="Compatibility root used when --data-dir or --output-dir is omitted",
+    )
+    parser.add_argument("--data-dir", type=Path, help="ACDC database/training directory")
+    parser.add_argument("--output-dir", type=Path, help="Rigorous experiment output directory")
+    parser.add_argument(
+        "--models",
+        nargs="+",
+        choices=tuple(TRAIN_BATCH_SIZE),
+        default=MODELS_TO_RUN,
+        help="Models to train in order",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: Optional[Sequence[str]] = None) -> None:
+    args = parse_args(argv)
+    project_root = args.project_root.resolve()
+    data_dir = args.data_dir or project_root / "Data" / "ACDC" / "database" / "training"
+    output_dir = args.output_dir or project_root / "experiment_outputs" / "rigorous_patient_split"
+    configure_paths(data_dir, output_dir)
+
     print(f"Device: {DEVICE}")
     print(f"DATA_DIR: {DATA_DIR}")
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -579,10 +783,12 @@ def main() -> None:
     print(f"Patients: train={len(split['train_patients'])}, val={len(split['val_patients'])}")
     print(f"Cases: train={len(train_cases)}, val={len(val_cases)}")
     print(f"Split saved at: {SPLIT_JSON}")
+    write_run_provenance(args.models)
+    print(f"Run provenance saved at: {RUN_PROVENANCE_JSON}")
 
     transform = build_transform()
     results = []
-    for model_name in MODELS_TO_RUN:
+    for model_name in args.models:
         results.append(train_one_model(model_name, train_cases, val_cases, transform))
         save_summary(results)
 

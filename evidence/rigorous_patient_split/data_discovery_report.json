@@ -1,0 +1,39 @@
+{
+  "data_dir": "D:\\AI_FYP\\Data\\ACDC\\database\\training",
+  "num_patients_with_dirs": 100,
+  "num_cases_found": 200,
+  "num_skipped_empty_or_invalid_containers": 0,
+  "first_20_skipped_empty_or_invalid_containers": [],
+  "first_5_cases": [
+    {
+      "patient_id": "patient001",
+      "case_id": "patient001_frame01",
+      "image": "D:\\AI_FYP\\Data\\ACDC\\database\\training\\patient001\\patient001_frame01.nii\\CMD03Gate1.nii",
+      "label": "D:\\AI_FYP\\Data\\ACDC\\database\\training\\patient001\\patient001_frame01_gt.nii\\DCM03-OH-AL_V2_1.nii"
+    },
+    {
+      "patient_id": "patient001",
+      "case_id": "patient001_frame12",
+      "image": "D:\\AI_FYP\\Data\\ACDC\\database\\training\\patient001\\patient001_frame12.nii\\CMD03Gate12.nii",
+      "label": "D:\\AI_FYP\\Data\\ACDC\\database\\training\\patient001\\patient001_frame12_gt.nii\\DCM03-OH-AL_V2_12.nii"
+    },
+    {
+      "patient_id": "patient002",
+      "case_id": "patient002_frame01",
+      "image": "D:\\AI_FYP\\Data\\ACDC\\database\\training\\patient002\\patient002_frame01.nii\\DCM04Gate1.nii",
+      "label": "D:\\AI_FYP\\Data\\ACDC\\database\\training\\patient002\\patient002_frame01_gt.nii\\DCM04-OH-AL_V2_1.nii"
+    },
+    {
+      "patient_id": "patient002",
+      "case_id": "patient002_frame12",
+      "image": "D:\\AI_FYP\\Data\\ACDC\\database\\training\\patient002\\patient002_frame12.nii\\DCM04Gate12.nii",
+      "label": "D:\\AI_FYP\\Data\\ACDC\\database\\training\\patient002\\patient002_frame12_gt.nii\\DCM04-OH-AL_V2_12.nii"
+    },
+    {
+      "patient_id": "patient003",
+      "case_id": "patient003_frame01",
+      "image": "D:\\AI_FYP\\Data\\ACDC\\database\\training\\patient003\\patient003_frame01.nii\\DCM08Gate1.nii",
+      "label": "D:\\AI_FYP\\Data\\ACDC\\database\\training\\patient003\\patient003_frame01_gt.nii\\DCM08-OH-AL_V2_1.nii"
+    }
+  ]
+}

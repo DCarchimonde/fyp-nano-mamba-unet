@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "audit_date": "2026-08-20",
+  "branch": "p2-final-audit-2026-08-20",
+  "audited_source_commit": "81e41f0bb185db616851a3bac9ccde83cb49693c",
+  "registered_title": "Nano-Mamba U-Net: A Spatio-Temporal Framework for Cardiac Motion Analysis",
+  "scientific_scope": {
+    "task": "Four-class 3D cardiac MRI segmentation of independently processed ED and ES volumes",
+    "depth_axis": "Anatomical slice depth, not cardiac time",
+    "bottleneck": "Mamba-inspired gated spatial sequence module; not full Mamba selective scan",
+    "claim": "Competitive accuracy-efficiency trade-off; not the highest Dice and not a causal gate advantage",
+    "boundary_file": "SCIENTIFIC_BOUNDARIES.md",
+    "boundary_file_sha256": "8b438497c6efd0e6a56745c1ed39a474385fba41c6f6b68a26ddcb09b1e318b6"
+  },
+  "main_result_evidence": {
+    "pipeline": "src/21_rigorous_experiment_pipeline.py",
+    "pipeline_sha256": "fb9a3a7c0b7ace76cad9d15e57609561ac7c9fcd8a583cf6392e1c13150a4a0d",
+    "summary_csv": "evidence/rigorous_patient_split/summary_metrics.csv",
+    "summary_csv_sha256": "db5d2109f5195ad0ae7ea82d970dd57edaa9767f3b9a915e038a412a0e9cce5a",
+    "split_json": "evidence/rigorous_patient_split/patient_split_seed42.json",
+    "split_json_sha256": "e79f1c238d73389900364ea32a92d954458e17e461e1c81a2e595ba653456280",
+    "audit_report": "evidence/rigorous_patient_split/evidence_audit_report.json",
+    "audit_report_sha256": "6ed5cbcf576d15c36e28929ad80e48fc9d1778cbcca2c256f63b512f54636761",
+    "core_evidence_status": "pass",
+    "strict_closure_status": "incomplete",
+    "strict_closure_reason": "Original per-case rows, training logs, checkpoint manifest, confirmed historical environment, and confirmed command transcript were not supplied."
+  },
+  "quantitative_figures": {
+    "provenance_manifest": "figures/quantitative_figure_provenance.json",
+    "provenance_manifest_sha256": "cee34e49e07451ce0bac9a88342ab4e22b51cd34f18566fcde1b1d1f149bc768",
+    "source": "Audited summary CSV",
+    "count": 3
+  },
+  "thesis": {
+    "entry_point": "paper_write/Universiti_Malaya_Thesis_Template/thesis.tex",
+    "entry_point_sha256": "4da4aa15fcfd68288fa01e7e89855bcb3905ae670095b75f63ea31391eca84d5",
+    "bibliography": "paper_write/Universiti_Malaya_Thesis_Template/myrefs.bib",
+    "bibliography_sha256": "a53e57cf204e9e654c69a16ea8b24341c44cd9083ca0e0fda47f74319ba9a034",
+    "pdf": "paper_write/Universiti_Malaya_Thesis_Template/thesis.pdf",
+    "pdf_sha256": "eeb4ce4cfef3696df1a0779f537138329b74fac30e3f4cd1685030a08a483fe6",
+    "bytes": 544834,
+    "pages": 71,
+    "page_size": "A4 (595.276 x 841.89 pt)",
+    "pdf_version": "1.5",
+    "build_command": "bash scripts/build_thesis.sh",
+    "acceptance_checks": [
+      "Build exit status 0",
+      "No undefined citations or references",
+      "No overfull boxes",
+      "No missing figures",
+      "All 71 pages rendered and visually reviewed"
+    ]
+  },
+  "presentation": {
+    "deck": "presentation/P2_Final_Defense_Tong_Siyuan.pptx",
+    "deck_sha256": "f420eeb28170d218f6abef003afe0a1223fc3395e73e410965577717e6fb586f",
+    "bytes": 363762,
+    "slides": 13,
+    "target_duration_minutes": 15,
+    "viva_bank": "presentation/P2_VIVA_QA.md",
+    "viva_bank_sha256": "f61aea5578c6399f801f06954ad6a199dd582d6246a238eb0523328d66b7943e",
+    "qa": "Rendered all slides; slide-layout test reported no overflow; montage and individual slides visually reviewed"
+  },
+  "tool_versions": {
+    "python": "3.12.13",
+    "matplotlib": "3.10.8",
+    "pdftex": "3.141592653-2.6-1.40.25 (TeX Live 2023/Debian)",
+    "bibtex": "0.99d (TeX Live 2023/Debian)",
+    "pdfinfo": "26.05.0",
+    "node": "24.19.0",
+    "artifact_tool": "2.8.43"
+  },
+  "verification": {
+    "evidence_tests": "3 passed",
+    "pytorch_architecture_tests": "3 skipped because PyTorch is not installed in the audit environment",
+    "presentation_overflow_test": "pass",
+    "git_diff_check": "pass"
+  },
+  "required_private_pre_submission_action": "Create the ignored submission-private.tex from the tracked example, complete only institution-required identity/signature fields, rebuild the PDF, and visually inspect the declaration page before upload."
+}

@@ -1,18 +1,20 @@
 %% thesis.tex
 %% Distributed with umalayathesis v1.5.3 (7 January 2023)
-\documentclass[english,singlespacedlisttitles]{umalayathesis}
+\documentclass[english,singlespacedlisttitles,noglossaries]{umalayathesis}
 
-\usepackage{lipsum}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{microtype}
+\usepackage{amssymb}
 \usepackage{graphicx}
+\graphicspath{{../../figures/}}
 \usepackage[dvipsnames,x11names,rgb]{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows, positioning, fit, calc}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.17}
-\usepackage{url}
+% xurl allows line breaks throughout long evidence and publisher URLs.
+\usepackage{xurl}
 \usepackage{float}
 
 % Useful for including code listings
@@ -29,8 +31,6 @@
 
 \usepackage{longtable}
 \usepackage{supertabular}
-\usepackage{algorithm}
-\usepackage{algorithmic}
 
 % ==========================================
 % Core thesis metadata
@@ -42,6 +42,18 @@
 \faculty{Faculty of Computer Science and Information Technology}
 \submissionyear{2026}
 \degree{Master of Artificial Intelligence}
+\AtBeginDocument{\hypersetup{%
+  pdftitle={Nano-Mamba U-Net: A Spatio-Temporal Framework for Cardiac Motion Analysis},%
+  pdfauthor={Tong Siyuan},%
+  pdfsubject={Master of Artificial Intelligence research project}%
+}}
+
+% Keep private identifiers out of the public repository.  For the signed
+% submission copy, create the ignored file submission-private.tex from the
+% tracked example before building.
+\newcommand{\candidatePassportNo}{}
+\newcommand{\candidateMatricNo}{}
+\IfFileExists{submission-private.tex}{\input{submission-private.tex}}{}
 
 % The template declaration page leaves all fields blank by default. This override
 % fills the known thesis metadata while leaving private/unknown identifiers blank
@@ -49,8 +61,8 @@
 \makeatletter
 \renewcommand{\declarationpage}{%
   \chapter*{\@mtunien\vskip1em Original Literary Work Declaration}
-  {\noindent Name of Candidate: Tong Siyuan \hfill (I.C./Passport No.:\hspace{6em})\par
-   \noindent Registration/Matric No.:\hspace{10em}\par
+  {\noindent Name of Candidate: Tong Siyuan \hfill (I.C./Passport No.: \candidatePassportNo)\par
+   \noindent Registration/Matric No.: \candidateMatricNo\par
    \noindent Name of Degree: Master of Artificial Intelligence\par
    \noindent Title of Project Paper/Research Report/Dissertation/Thesis (``this Work''):\par
    \noindent Nano-Mamba U-Net: A Spatio-Temporal Framework for Cardiac Motion Analysis\par
@@ -83,9 +95,6 @@
 }
 \makeatother
 
-% load acronym definitions from separate file
-\loadglsentries{myacronyms}
-
 \begin{document}
 \frontmatter
 
@@ -114,8 +123,8 @@
 \input{sample-chap-results-p2}
 \input{sample-chap-conclusion.tex}
 
-% References. myrefs_extra contains missing or updated entries used in the revised text.
-\bibliography{myrefs,myrefs_extra}
+% The submission bibliography contains only cited entries checked during the P2 audit.
+\bibliography{myrefs}
 
 % \begin{appendices}
 % \input{sample-appen-manual}

@@ -9,7 +9,7 @@
 This chapter describes the research design used to implement and evaluate the proposed Nano-Mamba U-Net. The methodology is written to make the experiment reproducible: it specifies the dataset boundary, data discovery procedure, patient-level split, preprocessing pipeline, model architecture, loss function, checkpoint selection, evaluation metrics, and computational profiling. The chapter also distinguishes clearly between methods adopted from prior work and components implemented in this project.
 
 \section{Overall Research Workflow}
-The study follows an experimental computing workflow. First, the ACDC cardiac MRI data are discovered and paired with corresponding segmentation labels. Second, patients are separated into training and validation groups using a deterministic patient-level split. Third, all models are trained under the same preprocessing, optimization, and validation protocol. Finally, the best checkpoint for each model is selected by validation mean Dice and evaluated on the held-out validation patients.
+The study follows an experimental computing workflow. First, the ACDC cardiac MRI data are discovered and paired with corresponding segmentation labels. Second, patients are separated into training and validation groups using a deterministic patient-level split. Third, all models use the same preprocessing, patient split, epoch budget, optimizer family, and validation procedure, while memory-constrained batch sizes differ by model as reported below. Finally, the best checkpoint for each model is selected by validation mean Dice and evaluated descriptively on the same held-out validation patients.
 
 \begin{figure}[hbt!]
 \centering
@@ -41,9 +41,9 @@ The study follows an experimental computing workflow. First, the ACDC cardiac MR
 \end{figure}
 
 \section{Dataset and Data Discovery}
-The experiment uses the Automated Cardiac Diagnosis Challenge (ACDC) dataset \cite{bernard2018deep}. The task is multi-class segmentation of three anatomical structures: RV, MYO, and LV. The final experiment discovered 200 valid image-label pairs from 100 patients. Each patient contributes labelled end-diastolic and end-systolic frames, giving two labelled 3D cases per patient.
+The experiment uses the Automated Cardiac Diagnosis Challenge (ACDC) dataset \cite{bernard2018deep}. The task is multi-class segmentation of three anatomical structures: RV, MYO, and LV. The final discovery snapshot records 200 non-empty image-label path pairs from 100 patients. Each patient contributes labelled end-diastolic and end-systolic frames, giving two labelled 3D cases per patient.
 
-A practical issue in this project is that the local dataset layout contains paths ending in \texttt{.nii} that may act as containers rather than directly readable NIfTI files. Therefore, the final data discovery procedure checks whether each candidate path is a valid non-empty file or a directory containing the actual NIfTI file. Empty placeholders are skipped. This step is important because directly passing an empty placeholder file to a NIfTI reader causes a loading error. The final data discovery report confirmed 200 valid image-label pairs and no skipped invalid containers.
+A practical issue in this project is that the local dataset layout contains paths ending in \texttt{.nii} that may act as containers rather than directly readable NIfTI files. Therefore, the final data discovery procedure checks whether each candidate path is a non-empty file or a directory containing a non-empty NIfTI path. Empty placeholders are skipped. This step is important because directly passing an empty placeholder file to a NIfTI reader causes a loading error. The archived discovery report records 200 paired paths and no skipped containers, but it retains only five example cases. It is therefore evidence of path discovery, not an independent audit of every NIfTI header, voxel array, label set, orientation, or spacing.
 
 \section{Patient-Level Training and Validation Split}
 The split was performed at patient level rather than case level. This means all labelled frames from the same patient belong either to training or to validation, never both. This design prevents leakage of patient-specific anatomy into the validation set. With random seed 42 and an 80/20 split, the experiment used 80 training patients and 20 validation patients, corresponding to 160 training cases and 40 validation cases.
@@ -56,6 +56,8 @@ This condition is the core methodological safeguard of the experiment. It ensure
 
 \section{Preprocessing Pipeline}
 All models use the same preprocessing pipeline implemented with MONAI \cite{cardoso2022monai}. Each image and label pair is loaded from NIfTI format, converted to channel-first representation, resized to a fixed spatial size of $256\times256\times16$, intensity-scaled, and converted to a PyTorch tensor. Applying the same preprocessing to all models is necessary because otherwise observed performance differences could be caused by data handling rather than architecture.
+
+The executed transform resizes array dimensions directly; it does not explicitly canonicalize image orientation or resample every case to a common physical voxel spacing before resizing. Therefore, the reported experiment is a fixed-array-shape comparison rather than a spacing-preserving geometric evaluation. This historical preprocessing is documented rather than changed retrospectively, because changing it would require retraining every model and would produce a different experiment.
 
 \begin{figure}[hbt!]
 \centering
@@ -131,7 +133,7 @@ The proposed model follows a 3D U-Net-style encoder-decoder structure. The encod
 \draw[skip] (e1) -- node[above, font=\scriptsize] {skip} (d1);
 \end{tikzpicture}
 }
-\caption{Nano-Mamba U-Net architecture. The model keeps the U-Net encoder-decoder and skip-connection structure, while replacing the deepest bottleneck with a compact Mamba-inspired sequence-processing module.}
+\caption{Nano-Mamba U-Net architecture. The model keeps the U-Net encoder-decoder and skip-connection structure, while augmenting the deepest convolutional bottleneck with a compact Mamba-inspired gated sequence module.}
 \label{fig:full_architecture}
 \end{figure}
 
@@ -160,20 +162,30 @@ The tensor is serialized across the spatial dimensions to obtain a sequence:
 \begin{equation}
     \mathbf{X}_{seq}=\mathrm{reshape}(\mathcal{X})\in\mathbb{R}^{B\times L\times C}, \qquad L=HWD.
 \end{equation}
-This operation does not create new anatomical information. It changes the representation so that the bottleneck can process compressed volumetric features as a sequence.
+This operation does not create new anatomical or temporal information. It uses a fixed raster order over the spatial grid so that the bottleneck can process compressed volumetric features as a sequence. Here, $D$ is anatomical slice depth, not cardiac time; ED and ES volumes are processed as separate cases.
 
-The implemented bottleneck is Mamba-inspired rather than a full selective scan implementation. It uses linear projection, depthwise one-dimensional convolution, gating, output projection, and residual addition. A simplified representation of the operation is:
+The implemented bottleneck is Mamba-inspired rather than a full selective scan implementation. It uses linear projection, a symmetric depthwise one-dimensional convolution, a scalar sigmoid gate per token, output projection, and residual addition. The executed graph can be represented as:
 \begin{equation}
-    Z = \mathrm{Proj}_{out}\left(\mathrm{Gate}\left(\mathrm{DWConv1D}\left(\mathrm{Proj}_{in}(\mathbf{X}_{seq})\right)\right)\right)+\mathbf{X}_{seq}.
+    [\mathbf{U},\mathbf{V}] = \mathrm{split}\!\left(\mathrm{Proj}_{in}(\mathbf{X}_{seq})\right),
 \end{equation}
-Here, $\mathrm{Proj}_{in}$ and $\mathrm{Proj}_{out}$ are learned linear projections, $\mathrm{DWConv1D}$ is a depthwise sequence convolution, and $\mathrm{Gate}$ denotes a learned nonlinear gating operation. The output is reshaped back into 3D feature form before being passed to the decoder.
+\begin{equation}
+    \mathbf{H}=\mathrm{SiLU}\!\left(\mathrm{DWConv1D}(\mathbf{U})\right),
+    \qquad
+    \mathbf{G}=\sigma\!\left(\mathrm{Proj}_{gate}(\mathbf{H})_{:,:,1}\right),
+\end{equation}
+\begin{equation}
+    \mathbf{Y}=\mathrm{Proj}_{out}\!\left(\mathbf{H}\odot\mathbf{G}\odot\mathrm{SiLU}(\mathbf{V})\right),
+    \qquad
+    \mathbf{Z}=\mathbf{Y}+\mathbf{X}_{seq}.
+\end{equation}
+Here, $\mathrm{Proj}_{in}$ and $\mathrm{Proj}_{out}$ are learned linear projections, $\mathrm{DWConv1D}$ is the depthwise sequence convolution, $\sigma$ is the sigmoid function, and $\odot$ denotes element-wise multiplication. In the historical implementation, $\mathrm{Proj}_{gate}$ produces $2d_{state}+1$ channels but only its first channel enters $\mathbf{G}$. The remaining legacy projection channels are retained for checkpoint compatibility but have no path to the output. The output sequence is reshaped back into 3D feature form before being passed to the decoder.
 
 This design choice must be interpreted carefully. The original Mamba paper proposes selective state space sequence modeling \cite{gu2023mamba}. The implementation in this project uses a lightweight PyTorch block inspired by this direction, but it does not claim to reproduce the full hardware-aware selective scan. The research contribution is therefore the integration and evaluation of a compact sequence-inspired bottleneck inside a cardiac MRI segmentation model.
 
 \section{Comparison Models and Ablation Design}
-The experiment compares Nano-Mamba U-Net with several reference architectures. The 3D U-Net baseline represents the standard encoder-decoder approach. Attention U-Net represents attention-gated skip connections. SegResNet16 represents a residual convolutional segmentation model. Two ablation variants are included to study the role of the bottleneck: No-Mamba U-Net replaces the Mamba-inspired bottleneck with convolutional blocks, while Half-Mamba U-Net reduces the bottleneck capacity.
+The experiment compares Nano-Mamba U-Net with several reference architectures. The 3D U-Net baseline represents the standard encoder-decoder approach. Attention U-Net represents attention-gated skip connections. SegResNet16 represents a residual convolutional segmentation model based on the SegResNet family \cite{myronenko2019segresnet}. Two ablation variants are included to study the role of the bottleneck: No-Mamba U-Net replaces the Mamba-inspired bottleneck with convolutional blocks, while Half-Mamba U-Net reduces the bottleneck capacity.
 
-The purpose of the ablation study is not to prove that every Mamba-inspired configuration must outperform every convolutional configuration. Instead, the ablation tests whether the proposed bottleneck improves the accuracy-efficiency trade-off under the same training and validation protocol. This distinction is important because the final results show that No-Mamba U-Net slightly outperformed Nano-Mamba U-Net in mean Dice, while Nano-Mamba U-Net retained the lowest parameter count.
+The ablations are not parameter matched: the No-Mamba variant contains 2.29M reported parameters, whereas Nano-Mamba U-Net contains 1.46M. It also uses a different two-block convolutional bottleneck. The comparison can therefore describe the observed architecture-level accuracy-efficiency trade-off, but it cannot isolate a causal benefit or harm from sequence gating alone. This distinction is important because No-Mamba U-Net slightly outperformed Nano-Mamba U-Net in mean Dice, while Nano-Mamba U-Net retained the lowest reported parameter count.
 
 \section{Training Objective and Optimization}
 The models are trained using a Dice-Cross Entropy objective. Dice loss addresses region-level overlap, while cross entropy provides voxel-wise class supervision. For class $c$, the Dice score is:
@@ -192,25 +204,27 @@ The total loss used for optimization is:
 \begin{equation}
     \mathcal{L}_{total}=\mathcal{L}_{Dice}+\mathcal{L}_{CE}.
 \end{equation}
-Here, $p_{i,c}$ denotes the predicted probability for voxel $i$ and class $c$, while $g_{i,c}$ denotes the one-hot ground-truth label. This loss is a standard practical choice for medical segmentation and is implemented using MONAI's Dice-Cross Entropy loss.
+Here, $p_{i,c}$ denotes the predicted probability for voxel $i$ and class $c$, while $g_{i,c}$ denotes the one-hot ground-truth label. This loss is a standard practical choice for medical segmentation and is implemented using MONAI's Dice-Cross Entropy loss. The executed constructor sets \texttt{to\_onehot\_y=True} and \texttt{softmax=True} but does not override \texttt{include\_background}; under the documented MONAI default, the four-channel training Dice term includes background. By contrast, the reported evaluation Dice is computed only for the three foreground structures. The optimization loss and the reported metric therefore use related but not identical class averaging.
 
-Optimization is performed with AdamW \cite{loshchilov2017decoupled}. The learning rate is $1\times10^{-4}$ and weight decay is $1\times10^{-5}$. All models are trained for 150 epochs. The batch size is set according to model memory requirements: lighter models use batch size 2, while heavier models use batch size 1. These settings are kept consistent in the final experimental script to support fair comparison.
+Optimization is performed with AdamW \cite{loshchilov2017decoupled}. The learning rate is $1\times10^{-4}$ and weight decay is $1\times10^{-5}$. All models are trained for 150 epochs. UNet3D, Nano-Mamba, No-Mamba, and Half-Mamba use batch size 2; Attention U-Net and SegResNet16 use batch size 1 because of memory constraints. This is not a strictly controlled batch-size comparison. In particular, the custom U-Net variants contain batch-normalization layers, so different mini-batch statistics and numbers of optimizer steps per epoch are potential confounders.
 
 \section{Checkpoint Selection and Evaluation Metrics}
 A key methodological correction in the final experiment is validation-based checkpoint selection. Earlier exploratory scripts saved best models according to training loss, which is not a reliable indicator of generalization. In the final experiment, the checkpoint is saved only when validation mean Dice improves. If $\overline{D}^{(e)}_{val}$ denotes the validation mean Dice at epoch $e$, the selected checkpoint is:
 \begin{equation}
     e^*=\arg\max_e \overline{D}^{(e)}_{val}.
 \end{equation}
-The final reported metrics are computed from this selected checkpoint on the held-out validation cases.
+The final reported metrics are computed from this selected checkpoint on the held-out validation cases. Because the same validation set is used for repeated checkpoint selection and descriptive reporting, it must not be interpreted as an independent final test set.
 
 The primary reported segmentation metric is mean Dice across RV, MYO, and LV:
 \begin{equation}
     \overline{D}=\frac{D_{RV}+D_{MYO}+D_{LV}}{3}.
 \end{equation}
-The study also reports parameter count and inference speed. Parameter count measures the number of trainable parameters in the model, while inference speed is measured as frames per second on the same hardware environment. These computational metrics are necessary because the research question concerns the trade-off between accuracy and lightweight design, not Dice score alone.
+The implementation assigns a class Dice of 1 when both the predicted and reference masks for that class are empty in a case; otherwise it applies the unsmoothed foreground Dice expression. This convention is stated because it can affect case-level aggregation. The original per-case CSVs were not included in the audited evidence bundle, so the audit could not determine whether any reported case/class pair invoked the empty-empty rule.
+
+The study also reports parameter count and inference speed. The historical parameter count sums every tensor returned by \texttt{model.parameters()}, including the unused legacy outputs of the gate projection described above. Inference speed uses a random batch-one tensor of shape $1\times1\times256\times256\times16$, five warm-up passes, and 30 timed passes with CUDA synchronization. These computational metrics are engineering measurements from one implementation and environment; parameter count is not treated as a direct proxy for speed.
 
 \section{Hardware and Reproducibility}
-All experiments are run using PyTorch and MONAI on a single NVIDIA RTX 4060 GPU with 8GB VRAM. The random seed is fixed to 42 for Python, NumPy, and PyTorch. CuDNN deterministic settings are enabled to improve reproducibility. The final experiment script saves the patient split, per-case validation scores, training logs, checkpoints, and summary CSV/JSON files. These outputs provide an auditable evidence chain linking the reported thesis tables to the executed code.
+The experiment was recorded as running with PyTorch \cite{paszke2019pytorch} and MONAI on a single NVIDIA RTX 4060 GPU with 8GB VRAM. The random seed is fixed to 42 for Python, NumPy, and PyTorch, and CuDNN deterministic settings are enabled. The final script is designed to save the split, per-case validation scores, training logs, checkpoints, and summary CSV/JSON files. However, the submitted audit bundle retained only the split, discovery summary, and aggregate result CSV/JSON. Exact software, CUDA, driver, and operating-system versions, together with the original per-case files and training logs, were not archived in that bundle and are therefore listed as reproducibility limitations rather than silently inferred.
 
 \section{Methodological Summary}
-The methodology is designed to support a fair and cautious evaluation. The proposed Nano-Mamba U-Net is compared with several baseline and ablation models under the same patient-level split and preprocessing pipeline. The model is not evaluated using training-set performance, and it is not claimed to be a full implementation of the original Mamba selective scan. Instead, the experiment tests whether a compact Mamba-inspired bottleneck can provide competitive cardiac MRI segmentation performance with a low parameter count.
+The methodology supports a cautious, internally consistent comparison under one patient-level split and preprocessing pipeline. It does not provide an independent test set, matched batch sizes, matched-capacity ablations, or multi-seed uncertainty. The model is not evaluated using training-set performance and is not claimed to be a full implementation of the original Mamba selective scan. The experiment therefore addresses whether this particular compact Mamba-inspired bottleneck occupies a competitive accuracy-efficiency region, not whether it is universally superior.
