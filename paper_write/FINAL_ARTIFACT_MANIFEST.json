@@ -1,8 +1,9 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "audit_date": "2026-08-21",
   "branch": "p2-final-audit-2026-08-20",
-  "audited_source_commit": "be8666bffd0068de27a8b6c0ff4b3d5164853043",
+  "audited_source_commit": "70654969ea3b1c78a15de91293da5d6dc8bd9063",
+  "audited_source_tree": "2e95c372f8248705d941c3fa77a5b44c5b532589",
   "registered_title": "Nano-Mamba U-Net: A Spatio-Temporal Framework for Cardiac Motion Analysis",
   "scientific_scope": {
     "task": "Four-class 3D cardiac MRI segmentation of independently processed ED and ES volumes",
@@ -10,7 +11,7 @@
     "bottleneck": "Mamba-inspired gated spatial sequence module; not full Mamba selective scan",
     "claim": "Competitive accuracy-efficiency trade-off; not the highest Dice and not a causal gate advantage",
     "boundary_file": "SCIENTIFIC_BOUNDARIES.md",
-    "boundary_file_sha256": "8b438497c6efd0e6a56745c1ed39a474385fba41c6f6b68a26ddcb09b1e318b6"
+    "boundary_file_sha256": "0128ee770649ed6c960a07b34e89500177c1c72a0f1d7f875198f8e9ddee7974"
   },
   "main_result_evidence": {
     "pipeline": "src/21_rigorous_experiment_pipeline.py",
@@ -20,28 +21,66 @@
     "split_json": "evidence/rigorous_patient_split/patient_split_seed42.json",
     "split_json_sha256": "e79f1c238d73389900364ea32a92d954458e17e461e1c81a2e595ba653456280",
     "audit_report": "evidence/rigorous_patient_split/evidence_audit_report.json",
-    "audit_report_sha256": "0532371ea373522138b05791eaa0ccb4d0520864a9ccfa3b7c8df6b0e357db2e",
+    "audit_report_sha256": "683f01237cad6a5ef7105d5a0a8b432cf24e125a0feb780d205cd3cacc6aad91",
     "aggregate_consistency_status": "pass",
     "strict_closure_status": "incomplete",
-    "strict_closure_reason": "The historical bundle lacks the full 200-case discovery manifest, original per-case rows, training logs, checkpoint manifest, confirmed historical environment, and confirmed command transcript.",
+    "strict_closure_exit": 2,
+    "remaining_historical_confirmations": [
+      "The recovered six-checkpoint set has not been confirmed unchanged from the historical run.",
+      "The historical discovery record lacks a full 200-case NIfTI content manifest.",
+      "The current environment capture has not been confirmed as the historical training/benchmark environment.",
+      "The exact historical command and working directory remain unconfirmed."
+    ],
     "historical_source_lineage": "evidence/rigorous_patient_split/historical_source_lineage.json",
-    "historical_source_lineage_sha256": "52974fe8c25b8e06b10ad36447fcf2c3fcfa6adb3075e6cdfe2e171e5a1b4d34",
-    "lineage_scope": "Validated temporal/source context only; not end-to-end run provenance."
+    "historical_source_lineage_sha256": "fc37e621ccc98ffd5abe3c94149329df4c8d516cb98f9395ac80b5226e9adb0e",
+    "lineage_scope": "Validated temporal/source context only; not end-to-end run attestation."
+  },
+  "recovered_closure": {
+    "source_archive": "p2_closure_20260821_020939.zip",
+    "source_archive_sha256": "16fbbe31db97e9695fc78aadbb46e9cf04f99fa1e1fd2d9e735f03d75d14a3b3",
+    "receipt": "evidence/rigorous_patient_split/RECOVERED_CLOSURE_RECEIPT.json",
+    "receipt_sha256": "613a7c1143bc66a44bf3cd7e1854ddb7e50b4b9bf867f1dcf6cc5665574ff511",
+    "raw_checksum_list": "evidence/rigorous_patient_split/RECOVERED_CLOSURE_SHA256SUMS.txt",
+    "raw_checksum_list_sha256": "b6af4d005d2177dcb0564a15e62f5f74fe392480d7a6a94aa1cefbee01d1bf8b",
+    "raw_member_verification": "19 of 19 listed archive members passed SHA-256 after extraction and repository placement",
+    "per_case_csv_files": 6,
+    "per_case_rows": 240,
+    "foreground_class_scores_checked": 720,
+    "exact_unity_scores": 0,
+    "training_log_csv_files": 6,
+    "training_log_rows": 900,
+    "checkpoint_records": 6,
+    "unique_checkpoint_hashes": 6,
+    "checkpoint_manifest_sha256": "adc29abf93026aa8a8241c5298172e6aa65fdb82a17d2126c1b907316cf16e68",
+    "current_environment_capture_sha256": "cf47ebed361dab3ba502d52e04a31162d2d341b54f670a26847f49932839668d",
+    "unconfirmed_transcript_sha256": "a49604cbd875daf4b80fe2d35fc4acb50582670267501854c3755d0ebca4fdb8"
+  },
+  "posthoc_patient_bootstrap": {
+    "method": "Patient-level percentile bootstrap; 10000 replicates; seed 20260820; descriptive only",
+    "NanoMambaUNet_95_ci": [0.8205, 0.8690],
+    "paired_differences_percentage_points": {
+      "versus_UNet3D": {"estimate": 3.945, "ci95": [2.829, 5.009]},
+      "versus_AttentionUNet": {"estimate": 10.001, "ci95": [3.508, 18.294]},
+      "versus_SegResNet16": {"estimate": -1.918, "ci95": [-3.010, -0.884]},
+      "versus_NoMamba": {"estimate": -0.862, "ci95": [-1.482, -0.230]},
+      "versus_HalfMamba": {"estimate": -0.174, "ci95": [-0.909, 0.551]}
+    }
   },
   "quantitative_figures": {
     "provenance_manifest": "figures/quantitative_figure_provenance.json",
-    "provenance_manifest_sha256": "31613b2bc47daa2dcce160ea7af725f4857b48e41a918378c25d1c212604ab28",
-    "source": "Audited summary CSV",
-    "count": 3
+    "provenance_manifest_sha256": "09c137e901f96f95834353e3e979eba03d0d34ca02c0a0230566c6688673ddfc",
+    "generator_sha256": "65c4de4d10d8940ba214793ec247040392d804761d4532665727b6a8f7e184f1",
+    "count": 4,
+    "scope": "Three figures read the audited summary CSV; one reads all six recovered raw 150-epoch logs."
   },
-  "cross_platform_source_hashing": {
-    "attributes": ".gitattributes",
-    "attributes_sha256": "305a19c226487ca354227f175d86e80ac3475dd47f6c5ec9e9c5857fbe8e9e10",
-    "audit_script": "src/22_p2_evidence_audit.py",
-    "audit_script_sha256": "fde46d7a9bcaccbdd652d264cb53fd3d132a7392d13f00f5f1672c5678329f2e",
-    "regression_test": "tests/test_p2_evidence_audit.py",
-    "regression_test_sha256": "40f49dfb350792865cd4b283a61b1a4b6ebd39369a02900d93fed97f6ad69559",
-    "policy": "Tracked audit text uses LF; current-source SHA-256 validation canonicalizes CRLF to LF while continuing to reject all substantive byte changes."
+  "collection_and_validation_tools": {
+    "attributes_sha256": "87f9c41800b59cc63a5b3956ed7557f8b1e3507d019264f8b0c80a2627f8c5a6",
+    "audit_script_sha256": "e59fde636f363ba5181af9dd999f8bd1add4f35da74e3d2d8a67d98e081b1931",
+    "collector_sha256": "d4f97d79bf50a18acbd6c9a7c114d0a9c12610293f71794f9f78c2de087954fa",
+    "checkpoint_manifest_tool_sha256": "f93af34a9305e60555e5bcc2b0da4b8aaa0cb1a17d559864990acf3645870de4",
+    "environment_capture_tool_sha256": "7f4b7d581858d54cf3e13d13eb448a6b80753990d23c5788aae566ee12d131c8",
+    "dataset_manifest_tool_sha256": "7b93628963cb98dd1fd001f4f02790662901c7c92780a91f14c483369aca2c6e",
+    "policy": "Recovered evidence bytes are preserved; current-source hashes are CRLF-neutral; collection redacts URL credentials and common user-home paths; unexpected audit failures stop collection."
   },
   "thesis": {
     "entry_point": "paper_write/Universiti_Malaya_Thesis_Template/thesis.tex",
@@ -49,9 +88,9 @@
     "bibliography": "paper_write/Universiti_Malaya_Thesis_Template/myrefs.bib",
     "bibliography_sha256": "79edb4432a8efc74da2f4177c237fcf09faef68637d4b03a5347fe2ba7271ba7",
     "pdf": "paper_write/Universiti_Malaya_Thesis_Template/thesis.pdf",
-    "pdf_sha256": "4f7b3f89bafdd858fe7cd45c0853fa0f7dc43f6b64ddd997203cf379f1a3d141",
-    "bytes": 546049,
-    "pages": 71,
+    "pdf_sha256": "f6eaec329b35edf6be675117132b0949947e200e6aa1b8217b3ca3f1dfc9a3e5",
+    "bytes": 770981,
+    "pages": 73,
     "page_size": "A4 (595.276 x 841.89 pt)",
     "pdf_version": "1.5",
     "build_command": "bash scripts/build_thesis.sh",
@@ -61,24 +100,43 @@
       "No undefined citations or references",
       "No overfull boxes",
       "No missing figures",
-      "All 71 pages rendered and visually reviewed"
+      "All 73 pages rendered and visually reviewed",
+      "Latest 73 raster pages pixel-match the fully reviewed render"
     ]
   },
   "word_count": {
+    "record": "paper_write/WORD_COUNT.md",
+    "record_sha256": "53547d51cf3c1372311d246d60dfe84230a8673eb89556247e17b7ea7e1c5a76",
     "method": "detex over the five active body-chapter sources, then wc -w",
-    "active_body_words": 11563,
-    "cross_check_pdf_body_words": 11667,
+    "active_body_words": 12112,
+    "cross_check_pdf_body_words": 12366,
     "scope": "Excludes abstracts, front matter, references, and inactive legacy files."
   },
   "presentation": {
     "deck": "presentation/P2_Final_Defense_Tong_Siyuan.pptx",
-    "deck_sha256": "f420eeb28170d218f6abef003afe0a1223fc3395e73e410965577717e6fb586f",
-    "bytes": 363762,
+    "deck_sha256": "6ae5b8884b044bc0dcd70c259bba7b4f6156e981c95c01123d6da085d5908fc6",
+    "bytes": 364033,
     "slides": 13,
     "target_duration_minutes": 15,
     "viva_bank": "presentation/P2_VIVA_QA.md",
-    "viva_bank_sha256": "fb037c860cf9f8bda4f61bbc6c6a1dac56a024c473aa08aad7539aa9e148c1c7",
-    "qa": "Rendered all slides; slide-layout test reported no overflow; montage and individual slides visually reviewed"
+    "viva_bank_sha256": "ad589dd776b1b793d6789e3adb6a37e40853c9170a653f8e5e460bd028389dd9",
+    "qa": "All slides rendered and individually reviewed; layout test reports no overflow; template-fidelity test reports no issues."
+  },
+  "final_audit": {
+    "file": "paper_write/P2_FINAL_AUDIT.md",
+    "sha256": "77b8604cd86ea7d07e8db0583537a820dcff932295048587a03b39ef68a1e6c3",
+    "disposition": "Conditionally ready for submission with four historical provenance confirmations and private declaration fields explicitly outstanding."
+  },
+  "verification": {
+    "data_free_tests": "17 passed on the sealed source state",
+    "pytorch_architecture_tests": "3 passed in the candidate's Windows nanomamba environment before this evidence-only update; the unchanged architecture tests skip because PyTorch is not installed in the audit container",
+    "python_compile": "pass",
+    "raw_evidence_checksum": "pass (19/19)",
+    "aggregate_evidence_audit": "pass",
+    "strict_closure_test": "expected exit 2 on exactly four historical confirmation gaps",
+    "pdf_visual_review": "all 73 pages reviewed; final rebuild raster is pixel-identical to the reviewed raster",
+    "presentation_overflow_test": "pass",
+    "non_raw_git_diff_check": "pass"
   },
   "tool_versions": {
     "python": "3.12.13",
@@ -88,15 +146,6 @@
     "pdfinfo": "26.05.0",
     "node": "24.19.0",
     "artifact_tool": "2.8.43"
-  },
-  "verification": {
-    "data_free_tests": "9 passed, including CRLF acceptance and substantive-change rejection",
-    "pytorch_architecture_tests": "3 passed in the user-reported Windows nanomamba run; the same tests skip because PyTorch is not installed in the audit container",
-    "windows_checkout_regression": "pass",
-    "strict_closure_test": "expected exit 2 on documented historical evidence gaps",
-    "pdf_visual_review": "all 71 pages reviewed; final page-break correction re-rendered at full size",
-    "presentation_overflow_test": "pass",
-    "git_diff_check": "pass"
   },
   "required_private_pre_submission_action": "Create the ignored submission-private.tex from the tracked example, complete only institution-required identity/signature fields, rebuild the PDF, and visually inspect the declaration page before upload."
 }
