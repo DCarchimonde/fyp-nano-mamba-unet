@@ -20,12 +20,12 @@
     "split_json": "evidence/rigorous_patient_split/patient_split_seed42.json",
     "split_json_sha256": "e79f1c238d73389900364ea32a92d954458e17e461e1c81a2e595ba653456280",
     "audit_report": "evidence/rigorous_patient_split/evidence_audit_report.json",
-    "audit_report_sha256": "bc8f872c5e7eda96fbb8d23d3f3411b564b554ca856917b379fe2f912d53a3a3",
+    "audit_report_sha256": "0532371ea373522138b05791eaa0ccb4d0520864a9ccfa3b7c8df6b0e357db2e",
     "aggregate_consistency_status": "pass",
     "strict_closure_status": "incomplete",
     "strict_closure_reason": "The historical bundle lacks the full 200-case discovery manifest, original per-case rows, training logs, checkpoint manifest, confirmed historical environment, and confirmed command transcript.",
     "historical_source_lineage": "evidence/rigorous_patient_split/historical_source_lineage.json",
-    "historical_source_lineage_sha256": "fb4e0997079dcc8fc28464438a23de08dc26a0c2f33ecbd3d22e39bfff19a516",
+    "historical_source_lineage_sha256": "52974fe8c25b8e06b10ad36447fcf2c3fcfa6adb3075e6cdfe2e171e5a1b4d34",
     "lineage_scope": "Validated temporal/source context only; not end-to-end run provenance."
   },
   "quantitative_figures": {
@@ -33,6 +33,15 @@
     "provenance_manifest_sha256": "31613b2bc47daa2dcce160ea7af725f4857b48e41a918378c25d1c212604ab28",
     "source": "Audited summary CSV",
     "count": 3
+  },
+  "cross_platform_source_hashing": {
+    "attributes": ".gitattributes",
+    "attributes_sha256": "305a19c226487ca354227f175d86e80ac3475dd47f6c5ec9e9c5857fbe8e9e10",
+    "audit_script": "src/22_p2_evidence_audit.py",
+    "audit_script_sha256": "fde46d7a9bcaccbdd652d264cb53fd3d132a7392d13f00f5f1672c5678329f2e",
+    "regression_test": "tests/test_p2_evidence_audit.py",
+    "regression_test_sha256": "40f49dfb350792865cd4b283a61b1a4b6ebd39369a02900d93fed97f6ad69559",
+    "policy": "Tracked audit text uses LF; current-source SHA-256 validation canonicalizes CRLF to LF while continuing to reject all substantive byte changes."
   },
   "thesis": {
     "entry_point": "paper_write/Universiti_Malaya_Thesis_Template/thesis.tex",
@@ -81,8 +90,9 @@
     "artifact_tool": "2.8.43"
   },
   "verification": {
-    "data_free_tests": "8 passed",
-    "pytorch_architecture_tests": "3 skipped because PyTorch is not installed in the audit environment",
+    "data_free_tests": "9 passed, including CRLF acceptance and substantive-change rejection",
+    "pytorch_architecture_tests": "3 passed in the user-reported Windows nanomamba run; the same tests skip because PyTorch is not installed in the audit container",
+    "windows_checkout_regression": "pass",
     "strict_closure_test": "expected exit 2 on documented historical evidence gaps",
     "pdf_visual_review": "all 71 pages reviewed; final page-break correction re-rendered at full size",
     "presentation_overflow_test": "pass",

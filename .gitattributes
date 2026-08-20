@@ -1,0 +1,28 @@
+* text=auto
+.gitattributes text eol=lf
+
+# Keep audited source and evidence text byte-stable across Windows and Unix.
+*.py text eol=lf
+*.json text eol=lf
+*.csv text eol=lf
+*.md text eol=lf
+*.tex text eol=lf
+*.bib text eol=lf
+*.cls text eol=lf
+*.ldf text eol=lf
+*.sh text eol=lf
+*.ps1 text eol=lf
+*.txt text eol=lf
+
+# Generated and submission artefacts are binary.
+*.docx binary
+*.gz binary
+*.nii binary
+*.npy binary
+*.npz binary
+*.pdf binary
+*.png binary
+*.pptx binary
+*.pth binary
+*.pt binary
+*.zip binary

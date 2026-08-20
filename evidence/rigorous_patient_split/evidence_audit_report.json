@@ -60,7 +60,7 @@
   "reconstructed_source_lineage": {
     "git_objects_checked": true,
     "scope": "Temporal/source context only; the lineage file explicitly does not close missing run-level provenance.",
-    "sha256": "fb4e0997079dcc8fc28464438a23de08dc26a0c2f33ecbd3d22e39bfff19a516",
+    "sha256": "52974fe8c25b8e06b10ad36447fcf2c3fcfa6adb3075e6cdfe2e171e5a1b4d34",
     "status": "validated reconstructed context"
   },
   "schema_version": 2,

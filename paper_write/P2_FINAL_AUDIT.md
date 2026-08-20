@@ -240,7 +240,9 @@ added the following corrections without changing the reported result values:
 - documented that the training Dice term includes background under the MONAI
   default whereas the reported evaluation averages the three foreground classes;
 - replaced the SegMamba preprint record with its MICCAI 2024 proceedings record;
-  and
+- made current-source lineage hashing invariant to Git's Windows CRLF checkout
+  conversion while retaining rejection of every substantive source change, and
+  added repository line-ending policy plus a dedicated regression test; and
 - isolated TeX font caches in the temporary build directory and rechecked all
   71 pages, including the corrected page break at the end of the limitations.
 

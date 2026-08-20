@@ -18,11 +18,17 @@ python -m py_compile \
   src/nano_mamba_core.py
 ```
 
-Expected result: the aggregate-consistency audit passes; the eight data-free
+Expected result: the aggregate-consistency audit passes; the nine data-free
 audit tests pass; PyTorch-dependent architecture tests pass when PyTorch is
 installed and otherwise skip explicitly. This default pass is not an
 end-to-end provenance claim. Strict closure remains incomplete until the
 original experiment artefacts are added.
+
+The repository enforces LF for audited text through `.gitattributes`. The
+lineage validator also canonicalizes CRLF to LF for current source files, so a
+Windows `core.autocrlf` checkout cannot produce a false hash mismatch. The
+regression test verifies both CRLF acceptance and rejection of a real content
+change.
 
 ## 2. Regenerate quantitative figures
 

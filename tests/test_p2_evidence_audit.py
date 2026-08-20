@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import shutil
 import subprocess
@@ -105,6 +106,49 @@ class P2EvidenceAuditTests(unittest.TestCase):
             result = self.run_audit("--evidence-dir", str(copied))
             self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
             self.assertIn("best_epoch", result.stderr)
+
+    def test_source_lineage_accepts_crlf_but_rejects_content_change(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            copied = Path(temp_dir)
+            for name in AGGREGATE_FILES:
+                shutil.copy2(EVIDENCE / name, copied / name)
+
+            source = copied / "checkout_source.py"
+            canonical = b"first = 1\nsecond = 2\n"
+            source.write_bytes(canonical.replace(b"\n", b"\r\n"))
+
+            archive_hash_keys = {
+                "summary_metrics.csv": "summary_metrics_csv_sha256",
+                "summary_metrics.json": "summary_metrics_json_sha256",
+                "patient_split_seed42.json": "patient_split_sha256",
+                "data_discovery_report.json": "data_discovery_sha256",
+            }
+            archive = {
+                key: hashlib.sha256((copied / name).read_bytes()).hexdigest()
+                for name, key in archive_hash_keys.items()
+            }
+            lineage = {
+                "schema_version": 1,
+                "supplied_archive": archive,
+                "historical_sources_present_before_the_summary_timestamp": {},
+                "current_hardened_sources": {
+                    str(source): hashlib.sha256(canonical).hexdigest()
+                },
+            }
+            lineage_path = copied / "historical_source_lineage.json"
+            lineage_path.write_text(
+                json.dumps(lineage, indent=2) + "\n", encoding="utf-8"
+            )
+
+            converted = self.run_audit("--evidence-dir", str(copied))
+            self.assertEqual(
+                converted.returncode, 0, converted.stdout + converted.stderr
+            )
+
+            source.write_bytes(b"first = 1\r\nsecond = 999\r\n")
+            changed = self.run_audit("--evidence-dir", str(copied))
+            self.assertEqual(changed.returncode, 1, changed.stdout + changed.stderr)
+            self.assertIn("current-source mismatch", changed.stderr)
 
 
 if __name__ == "__main__":

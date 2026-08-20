@@ -69,6 +69,17 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def sha256_git_text(path: Path) -> str:
+    """Hash text as Git stores it, independent of checkout line endings.
+
+    Git may materialize tracked text with CRLF in a Windows working tree even
+    though the repository blob and recorded audit hash use LF.  Normalize only
+    CRLF pairs so line-ending conversion cannot create a false lineage failure;
+    every other byte remains covered by the SHA-256 check.
+    """
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
 def natural_patient_key(patient_id: str) -> Tuple[str, int]:
     prefix = patient_id.rstrip("0123456789")
     suffix = patient_id[len(prefix) :]
@@ -471,7 +482,7 @@ def validate_source_lineage(
     current_sources = lineage.get("current_hardened_sources", {})
     for relative_path, expected_hash in current_sources.items():
         source_path = REPO_ROOT / relative_path
-        if not source_path.is_file() or sha256(source_path) != expected_hash:
+        if not source_path.is_file() or sha256_git_text(source_path) != expected_hash:
             raise EvidenceError(
                 f"historical source lineage current-source mismatch: {relative_path}"
             )
