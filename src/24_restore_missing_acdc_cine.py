@@ -9,8 +9,13 @@ No recovered file is installed until all of these checks pass:
 
 * exact byte length and SHA-256 for a pinned download;
 * four-dimensional NIfTI shape and ``Info.cfg`` ``NbFrame``;
-* spatial shape and affine agreement with the local ED and ES images; and
+* spatial shape and header voxel-size agreement with local ED/ES images;
+* explicit audit of the raw qform/sform affine metadata; and
 * normalized ED/ES image agreement with the corresponding cine frames.
+
+The affine is audited rather than treated as an identity gate because the
+public ACDC release contains byte-identical 4D and endpoint arrays whose
+qform/sform codes make nibabel expose different fallback affines.
 """
 
 from __future__ import annotations
@@ -176,27 +181,40 @@ def validate_cine_identity(
             f"(X, Y, Z, {expected_frames})"
         )
 
-    native_shape = cine_shape[:3]
-    cine_affine = np.asarray(cine_image.affine, dtype=np.float64)
     endpoint_mae: Dict[str, float] = {}
+    endpoint_geometry: Dict[str, Dict[str, object]] = {}
     for phase in ("ED", "ES"):
         frame = int(info[phase])
         if frame not in endpoints:
             raise ValueError(f"{patient_dir.name} is missing the {phase} endpoint pair")
         endpoint_image = nib.load(str(endpoints[frame]["image"]))
-        endpoint_shape = tuple(int(value) for value in endpoint_image.shape)
-        if endpoint_shape != native_shape:
+        endpoint_label = nib.load(str(endpoints[frame]["label"]))
+        label_pair_geometry = analysis.spatial_grid_record(
+            endpoint_image,
+            endpoint_label,
+            f"{patient_dir.name} {phase} endpoint image",
+            f"{patient_dir.name} {phase} endpoint label",
+        )
+        if not bool(label_pair_geometry["affine_matches"]):
             raise ValueError(
-                f"{patient_dir.name} {phase} shape={endpoint_shape}, "
-                f"cine spatial shape={native_shape}"
+                f"{patient_dir.name} {phase} endpoint image/label affine differs; "
+                "their label registration cannot be established"
             )
-        if not np.allclose(
-            np.asarray(endpoint_image.affine, dtype=np.float64),
-            cine_affine,
-            rtol=1e-5,
-            atol=1e-5,
-        ):
-            raise ValueError(f"{patient_dir.name} {phase} affine differs from recovered cine")
+        endpoint_geometry[phase] = {
+            "image_vs_cine": analysis.spatial_grid_record(
+                cine_image,
+                endpoint_image,
+                f"{patient_dir.name} recovered cine",
+                f"{patient_dir.name} {phase} endpoint image",
+            ),
+            "label_vs_cine": analysis.spatial_grid_record(
+                cine_image,
+                endpoint_label,
+                f"{patient_dir.name} recovered cine",
+                f"{patient_dir.name} {phase} endpoint label",
+            ),
+            "label_vs_endpoint_image": label_pair_geometry,
+        }
         cine_frame = np.asarray(cine_image.dataobj[..., frame - 1], dtype=np.float32)
         endpoint_values = np.asarray(endpoint_image.dataobj, dtype=np.float32)
         mae = analysis.normalized_input_mae(cine_frame, endpoint_values)
@@ -212,6 +230,7 @@ def validate_cine_identity(
         "reference_ed_frame": int(info["ED"]),
         "reference_es_frame": int(info["ES"]),
         "endpoint_normalized_mae": endpoint_mae,
+        "endpoint_grid_audit": endpoint_geometry,
     }
 
 
@@ -476,11 +495,24 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     temporary_download.unlink()
 
         installed_sha256 = sha256(target)
+        affine_mismatches = [
+            f"{phase}/{kind}"
+            for phase in ("ED", "ES")
+            for kind in ("image_vs_cine", "label_vs_cine")
+            if not bool(
+                validation["endpoint_grid_audit"][phase][kind]["affine_matches"]
+            )
+        ]
         print(
             f"    validated and installed: ED MAE="
             f"{float(validation['endpoint_normalized_mae']['ED']):.8f}, ES MAE="
             f"{float(validation['endpoint_normalized_mae']['ES']):.8f}"
         )
+        if affine_mismatches:
+            print(
+                "    raw affine differences audited (shape, voxel sizes, and "
+                "endpoint pixels match): " + ", ".join(affine_mismatches)
+            )
         recovered.append(
             {
                 "patient_id": patient_id,

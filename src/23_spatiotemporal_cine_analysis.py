@@ -405,6 +405,122 @@ def normalized_input_mae(first: np.ndarray, second: np.ndarray) -> float:
     return float(np.mean(np.abs(unit_scale(first) - unit_scale(second))))
 
 
+def nifti_spatial_zooms(image: Any) -> Tuple[float, float, float]:
+    zooms = tuple(float(value) for value in image.header.get_zooms()[:3])
+    if (
+        len(zooms) != 3
+        or not np.isfinite(zooms).all()
+        or any(value <= 0.0 for value in zooms)
+    ):
+        raise ValueError(f"Invalid NIfTI spatial voxel sizes: {zooms}")
+    return zooms
+
+
+def _nifti_form_code(image: Any, field: str) -> Optional[int]:
+    try:
+        return int(np.asarray(image.header[field]).item())
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return None
+
+
+def spatial_grid_record(
+    reference_image: Any,
+    candidate_image: Any,
+    reference_name: str,
+    candidate_name: str,
+) -> Dict[str, object]:
+    """Prove voxel-grid compatibility while auditing unreliable raw affines.
+
+    The public ACDC release can encode byte-identical 4D and standalone
+    endpoint frames with different qform/sform affines. Array correspondence
+    is therefore established separately from raw affine equality: spatial
+    shape and header voxel sizes must match, and callers additionally compare
+    endpoint image content. Raw affine equality remains recorded for audit.
+    """
+
+    reference_shape = tuple(int(value) for value in reference_image.shape[:3])
+    candidate_shape = tuple(int(value) for value in candidate_image.shape)
+    if len(candidate_shape) != 3 or candidate_shape != reference_shape:
+        raise ValueError(
+            f"{candidate_name} shape={candidate_shape} differs from "
+            f"{reference_name} spatial shape={reference_shape}"
+        )
+    reference_zooms = nifti_spatial_zooms(reference_image)
+    candidate_zooms = nifti_spatial_zooms(candidate_image)
+    if not np.allclose(reference_zooms, candidate_zooms, rtol=1e-5, atol=1e-5):
+        raise ValueError(
+            f"{candidate_name} voxel sizes={candidate_zooms} differ from "
+            f"{reference_name} voxel sizes={reference_zooms}"
+        )
+    reference_affine = np.asarray(reference_image.affine, dtype=np.float64)
+    candidate_affine = np.asarray(candidate_image.affine, dtype=np.float64)
+    for name, matrix in (
+        (reference_name, reference_affine),
+        (candidate_name, candidate_affine),
+    ):
+        if matrix.shape != (4, 4) or not np.isfinite(matrix).all():
+            raise ValueError(f"{name} has an invalid affine matrix")
+    return {
+        "spatial_shape": list(reference_shape),
+        "reference_zooms_mm": list(reference_zooms),
+        "candidate_zooms_mm": list(candidate_zooms),
+        "affine_matches": bool(
+            np.allclose(reference_affine, candidate_affine, rtol=1e-5, atol=1e-5)
+        ),
+        "reference_qform_code": _nifti_form_code(reference_image, "qform_code"),
+        "reference_sform_code": _nifti_form_code(reference_image, "sform_code"),
+        "candidate_qform_code": _nifti_form_code(candidate_image, "qform_code"),
+        "candidate_sform_code": _nifti_form_code(candidate_image, "sform_code"),
+    }
+
+
+def physical_metric_geometry(
+    image: Any,
+) -> Tuple[np.ndarray, float, Dict[str, object]]:
+    """Build a millimetre metric from header zooms and affine directions.
+
+    Only distances and volumes are reported. They are invariant to translation,
+    rotation, and axis flips. Header zooms supply scale because some valid ACDC
+    endpoint headers have sform matrices whose column norms disagree with
+    ``pixdim``. The raw affine is retained only for direction when orthonormal.
+    """
+
+    zooms = np.asarray(nifti_spatial_zooms(image), dtype=np.float64)
+    raw_affine = np.asarray(image.affine, dtype=np.float64)
+    if raw_affine.shape != (4, 4) or not np.isfinite(raw_affine).all():
+        raise ValueError("Cine has an invalid affine matrix")
+    linear = raw_affine[:3, :3]
+    column_norms = np.linalg.norm(linear, axis=0)
+    directions_valid = bool(
+        np.all(np.isfinite(column_norms)) and np.all(column_norms > 0.0)
+    )
+    if directions_valid:
+        directions = linear / column_norms[None, :]
+        directions_valid = bool(
+            np.allclose(directions.T @ directions, np.eye(3), rtol=1e-5, atol=1e-5)
+        )
+    metric_affine = np.eye(4, dtype=np.float64)
+    if directions_valid:
+        metric_affine[:3, :3] = directions @ np.diag(zooms)
+        metric_affine[:3, 3] = raw_affine[:3, 3]
+        policy = "header_zooms_with_orthonormal_affine_directions"
+    else:
+        metric_affine[:3, :3] = np.diag(zooms)
+        policy = "header_zooms_with_diagonal_direction_fallback"
+    voxel_volume_ml = float(np.prod(zooms) / 1000.0)
+    return metric_affine, voxel_volume_ml, {
+        "policy": policy,
+        "spatial_zooms_mm": [float(value) for value in zooms],
+        "raw_affine_axis_scales": [float(value) for value in column_norms],
+        "raw_affine_scales_match_header_zooms": bool(
+            np.allclose(column_norms, zooms, rtol=1e-5, atol=1e-5)
+        ),
+        "voxel_volume_ml": voxel_volume_ml,
+        "qform_code": _nifti_form_code(image, "qform_code"),
+        "sform_code": _nifti_form_code(image, "sform_code"),
+    }
+
+
 def preprocess_frame(frame: np.ndarray, torch: Any, functional: Any) -> Any:
     values = np.asarray(frame, dtype=np.float32)
     if values.ndim != 3 or not np.isfinite(values).all():
@@ -1049,6 +1165,10 @@ def write_report(path: Path, summary: Mapping[str, object]) -> None:
         "global motion/function analysis. The 3D backbone was not retrained as a learned ",
         "temporal network, and the outputs are not optical flow, dense displacement, ",
         "local strain, or externally validated clinical measurements.",
+        "Raw endpoint/4D affine equality is audited but is not used as the grid ",
+        "registration criterion because valid ACDC files can encode identical endpoint ",
+        "voxel arrays with different qform/sform affines. Shape, voxel size, and ED/ES ",
+        "image content must match; physical magnitudes use cine header voxel sizes.",
         "",
     ]
     path.write_text("\n".join(lines), encoding="utf-8")
@@ -1197,25 +1317,45 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if not np.isfinite(cine).all():
             raise ValueError(f"{patient_id} full cine contains NaN or infinity")
         native_shape = cine.shape[:3]
-        affine = np.asarray(cine_image.affine, dtype=np.float64)
-        voxel_volume_ml = float(abs(np.linalg.det(affine[:3, :3])) / 1000.0)
+        metric_affine, voxel_volume_ml, cine_geometry = physical_metric_geometry(
+            cine_image
+        )
         if not np.isfinite(voxel_volume_ml) or voxel_volume_ml <= 0.0:
             raise ValueError(f"{patient_id} has invalid physical voxel volume")
 
         input_mae: Dict[str, float] = {}
+        endpoint_geometry: Dict[str, Dict[str, object]] = {}
         labels_native: Dict[str, np.ndarray] = {}
         endpoint_images: Dict[str, np.ndarray] = {}
         for phase, frame in (("ED", int(info["ED"])), ("ES", int(info["ES"]))):
             endpoint_image = nib.load(str(endpoints[frame]["image"]))
             endpoint_label = nib.load(str(endpoints[frame]["label"]))
-            if endpoint_image.shape != native_shape or endpoint_label.shape != native_shape:
+            label_pair_geometry = spatial_grid_record(
+                endpoint_image,
+                endpoint_label,
+                f"{patient_id} {phase} endpoint image",
+                f"{patient_id} {phase} endpoint label",
+            )
+            if not bool(label_pair_geometry["affine_matches"]):
                 raise ValueError(
-                    f"{patient_id} {phase} endpoint geometry differs from the 4D cine"
+                    f"{patient_id} {phase} endpoint image/label affine differs; "
+                    "their label registration cannot be established"
                 )
-            if not np.allclose(endpoint_image.affine, affine, rtol=1e-5, atol=1e-5):
-                raise ValueError(f"{patient_id} {phase} endpoint affine differs from the cine")
-            if not np.allclose(endpoint_label.affine, affine, rtol=1e-5, atol=1e-5):
-                raise ValueError(f"{patient_id} {phase} label affine differs from the cine")
+            endpoint_geometry[phase] = {
+                "image_vs_cine": spatial_grid_record(
+                    cine_image,
+                    endpoint_image,
+                    f"{patient_id} cine",
+                    f"{patient_id} {phase} endpoint image",
+                ),
+                "label_vs_cine": spatial_grid_record(
+                    cine_image,
+                    endpoint_label,
+                    f"{patient_id} cine",
+                    f"{patient_id} {phase} endpoint label",
+                ),
+                "label_vs_endpoint_image": label_pair_geometry,
+            }
             image_values = np.asarray(endpoint_image.dataobj, dtype=np.float32)
             label_values = np.asarray(endpoint_label.dataobj)
             input_mae[phase] = normalized_input_mae(cine[..., frame - 1], image_values)
@@ -1260,7 +1400,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 native_mask = resize_mask_to_native(
                     resized_mask_tensor, native_shape, torch, functional
                 )
-                physical = segmentation_frame_metrics(native_mask, affine, voxel_volume_ml)
+                physical = segmentation_frame_metrics(
+                    native_mask, metric_affine, voxel_volume_ml
+                )
                 row: Dict[str, object] = {
                     "patient_id": patient_id,
                     "group": str(info.get("Group", "unknown")),
@@ -1284,7 +1426,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             method: {} for method in METHODS
         }
         reference_metrics = {
-            phase: segmentation_frame_metrics(label, affine, voxel_volume_ml)
+            phase: segmentation_frame_metrics(label, metric_affine, voxel_volume_ml)
             for phase, label in labels_native.items()
         }
         for method in METHODS:
@@ -1362,6 +1504,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 "cine_shape": list(cine_image.shape),
                 "zooms": [float(value) for value in cine_image.header.get_zooms()],
                 "voxel_volume_ml": voxel_volume_ml,
+                "cine_physical_geometry": cine_geometry,
+                "endpoint_grid_audit": endpoint_geometry,
                 "reference_ed_frame": int(info["ED"]),
                 "reference_es_frame": int(info["ES"]),
                 "endpoint_input_mae_ed": input_mae["ED"],
@@ -1447,9 +1591,29 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "scientific_boundaries": [
             "Intermediate cine frames have no manual segmentation labels in ACDC training data.",
             "ED/ES endpoint masks and Info.cfg phase indices provide the available temporal validation.",
+            "Raw ACDC endpoint and 4D cine affines may differ despite identical endpoint voxel arrays; grid registration is proven by shape, voxel spacing, and ED/ES image content, while physical magnitudes use cine header zooms.",
             "The analysis is not optical flow, dense registration, local strain, or external clinical validation.",
             "The validation cohort was also used historically for checkpoint selection.",
         ],
+        "geometry_audit": {
+            "physical_metric_policy": "header voxel sizes with orthonormal affine directions when valid; distances and volumes are origin/orientation invariant",
+            "patients_with_any_endpoint_affine_mismatch": sorted(
+                {
+                    str(record["patient_id"])
+                    for record in input_records
+                    if any(
+                        not bool(
+                            record["endpoint_grid_audit"][phase][kind][
+                                "affine_matches"
+                            ]
+                        )
+                        for phase in ("ED", "ES")
+                        for kind in ("image_vs_cine", "label_vs_cine")
+                    )
+                },
+                key=natural_sort_key,
+            ),
+        },
         "endpoint_input_max_normalized_mae": max(
             max(float(record["endpoint_input_mae_ed"]), float(record["endpoint_input_mae_es"]))
             for record in input_records

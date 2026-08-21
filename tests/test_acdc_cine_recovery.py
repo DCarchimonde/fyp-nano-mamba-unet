@@ -19,6 +19,7 @@ if SPEC is None or SPEC.loader is None:
     raise RuntimeError(f"Cannot import {SCRIPT_PATH}")
 RECOVERY = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(RECOVERY)
+ANALYSIS = RECOVERY.load_cine_analysis_module()
 
 
 class FakeResponse(io.BytesIO):
@@ -29,11 +30,39 @@ class FakeResponse(io.BytesIO):
         self.close()
 
 
+class FakeHeader:
+    def __init__(
+        self,
+        zooms: tuple[float, ...],
+        qform_code: int = 0,
+        sform_code: int = 0,
+    ) -> None:
+        self.zooms = zooms
+        self.form_codes = {
+            "qform_code": np.asarray(qform_code),
+            "sform_code": np.asarray(sform_code),
+        }
+
+    def get_zooms(self) -> tuple[float, ...]:
+        return self.zooms
+
+    def __getitem__(self, field: str) -> np.ndarray:
+        return self.form_codes[field]
+
+
 class FakeImage:
-    def __init__(self, values: np.ndarray, affine: np.ndarray) -> None:
+    def __init__(
+        self,
+        values: np.ndarray,
+        affine: np.ndarray,
+        zooms: tuple[float, ...],
+        qform_code: int = 0,
+        sform_code: int = 0,
+    ) -> None:
         self.dataobj = values
         self.shape = values.shape
         self.affine = affine
+        self.header = FakeHeader(zooms, qform_code, sform_code)
 
 
 class FakeNibabel:
@@ -45,6 +74,8 @@ class FakeNibabel:
 
 
 class FakeAnalysis:
+    spatial_grid_record = staticmethod(ANALYSIS.spatial_grid_record)
+
     @staticmethod
     def parse_info_cfg_text(text: str) -> dict[str, int]:
         return {"ED": 1, "ES": 2, "NbFrame": 3}
@@ -134,14 +165,49 @@ class CineRecoveryTests(unittest.TestCase):
             patient.mkdir()
             (patient / "Info.cfg").write_text("ignored", encoding="utf-8")
             cine_path = patient / "patient002_4d.nii.gz"
-            affine = np.eye(4)
+            cine_affine = np.array(
+                [
+                    [-1.3671875, 0.0, 0.0, 157.91015625],
+                    [0.0, 1.3671875, 0.0, -174.31640625],
+                    [0.0, 0.0, 10.0, -45.0],
+                    [0.0, 0.0, 0.0, 1.0],
+                ]
+            )
+            endpoint_affine = np.diag([-1.0, -1.0, 1.0, 1.0])
+            spatial_zooms = (1.3671875, 1.3671875, 10.0)
             cine = np.zeros((2, 2, 1, 3), dtype=np.float32)
             cine[..., 0] = 1.0
             cine[..., 1] = 2.0
             images = {
-                str(cine_path): FakeImage(cine, affine),
-                str(patient / "ed.nii"): FakeImage(cine[..., 0], affine),
-                str(patient / "es.nii"): FakeImage(cine[..., 1], affine),
+                str(cine_path): FakeImage(
+                    cine,
+                    cine_affine,
+                    spatial_zooms + (1.0,),
+                ),
+                str(patient / "ed.nii"): FakeImage(
+                    cine[..., 0],
+                    endpoint_affine,
+                    spatial_zooms,
+                    sform_code=2,
+                ),
+                str(patient / "ed_gt.nii"): FakeImage(
+                    np.zeros_like(cine[..., 0]),
+                    endpoint_affine,
+                    spatial_zooms,
+                    sform_code=2,
+                ),
+                str(patient / "es.nii"): FakeImage(
+                    cine[..., 1],
+                    endpoint_affine,
+                    spatial_zooms,
+                    sform_code=2,
+                ),
+                str(patient / "es_gt.nii"): FakeImage(
+                    np.zeros_like(cine[..., 1]),
+                    endpoint_affine,
+                    spatial_zooms,
+                    sform_code=2,
+                ),
             }
             result = RECOVERY.validate_cine_identity(
                 cine_path,
@@ -152,10 +218,43 @@ class CineRecoveryTests(unittest.TestCase):
             )
             self.assertEqual(result["cine_shape"], [2, 2, 1, 3])
             self.assertEqual(result["endpoint_normalized_mae"], {"ED": 0.0, "ES": 0.0})
+            self.assertFalse(
+                result["endpoint_grid_audit"]["ED"]["image_vs_cine"][
+                    "affine_matches"
+                ]
+            )
+            self.assertTrue(
+                result["endpoint_grid_audit"]["ED"][
+                    "label_vs_endpoint_image"
+                ]["affine_matches"]
+            )
+
+            images[str(patient / "ed_gt.nii")] = FakeImage(
+                np.zeros_like(cine[..., 0]),
+                np.eye(4),
+                spatial_zooms,
+                sform_code=2,
+            )
+            with self.assertRaisesRegex(ValueError, "image/label affine differs"):
+                RECOVERY.validate_cine_identity(
+                    cine_path,
+                    patient,
+                    FakeAnalysis,
+                    FakeNibabel(images),
+                    endpoint_mae_tolerance=0.0,
+                )
+            images[str(patient / "ed_gt.nii")] = FakeImage(
+                np.zeros_like(cine[..., 0]),
+                endpoint_affine,
+                spatial_zooms,
+                sform_code=2,
+            )
 
             images[str(patient / "es.nii")] = FakeImage(
                 cine[..., 1] + 1.0,
-                affine,
+                endpoint_affine,
+                spatial_zooms,
+                sform_code=2,
             )
             with self.assertRaisesRegex(ValueError, "does not match local endpoints"):
                 RECOVERY.validate_cine_identity(

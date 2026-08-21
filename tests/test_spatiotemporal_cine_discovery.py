@@ -6,6 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import numpy as np
+
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -23,6 +25,40 @@ except ImportError:
 
 
 class CineDiscoveryTests(unittest.TestCase):
+    class FakeHeader:
+        def __init__(
+            self,
+            zooms: tuple[float, ...],
+            qform_code: int = 0,
+            sform_code: int = 0,
+        ) -> None:
+            self.zooms = zooms
+            self.form_codes = {
+                "qform_code": np.asarray(qform_code),
+                "sform_code": np.asarray(sform_code),
+            }
+
+        def get_zooms(self) -> tuple[float, ...]:
+            return self.zooms
+
+        def __getitem__(self, field: str) -> np.ndarray:
+            return self.form_codes[field]
+
+    class FakeGeometryImage:
+        def __init__(
+            self,
+            shape: tuple[int, ...],
+            affine: np.ndarray,
+            zooms: tuple[float, ...],
+            qform_code: int = 0,
+            sform_code: int = 0,
+        ) -> None:
+            self.shape = shape
+            self.affine = affine
+            self.header = CineDiscoveryTests.FakeHeader(
+                zooms, qform_code, sform_code
+            )
+
     class FakeNifti:
         def __init__(self, shape: tuple[int, ...]) -> None:
             self.shape = shape
@@ -101,6 +137,62 @@ class CineDiscoveryTests(unittest.TestCase):
             CINE.label_container_for(Path("patient001_frame01.nii")),
             Path("patient001_frame01_gt.nii"),
         )
+
+    def test_acdc_affine_metadata_mismatch_is_audited_not_misclassified(self) -> None:
+        zooms = (1.3671875, 1.3671875, 10.0)
+        cine = self.FakeGeometryImage(
+            (232, 256, 10, 30),
+            np.array(
+                [
+                    [-zooms[0], 0.0, 0.0, 157.91015625],
+                    [0.0, zooms[1], 0.0, -174.31640625],
+                    [0.0, 0.0, zooms[2], -45.0],
+                    [0.0, 0.0, 0.0, 1.0],
+                ]
+            ),
+            zooms + (1.0,),
+        )
+        endpoint = self.FakeGeometryImage(
+            (232, 256, 10),
+            np.diag([-1.0, -1.0, 1.0, 1.0]),
+            zooms,
+            sform_code=2,
+        )
+        record = CINE.spatial_grid_record(
+            cine, endpoint, "patient002 cine", "patient002 ED endpoint"
+        )
+        self.assertFalse(record["affine_matches"])
+        self.assertEqual(record["reference_zooms_mm"], list(zooms))
+        self.assertEqual(record["candidate_zooms_mm"], list(zooms))
+
+    def test_grid_record_rejects_a_real_voxel_size_mismatch(self) -> None:
+        reference = self.FakeGeometryImage(
+            (32, 32, 4, 20), np.eye(4), (1.4, 1.4, 8.0, 1.0)
+        )
+        candidate = self.FakeGeometryImage(
+            (32, 32, 4), np.eye(4), (1.4, 1.4, 10.0)
+        )
+        with self.assertRaisesRegex(ValueError, "voxel sizes"):
+            CINE.spatial_grid_record(
+                reference, candidate, "reference cine", "endpoint image"
+            )
+
+    def test_physical_metric_uses_header_zooms_not_inconsistent_affine_scale(self) -> None:
+        zooms = (1.3671875, 1.3671875, 10.0)
+        image = self.FakeGeometryImage(
+            (232, 256, 10, 30),
+            np.diag([-1.0, -1.0, 1.0, 1.0]),
+            zooms + (1.0,),
+            sform_code=2,
+        )
+        metric_affine, voxel_volume_ml, audit = CINE.physical_metric_geometry(
+            image
+        )
+        self.assertTrue(
+            np.allclose(np.linalg.norm(metric_affine[:3, :3], axis=0), zooms)
+        )
+        self.assertAlmostEqual(voxel_volume_ml, np.prod(zooms) / 1000.0)
+        self.assertFalse(audit["raw_affine_scales_match_header_zooms"])
 
     def test_aggregate_keeps_paired_temporal_comparison(self) -> None:
         rows = []

@@ -58,11 +58,14 @@ download only the required files (91.6 MiB total) from the public
 `msepulvedagodoy/acdc` mirror pinned at revision
 `067262d5b40f9c976f7139c13416ace5a3314f42`. Each download has a fixed byte
 count and SHA-256, and it is installed only after its ED and ES image content,
-affine, spatial shape, and `NbFrame` agree with the existing local patient
-files. The source and checks are written to a recovery manifest under
-`experiment_outputs`. A byte-identical fallback mirror is also pinned for
-transient repository failures. A full official ACDC archive remains an
-alternative.
+spatial shape, header voxel sizes, and `NbFrame` agree with the existing local
+patient files. Raw qform/sform affine equality is recorded but is not an
+identity gate: the public ACDC release contains matching 4D and standalone
+endpoint arrays with different affine metadata. Physical distances and volumes
+use the cine header voxel sizes. The source and checks are written to a
+recovery manifest under `experiment_outputs`. A byte-identical fallback mirror
+is also pinned for transient repository failures. A full official ACDC archive
+remains an alternative.
 
 On success it creates a timestamped directory and ZIP under
 `D:\AI_FYP\experiment_outputs`, for example:
@@ -85,12 +88,20 @@ of these occur:
 
 - a validation patient, `Info.cfg`, 4D cine, endpoint image, or label is missing;
 - the NIfTI time dimension differs from `NbFrame`;
-- cine and endpoint spatial geometry/affine differ;
+- cine and endpoint spatial shape or header voxel sizes differ;
 - the cine ED/ES image does not match the original standalone image;
 - the checkpoint hash/model/state dictionary differs from the audited record;
 - frame-wise endpoint Dice cannot reproduce the recovered historical case row;
 - the model produces non-finite probabilities;
 - fewer than all 20 validation patients are processed in the final run.
+
+A raw affine mismatch between the 4D cine and its standalone endpoint does not
+stop the run. It is preserved in the input and recovery manifests, while array
+registration is established by matching spatial dimensions, voxel spacing, and
+endpoint image content. The endpoint image and its manual label must still
+match each other's affine. This handles the documented ACDC container-header
+inconsistency without weakening checks that can detect a wrong patient, frame,
+voxel grid, image payload, or label alignment.
 
 ## Exact scientific boundary
 

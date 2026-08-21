@@ -29,7 +29,7 @@ python -m py_compile \
   src/nano_mamba_core.py
 ```
 
-Expected result: the aggregate-consistency audit passes; thirty-five data-free
+Expected result: the aggregate-consistency audit passes; thirty-eight data-free
 audit, visualization, recovery, and cine-analysis tests pass; four
 PyTorch-dependent tests pass
 when PyTorch is installed and otherwise skip explicitly. This verifies the
