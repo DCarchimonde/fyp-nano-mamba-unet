@@ -21,8 +21,10 @@ viva answers.
 - Main values come only from the rigorous patient-split pipeline and audited
   summary CSV.
 - SegResNet16 achieved the highest validation mean Dice (86.70%).
-- Nano-Mamba U-Net achieved 84.78% with the smallest reported parameter count
-  (1.456M) among the evaluated configurations.
+- Nano-Mamba U-Net achieved 84.78% with exactly 1,456,325 trainable parameters,
+  the smallest count among the evaluated configurations. Its checkpoint has
+  1,422 additional BatchNorm running-statistic/counter entries that are buffers,
+  not trainable parameters.
 - Nano-Mamba U-Net exceeded UNet3D by 3.945 percentage points and used 69.714%
   fewer reported parameters.
 - The No-Mamba ablation achieved 85.64%, 0.862 percentage points above
@@ -45,6 +47,10 @@ viva answers.
 - Fixed circular probability fusion uses
   `0.25 P(t-1) + 0.50 P(t) + 0.25 P(t+1)`; it is deterministic and contains no
   learned temporal parameter.
+- The sealed cine run computed logits and softmax in float32 and preserved the
+  frame-wise argmax before storing probability maps as float16. Neighbour maps
+  were converted back to float32 for fixed fusion. Reported fusion measurements
+  describe this executed precision path.
 - Frame-wise and temporal-fusion resized endpoint Dice are 84.779% and 84.794%.
   Their paired difference is +0.014 percentage points with a 95% bootstrap
   interval of [-0.063, +0.082] percentage points, which includes zero.
@@ -71,6 +77,11 @@ viva answers.
   workflow does perform nearest-neighbour native-shape mask restoration and
   reports the lower native-grid endpoint Dice; it does not retroactively make
   the training comparison spacing-preserving or orientation-canonicalized.
+- The approximately 6.861 percentage-point resized/native frame-wise Dice
+  difference must not be attributed solely to Z-axis anisotropy. Code and
+  regression review found no axis permutation or interpolation-mode bug;
+  in-plane/through-plane resizing, native-grid heterogeneity, boundary
+  discretization, and model error can all contribute.
 - Intermediate cine frames do not have manual masks. Smooth trajectories alone
   must not be presented as proof of anatomically correct intermediate masks.
 - Diagnostic-group values are descriptive only because group sizes are 1--7;
@@ -79,6 +90,9 @@ viva answers.
 - The ablation does not causally prove that Mamba-inspired gating improves or
   harms accuracy because capacity, normalization, and batch-size confounds
   remain.
+- Attention U-Net used BatchNorm3d at batch size one and SegResNet16 used
+  GroupNorm at batch size one. Completion of all 150 epochs rules out a training
+  crash, but does not remove the cross-model normalization/batch-size confound.
 - The 20 validation patients are not the official ACDC test set and not an
   independent final test set; the same set was used for checkpoint selection.
 - A single seed/split and post-hoc bootstrap intervals do not establish
@@ -88,6 +102,9 @@ viva answers.
   environment-specific batch-one random-input benchmark.
 - The legacy gate projection contains trainable channels without an output path;
   published parameter counts include those channels.
+- The very small fixed-fusion Dice/EF differences must not be presented as
+  precision-independent improvements because the sealed probability maps used
+  float16 host-memory storage before float32 fusion arithmetic.
 
 ## Fixed-title viva defence
 

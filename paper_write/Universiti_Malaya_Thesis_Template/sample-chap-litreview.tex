@@ -42,9 +42,22 @@ Fully Convolutional Networks (FCNs) showed that classification-style neural netw
 
 U-Net became one of the most influential architectures in biomedical image segmentation \cite{ronneberger2015u}. Its main contribution is the encoder-decoder structure with skip connections. The encoder gradually reduces spatial resolution to learn semantic features, while the decoder restores resolution to produce a segmentation mask. Skip connections transfer high-resolution spatial features from the encoder to the decoder, which helps recover fine boundaries. If $\mathbf{X}^{(l)}_{enc}$ is an encoder feature map and $\mathbf{X}^{(l+1)}_{dec}$ is a decoder feature map from a coarser level, a simplified skip-connection operation can be written as:
 \begin{equation}
-    \mathbf{X}^{(l)}_{dec}=\mathcal{F}\left(\mathbf{X}^{(l)}_{enc}\oplus \mathcal{U}\left(\mathbf{X}^{(l+1)}_{dec}\right)\right),
+    \mathbf{X}^{(l)}_{\mathrm{dec}}
+    =\operatorname{Conv}\!\left(
+      \operatorname{Concat}\!\left[
+        \mathbf{X}^{(l)}_{\mathrm{enc}},
+        \operatorname{Upsample}\!\left(\mathbf{X}^{(l+1)}_{\mathrm{dec}}\right)
+      \right]
+    \right),
 \end{equation}
-where $\mathcal{U}$ denotes up-sampling, $\oplus$ denotes channel-wise concatenation, and $\mathcal{F}$ denotes convolutional refinement. This equation explains why U-Net is suitable for medical segmentation: the decoder does not reconstruct boundaries only from compressed semantic features; it also receives high-resolution information from earlier encoder layers.
+where \(\operatorname{Upsample}\) restores spatial resolution,
+\(\operatorname{Concat}\) joins feature channels, and
+\(\operatorname{Conv}\) performs convolutional refinement. Writing the
+operations by name avoids any ambiguity about the order: up-sampling occurs
+before channel concatenation, and convolution follows the concatenation. This
+equation explains why U-Net is suitable for medical segmentation: the decoder
+does not reconstruct boundaries only from compressed semantic features; it
+also receives high-resolution information from earlier encoder layers.
 
 For volumetric data, 3D U-Net extends the same principle from 2D images to 3D tensors \cite{cicek20163d}. V-Net also used volumetric convolution and Dice-based optimization for 3D medical segmentation \cite{milletari2016v}. These works are directly relevant to this thesis because the proposed Nano-Mamba U-Net uses a 3D U-Net-style encoder-decoder as its architectural base. The contribution of this thesis is not the invention of the U-Net framework itself. Rather, the project studies whether the bottleneck of such a framework can be modified into a compact sequence-processing module.
 
@@ -78,18 +91,28 @@ For volumetric data, 3D U-Net extends the same principle from 2D images to 3D te
 \subsection{Attention U-Net}
 Attention U-Net introduced attention gates to suppress irrelevant encoder features before they are passed through skip connections \cite{oktay2018attention}. This is relevant in medical images because large regions of an image may contain background structures unrelated to the target anatomy. In a simplified attention gate, an encoder feature $x$ and a decoder gating signal $g$ are projected into a shared representation and transformed into an attention coefficient:
 \begin{equation}
-    \alpha = \sigma\left(\psi^T\delta\left(W_xx + W_gg + b\right)\right).
+    \alpha = \operatorname{sigmoid}\!\left(
+      \boldsymbol{\psi}^{\mathsf{T}}
+      \delta\!\left(W_xx + W_gg + b\right)
+    \right).
 \end{equation}
 The filtered feature can then be represented as:
 \begin{equation}
-    \hat{x}=\alpha \odot x.
+    \hat{x}_i=\alpha_i x_i,
 \end{equation}
-Here, $\sigma$ is a sigmoid function, $\delta$ is a nonlinear activation, and $\odot$ denotes element-wise multiplication. The key idea is not that attention automatically guarantees better segmentation, but that it provides a mechanism for feature selection. In the final experiment of this thesis, Attention U-Net did not outperform the other models, which illustrates why empirical comparison under the same split is necessary.
+where index \(i\) runs over the spatial feature elements. Thus,
+\(\operatorname{sigmoid}\) maps the attention score to a coefficient,
+\(\delta\) is a nonlinear activation, and \(\alpha_i x_i\) is explicit
+element-wise multiplication. The key idea is not that attention automatically
+guarantees better segmentation, but that it provides a mechanism for feature
+selection. In the final experiment of this thesis, Attention U-Net did not
+outperform the other models, which illustrates why empirical comparison under
+the same split is necessary.
 
 \subsection{Residual Networks and SegResNet}
-Residual learning was introduced to make deeper networks easier to optimize \cite{he2016deep}. Instead of asking stacked layers to learn a full mapping $\mathcal{H}(x)$, a residual block learns a residual function $\mathcal{F}(x)$ and adds the input back to the output:
+Residual learning was introduced to make deeper networks easier to optimize \cite{he2016deep}. Instead of asking stacked layers to learn a full mapping $H(x)$, a residual block learns a residual function $F(x)$ and adds the input back to the output:
 \begin{equation}
-    y = \mathcal{F}(x) + x.
+    y = F(x) + x.
 \end{equation}
 This identity shortcut improves gradient flow and can make deeper convolutional models more trainable. SegResNet-style medical segmentation architectures use residual blocks in an encoder-decoder setting \cite{myronenko2019segresnet}. In this thesis, the MONAI SegResNet configuration with 16 initial filters serves as a residual convolutional alternative to the proposed Nano-Mamba U-Net. The final results show that SegResNet16 achieved the highest mean Dice, which must be acknowledged rather than hidden.
 
@@ -98,9 +121,20 @@ Transformers introduced self-attention as a way to model long-range dependencies
 
 The computational concern with standard self-attention is that the attention matrix grows quadratically with the number of tokens. For an input sequence of length $N$, the attention matrix has size $N\times N$, and the simplified attention operation is:
 \begin{equation}
-    \mathrm{Attention}(Q,K,V)=\mathrm{softmax}\left(\frac{QK^T}{\sqrt{d}}\right)V.
+    \operatorname{Attention}(Q,K,V)
+    =\left[
+      \operatorname{softmax}\!\left(
+        \frac{QK^{\mathsf{T}}}{\sqrt{d_k}}
+      \right)
+    \right]V.
 \end{equation}
-This equation shows why sequence length matters: the multiplication $QK^T$ compares every token with every other token. Window-based methods reduce this cost, but the broader issue remains important for volumetric segmentation because 3D images can produce many spatial tokens.
+Here, \(d_k\) is the key-vector dimension. The square brackets make the
+scope explicit: softmax acts on the complete scaled score matrix
+\(QK^{\mathsf{T}}/\sqrt{d_k}\), and the resulting attention-weight matrix is
+then multiplied by \(V\). This equation shows why sequence length matters: the
+multiplication \(QK^{\mathsf{T}}\) compares every token with every other token.
+Window-based methods reduce this cost, but the broader issue remains important
+for volumetric segmentation because 3D images can produce many spatial tokens.
 
 It would be inaccurate to claim that all transformer models are infeasible or that they are unsuitable for medical imaging. Prior work shows that transformer-based segmentation can be effective. The more careful motivation for this thesis is narrower: for a master's project focused on lightweight deployment and reproducible experiments on a consumer GPU, it is reasonable to investigate alternatives that attempt to combine broader context modeling with lower parameter count.
 
@@ -126,7 +160,7 @@ In multi-class segmentation, Dice can be computed separately for RV, MYO, and LV
 
 Cross-entropy is also widely used because it provides voxel-wise classification supervision. If $y_i$ is the true class at voxel $i$ and $p_{i,c}$ is the predicted probability for class $c$, the multi-class cross-entropy can be expressed as:
 \begin{equation}
-    \mathcal{L}_{CE}=-\sum_i\sum_c \mathbf{1}(y_i=c)\log p_{i,c}.
+    L_{\mathrm{CE}}=-\sum_i\sum_c \mathbf{1}(y_i=c)\log p_{i,c}.
 \end{equation}
 The final experiment uses MONAI's Dice-Cross Entropy loss, combining region-overlap supervision with voxel-wise classification supervision. This choice is practical rather than novel; it follows established segmentation practice and is supported by the MONAI framework \cite{cardoso2022monai}.
 

@@ -5,7 +5,10 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{microtype}
-\usepackage{amssymb}
+% Load the core mathematics packages explicitly.  The active chapters use
+% semantic operator names and standard Latin/Greek symbols so that equations
+% remain stable in PDF viewers that handle script-font character maps poorly.
+\usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \graphicspath{{../../figures/}}
 \usepackage[dvipsnames,x11names,rgb]{xcolor}
@@ -31,6 +34,7 @@
 
 \usepackage{longtable}
 \usepackage{supertabular}
+\usepackage{tabularx}
 
 % ==========================================
 % Core thesis metadata

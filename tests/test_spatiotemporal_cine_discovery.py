@@ -245,6 +245,49 @@ class CineDiscoveryTests(unittest.TestCase):
         self.assertEqual(int(masks["framewise"].item()), 1)
         self.assertEqual(int(masks["temporal_fusion"].item()), 0)
 
+    @unittest.skipUnless(torch is not None, "PyTorch is not installed")
+    def test_temporal_probability_fusion_wraps_both_cycle_boundaries(self) -> None:
+        probabilities = torch.zeros((4, 4, 1, 1, 1), dtype=torch.float32)
+        # Small non-wrapped class-0 evidence at every frame.
+        probabilities[:, 0] = 0.2
+        # The last frame must be the previous neighbour of frame 0.
+        probabilities[-1, 1] = 1.0
+        masks = CINE.prediction_masks(
+            probabilities,
+            torch.zeros((4, 1, 1, 1), dtype=torch.uint8),
+            frame_index=0,
+            torch=torch,
+        )
+        self.assertEqual(int(masks["temporal_fusion"].item()), 1)
+
+        # The first frame must be the following neighbour of the last frame.
+        probabilities.zero_()
+        probabilities[:, 0] = 0.2
+        probabilities[0, 1] = 1.0
+        masks = CINE.prediction_masks(
+            probabilities,
+            torch.zeros((4, 1, 1, 1), dtype=torch.uint8),
+            frame_index=3,
+            torch=torch,
+        )
+        self.assertEqual(int(masks["temporal_fusion"].item()), 1)
+
+    @unittest.skipUnless(torch is not None, "PyTorch is not installed")
+    def test_native_mask_restoration_preserves_axis_order_and_classes(self) -> None:
+        source = torch.zeros((2, 3, 4), dtype=torch.uint8)
+        source[0, 0, 0] = 1
+        source[-1, -1, -1] = 3
+        restored = CINE.resize_mask_to_native(
+            source,
+            native_shape=(5, 7, 9),
+            torch=torch,
+            functional=torch.nn.functional,
+        )
+        self.assertEqual(restored.shape, (5, 7, 9))
+        self.assertEqual(int(restored[0, 0, 0]), 1)
+        self.assertEqual(int(restored[-1, -1, -1]), 3)
+        self.assertTrue(set(np.unique(restored)).issubset({0, 1, 3}))
+
 
 if __name__ == "__main__":
     unittest.main()

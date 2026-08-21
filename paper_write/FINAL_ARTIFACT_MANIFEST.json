@@ -1,5 +1,5 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "audit_date": "2026-08-22",
   "branch": "p2-final-audit-2026-08-20",
   "registered_title": "Nano-Mamba U-Net: A Spatio-Temporal Framework for Cardiac Motion Analysis",
@@ -15,9 +15,9 @@
     "mamba_boundary": "The bottleneck is a Mamba-inspired gated spatial sequence module, not the reference selective-scan Mamba implementation.",
     "supported_claim": "Nano-Mamba provides a compact spatial accuracy-efficiency trade-off; the full-cine extension produces complete global trajectories, and fixed probability fusion makes the LV-volume curve smoother without establishing a resolved Dice or EF gain.",
     "boundary_file": "SCIENTIFIC_BOUNDARIES.md",
-    "boundary_file_sha256": "3dabda0d2e7733a9d2aab5f1c199eaefefbe46558a236076946046fbb628bfd0",
+    "boundary_file_sha256": "e1194004504cfc24ad7e1ba3a46b29a877b8a74c34492e527d2d338e3b19ac69",
     "cine_protocol": "SPATIOTEMPORAL_ANALYSIS.md",
-    "cine_protocol_sha256": "65e51bb0c8aed62696dfa6c344d16a7dc8fb4afbdffb06cc138eed3349ba66ca"
+    "cine_protocol_sha256": "218db035318a9a3378de8b37732bd40f9503e898d247f719fc622135924a421d"
   },
   "image_processing": {
     "stage_a_order": [
@@ -32,7 +32,7 @@
       "Discover a four-dimensional NIfTI whose final dimension equals NbFrame in Info.cfg",
       "Extract one X x Y x Z cardiac phase at a time",
       "Apply the checkpoint-compatible resize and per-phase min-max scaling",
-      "Retain four-class softmax probabilities",
+      "Compute logits and softmax in float32, retain frame-wise argmax, and store the sealed probability maps on CPU as float16",
       "Use frame-wise probabilities directly or apply fixed circular adjacent-frame fusion",
       "Apply class-axis argmax",
       "Restore the categorical mask to the original array shape with nearest-neighbour interpolation",
@@ -73,7 +73,14 @@
       "normalization implementations differ",
       "optimizer-step counts differ with batch size",
       "No-Mamba is not parameter matched to Nano-Mamba"
-    ]
+    ],
+    "normalization_batch_contract": {
+      "UNet3D": "InstanceNorm, batch size 2",
+      "NanoMambaUNet_and_custom_ablations": "BatchNorm3d, batch size 2",
+      "AttentionUNet": "BatchNorm3d, batch size 1; all 150 epochs completed",
+      "SegResNet16": "GroupNorm with 8 groups, batch size 1"
+    },
+    "deterministic_controls": "seed 42 for Python, NumPy, PyTorch CPU, and all CUDA devices; cudnn.deterministic=true; cudnn.benchmark=false; both loaders num_workers=0; global deterministic-algorithm enforcement was not enabled"
   },
   "stage_a_evidence": {
     "status": "scientific consistency pass",
@@ -103,7 +110,10 @@
       "UNet3D": 80.83,
       "AttentionUNet": 74.78
     },
-    "nano_parameters_millions": 1.456,
+    "nano_trainable_parameters": 1456325,
+    "nano_parameters_millions": 1.456325,
+    "nano_checkpoint_state_dict_scalars": 1457747,
+    "nano_non_parameter_batchnorm_buffers": 1422,
     "nano_foreground_dice_percent": {
       "RV": 82.11,
       "MYO": 80.35,
@@ -190,6 +200,8 @@
       "ef_absolute_error": "patient057: 8.119 percentage points under fusion"
     },
     "geometry_note": "Six recovered official cines have 4D/endpoint affine metadata differences. Shape, zooms, endpoint pixel identity, and endpoint image-label affine agreement pass; scalar physical metrics use header spacings and no dense world-coordinate correspondence is claimed.",
+    "probability_precision_note": "AMP was disabled; logits and softmax were float32; frame-wise argmax was preserved before the probability maps were stored as float16 and converted back to float32 for fixed fusion arithmetic.",
+    "native_grid_note": "Nearest-neighbour restoration uses the original X/Y/Z shape with no axis permutation. The 6.861 percentage-point frame-wise resized/native difference is not attributed solely to Z anisotropy; resampling in all axes, boundary discretization, heterogeneous native geometry, and model error can contribute.",
     "pathology_groups": "Descriptive only: MINF n=7, NOR n=6, DCM n=4, RV n=2, HCM n=1"
   },
   "open_scientific_limits": [
@@ -201,34 +213,52 @@
     "fixed fusion is not a learned temporal network",
     "HD95, ASD, calibration, and blinded qualitative review were not evaluated",
     "global centroid/radial trajectories are not dense tissue tracking or regional strain",
-    "pathology summaries are descriptive because groups are small and imbalanced"
+    "pathology summaries are descriptive because groups are small and imbalanced",
+    "the sealed temporal-fusion probability maps used float16 storage before float32 fusion arithmetic, so no precision-independent Dice or EF gain is claimed"
   ],
+  "methodology_deep_audit": {
+    "file": "paper_write/METHODOLOGY_DEEP_AUDIT_2026-08-22.md",
+    "sha256": "23fe3ef3e094ef197bebf70bc579dc98c895b6626e143c0147a4cde48ad0f33b",
+    "raised_items": 11,
+    "additional_issue": "float16 probability-map storage before fixed temporal fusion",
+    "native_grid_diagnostic": "src/26_native_grid_roundtrip_audit.py",
+    "native_grid_diagnostic_sha256": "5f6f0d2d26a6d57529d042efe9f2a6c6859a00a1d79e018c09ea45ed9d7bbb97",
+    "windows_runner": "scripts/run_native_grid_roundtrip_audit.ps1",
+    "windows_runner_sha256": "71ade29e7b85ae905ba9299d9e40b8ea0e6effb0c3e94a868c7cd55a608940e2",
+    "methodology_test": "tests/test_methodology_integrity.py",
+    "methodology_test_sha256": "fb293a20ee4a561ce814bc02f77dba08fff1ce155fbea11cb1302dd10d851421",
+    "roundtrip_test": "tests/test_native_grid_roundtrip_audit.py",
+    "roundtrip_test_sha256": "346b3ac1b9013970c1bb44c82b19cbe325be6b0ae586a8f7134abc44577237f8",
+    "cine_discovery_test": "tests/test_spatiotemporal_cine_discovery.py",
+    "cine_discovery_test_sha256": "a142f2ee2549fe5f21ba35b218321a37688999dca1ea10945646498a79a809aa"
+  },
   "thesis": {
     "entry_point": "paper_write/Universiti_Malaya_Thesis_Template/thesis.tex",
-    "entry_point_sha256": "4da4aa15fcfd68288fa01e7e89855bcb3905ae670095b75f63ea31391eca84d5",
+    "entry_point_sha256": "c18eba1a31c585550225ad582361ab21c224e428f222c3b9829882fa2adc7cca",
     "bibliography": "paper_write/Universiti_Malaya_Thesis_Template/myrefs.bib",
     "bibliography_sha256": "79edb4432a8efc74da2f4177c237fcf09faef68637d4b03a5347fe2ba7271ba7",
     "pdf": "paper_write/Universiti_Malaya_Thesis_Template/thesis.pdf",
-    "pdf_sha256": "797f112b5fe4ec2f716b53578b141cc564f7f9f31d0666a53f87e534df63aec9",
-    "bytes": 1550181,
-    "pages": 86,
+    "pdf_sha256": "49332abbc53da3d388a81762a4a29d23b38b5fee7b66bf5fb9bb37154cc003c1",
+    "bytes": 1556014,
+    "pages": 88,
     "page_size": "A4 (595.276 x 841.89 pt)",
     "pdf_version": "1.5",
     "build_command": "bash scripts/build_thesis.sh",
-    "build_script_sha256": "507a02c7f1e07cb72ee3ac28ce238846a1a9275991822fabd76e36c5f64e2793",
+    "build_script_sha256": "87a72eadc065218e74f6472573fd2e37624b04027c76f5d38df0012e43c90a0d",
     "acceptance_checks": [
       "clean build exit status 0",
       "no undefined citations or references",
       "no missing figures",
       "no overfull boxes",
-      "all 86 pages rendered and visually reviewed"
+      "cross-references stable after four LaTeX passes",
+      "all 88 pages rendered and visually reviewed"
     ]
   },
   "word_count": {
     "record": "paper_write/WORD_COUNT.md",
-    "record_sha256": "9d427e123ca07f9c04d7fa146c0a92003c4b4f5bae85145cfb76f53ee99904bc",
+    "record_sha256": "3d6da960bf4438119c82747cf747ec89d0a4872f9dd7c76e2579f288cb118190",
     "method": "detex over the five active body-chapter sources, then wc -w",
-    "active_body_words": 14968,
+    "active_body_words": 15595,
     "scope": "Excludes abstracts, front matter, references, and inactive legacy files."
   },
   "presentation": {
@@ -239,10 +269,10 @@
     "target_duration_minutes": 15,
     "speaker_notes": "14/14 slides; each contains a source block",
     "viva_bank": "presentation/P2_VIVA_QA.md",
-    "viva_questions": 60,
-    "viva_bank_sha256": "eed9021bc03f139e8f19201b22c8ea7bdbe06b3ccf03935c8dc819c96092a606",
+    "viva_questions": 65,
+    "viva_bank_sha256": "a9b389fb504ab438564db47cf9550c060576643c94d47c18a507f26e5a377a09",
     "method_cheatsheet": "presentation/P2_DEFENSE_METHOD_CHEATSHEET.md",
-    "method_cheatsheet_sha256": "1d15d591c52f051242c4aaa6f978b199182cb2637897b8949a8dab7c5f75f8cb",
+    "method_cheatsheet_sha256": "b21ba4095cc45e265f3f9a5fea4354ebc39bc39c7a556ee1d1549652fbf3e3af",
     "qa": [
       "all 14 slides rendered and visually reviewed",
       "layout overflow test passed",
@@ -253,14 +283,14 @@
   },
   "final_audit": {
     "file": "paper_write/P2_FINAL_AUDIT.md",
-    "sha256": "8ed80b0df8e082733d2ba65722aff102cfdafaa5c9b3fab40caa13ed9a9dee34",
+    "sha256": "593cf28271f6d00cdcca90eaa010d2ee6347faf511bd4b3703bcd1c5bc30b25d",
     "disposition": "Scientifically and defensively ready for P2 submission within the bounded spatial-segmentation plus full-cine global-function/motion scope."
   },
   "verification": {
-    "unit_tests_container": "45 discovered: 41 passed and four PyTorch-dependent tests skipped because PyTorch is unavailable in the audit container",
+    "unit_tests_container": "55 discovered: 48 passed and seven PyTorch/MONAI-dependent tests skipped explicitly because those packages are unavailable in the audit container",
     "spatial_scientific_evidence_audit": "pass",
     "full_cine_independent_audit": "pass",
-    "pdf_visual_review": "all 86 pages reviewed",
+    "pdf_visual_review": "all 88 pages reviewed, including full-size checks of every corrected equation, normalization table, limitations, and references",
     "presentation_visual_review": "all 14 slides reviewed",
     "presentation_overflow_test": "pass",
     "presentation_template_fidelity": "pass with zero issues"

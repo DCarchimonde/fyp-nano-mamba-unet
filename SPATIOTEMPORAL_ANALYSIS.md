@@ -117,6 +117,28 @@ python src\25_spatiotemporal_result_audit.py `
   --output evidence\spatiotemporal_cine\INDEPENDENT_AUDIT.json
 ```
 
+To isolate categorical resampling from model error, run the endpoint-label
+round-trip diagnostic on the local ACDC data:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\run_native_grid_roundtrip_audit.ps1 `
+  -ProjectRoot D:\AI_FYP
+```
+
+This applies the exact nearest-neighbour
+`native -> 256 x 256 x 16 -> native` path to the 40 manual ED/ES masks and
+writes a per-endpoint CSV plus `native_label_roundtrip_summary.json`. It does
+not train or run a model. The result measures label-boundary fidelity and is
+not a strict mathematical upper bound on a particular prediction's restored
+Dice.
+
+Source review and a non-cubic regression test confirm that the executed inverse
+resize uses the original `(X,Y,Z)` shape with no axis permutation and preserves
+categorical class identifiers. The observed 6.861 percentage-point frame-wise
+grid difference must not be attributed solely to the Z axis: direct in-plane
+and through-plane resizing, heterogeneous native shapes, thin-structure
+boundary discretization, and model error can all contribute.
+
 ## Fail-closed checks
 
 Before the first model inference, all 20 patient directories are scanned and
@@ -150,6 +172,9 @@ spatio-temporal motion/function framework. It must still state that:
 - the checkpoint-compatible Nano-Mamba backbone is a spatial 3D network;
 - temporal context is introduced by fixed adjacent-frame probability fusion,
   not a learned temporal Mamba block;
+- the sealed run stores probability maps as float16 before converting them
+  back to float32 for fixed fusion; frame-wise argmax is retained before that
+  storage conversion, and no precision-independent fusion gain is claimed;
 - ACDC provides manual masks only at ED and ES, so intermediate masks are not
   directly ground-truthed;
 - centroid displacement and myocardial radial-distance change are global

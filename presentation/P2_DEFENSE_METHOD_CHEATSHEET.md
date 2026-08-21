@@ -182,7 +182,7 @@ cine 是周期序列；第一个和最后一个相位在心动周期上相邻。
 
 **为什么 native Dice 比 resized Dice 低？**
 
-模型在固定 resized grid 上训练和预测；恢复到 heterogeneous native shapes 时 nearest-neighbour 显露了 geometry/resampling loss。两者回答不同问题，所以都报告，不能只保留较高者。
+模型在固定 resized grid 上训练和预测；恢复到 heterogeneous native shapes 时 nearest-neighbour 显露了 geometry/resampling 与 boundary discretization 的影响。代码使用原始三轴 shape，没有 axis transpose；但不能把 6.86 pp 的全部差距简单归因于 Z 轴，因为 in-plane resize、through-plane resize、薄 MYO 边界和模型误差共同存在。两种 grid 回答不同问题，所以都报告，并用 native-label round-trip audit 单独量化重采样成分。
 
 **centroid displacement 是心肌运动吗？**
 
@@ -195,6 +195,26 @@ reference EF 由 manual ED/ES masks 计算；predicted EF 在同一 annotated ph
 **为什么 fusion 没提高 Dice 还保留？**
 
 因为预设问题不只是 endpoint accuracy。它在 19/20 病人上降低 global curve second-difference，形成透明的 temporal regularization baseline；同时负结果被完整报告。
+
+**batch size 1 会不会让 BatchNorm 失效？**
+
+Attention U-Net 确实是 `BatchNorm3d + batch size 1`，但统计量还覆盖每个 channel 的三维空间元素，所以不是“方差必然为零”，而且 150 epochs 全部完成。问题是不同模型的 batch size、normalization 和每 epoch 更新次数不一致，因此主表不是严格控制变量的架构因果实验。SegResNet16 用 GroupNorm，不是 BatchNorm。
+
+**1.456325M 是不是四舍五入造出来的？**
+
+不是。trainable parameter 精确是 `1,456,325`。checkpoint 有 `1,457,747` 个 state-dict scalars，多出的 `1,422` 是 BatchNorm running mean、running variance 和 counter buffers，不是 parameters。
+
+**seed 是否真的写全？**
+
+Python `random`、NumPy、PyTorch CPU、所有 CUDA devices 都设为 42；`cudnn.deterministic=True`、`cudnn.benchmark=False`、两边 DataLoader 都是 `num_workers=0`。没有开启 `torch.use_deterministic_algorithms`，所以只能说 controlled reproducibility，不能保证跨机器 bitwise identical。
+
+**六个 affine mismatch 有没有污染物理量？**
+
+shape、header zooms、endpoint pixel identity、endpoint image-label alignment 都验证通过；volume 用 zooms，global distance 用 zooms 和可靠方向。raw mismatch 被记录，没有被覆盖。这个处理足够支持本论文的 scalar volume/global geometry，但不支持 dense correspondence、deformation 或 strain。
+
+**fusion 是不是全程 float32？**
+
+不是。logits/softmax 是 float32、AMP 关闭，frame-wise argmax 在降精度前保留；probability maps 为节省内存存成 float16，fusion 时再转回 float32。论文只报告这条实际 pipeline，不声称极小 Dice/EF 差异对存储精度不敏感。
 
 ## 不要说的句子
 
@@ -220,4 +240,5 @@ reference EF 由 manual ED/ES masks 计算；predicted EF 在同一 annotated ph
 | Function / motion formulas | `src/cardiac_motion_metrics.py` | Ch. 5 full-cine method | 9, 11 |
 | Full-cine rows/results | `evidence/spatiotemporal_cine/raw/` | Ch. 6 | 10–13 |
 | Independent recomputation | `src/25_spatiotemporal_result_audit.py`, `INDEPENDENT_AUDIT.json` | Ch. 6 evidence boundary | 10–12 |
+| Native-grid diagnostic | `src/26_native_grid_roundtrip_audit.py` | Ch. 6 limitation | Viva Q17, Q61--65 |
 | Scientific limits | `SCIENTIFIC_BOUNDARIES.md` | Ch. 6–7 | 12–14 |

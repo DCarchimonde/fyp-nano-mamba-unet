@@ -32,7 +32,7 @@ pdflatex \
   BIBINPUTS="$p2_source_dir:" bibtex thesis >bibtex.log
 )
 
-for p2_pass in 2 3; do
+for p2_pass in 2 3 4; do
   pdflatex \
     -interaction=nonstopmode \
     -halt-on-error \
@@ -43,6 +43,7 @@ done
 if rg -n -F \
   -e "undefined citations" \
   -e "There were undefined references" \
+  -e "Label(s) may have changed" \
   -e "Overfull \\hbox" \
   -e "Overfull \\vbox" \
   -e "No \\printgloss" \

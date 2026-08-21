@@ -34,7 +34,7 @@ tensor shapes, spatial-versus-temporal boundary, full-cine fusion, native-grid
 restoration, physical-volume calculation, phase detection, EF, global motion
 surrogates, validation strategy, failure cases, and limitations. The previous
 defense risk--being unable to explain temporal analysis or image processing--is
-covered directly in the thesis, 14-slide deck, speaker notes, 60-question viva
+covered directly in the thesis, 14-slide deck, speaker notes, 65-question viva
 bank, and bilingual method cheat sheet.
 
 ## Stage A: spatial segmentation experiment
@@ -144,6 +144,31 @@ endpoint image--label affine agreement were verified. Physical scalar metrics
 use header spacings; the analysis does not use the inconsistent affine metadata
 to assert world-coordinate tissue correspondence.
 
+## Last-mile methodology and typesetting audit
+
+An additional eleven-item review was completed against the active LaTeX,
+executed model constructors, historical training entry point, sealed cine code,
+and retained evidence. Its full evidence and disposition are recorded in
+`paper_write/METHODOLOGY_DEEP_AUDIT_2026-08-22.md`.
+
+| High-risk item | Final verdict |
+|---|---|
+| Set/loss/operator glyph corruption | Active formulas rewritten with portable bold/plain symbols and semantic operators; verified in the clean 88-page PDF |
+| Attention equation scope | Scaled score is explicitly parenthesized inside softmax and multiplied by `V` afterward |
+| Batch size 1 with normalization | Attention U-Net used BatchNorm3d and completed 150 epochs; SegResNet16 used GroupNorm; cross-model confounding is explicit |
+| Circular fusion at first/last frame | Correct modulo indexing; both boundaries now have dedicated regression tests |
+| Millilitre conversion | Exact `product(spacing_mm) / 1000` implementation and independent recomputation pass |
+| Seed controls | Python, NumPy, CPU/CUDA PyTorch, both CuDNN flags, and zero-worker loaders are present; no bitwise-identity claim |
+| Native-grid Dice reduction | Nearest inverse resize, original axis order, and categorical preservation confirmed; reduction is not attributed solely to Z anisotropy |
+| Nano-Mamba parameters | Exactly 1,456,325 trainable parameters; 1,422 additional state-dict entries are BatchNorm buffers |
+| Six affine mismatches | Shape/zoom/pixel/label checks pass; safe for reported scalar metrics, not for dense correspondence claims |
+
+The review also found that the sealed cine run stores probability maps as
+float16 before converting them back to float32 for fixed fusion. Frame-wise
+argmax is preserved before that conversion. This executed precision path is now
+disclosed, and the already unresolved Dice/EF changes are not described as
+precision-independent improvements.
+
 ## Scientific vulnerabilities and final disposition
 
 | Priority | Vulnerability | Impact | Final disposition |
@@ -179,11 +204,11 @@ to assert world-coordinate tissue correspondence.
 
 | Deliverable/check | Final status |
 |---|---|
-| Thesis | 86-page A4 PDF; clean build; all pages rendered and reviewed |
+| Thesis | 88-page A4 PDF; clean four-pass build; all pages rendered and reviewed |
 | Presentation | 14 slides; all rendered/reviewed; no overflow; template-fidelity pass |
 | Speaker notes | Present on all 14 slides; each contains a source block |
-| Viva preparation | 60 questions plus bilingual method cheat sheet |
-| Automated tests | 45 discovered; 41 passed and four PyTorch-dependent tests skipped in the audit container |
+| Viva preparation | 65 questions plus bilingual method cheat sheet |
+| Automated tests | 55 discovered; 48 passed and seven PyTorch/MONAI-dependent tests skipped explicitly in the audit container |
 | Candidate PyTorch environment | Earlier architecture and evidence tests passed; final full suite should also be run after pull |
 | Spatial evidence audit | Scientific consistency PASS |
 | Full-cine independent audit | PASS |

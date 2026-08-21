@@ -4,17 +4,17 @@
 
 **Canonical entry point:** `Universiti_Malaya_Thesis_Template/thesis.tex`
 
-The five active body-chapter sources contain approximately **14,968 words** by
+The five active body-chapter sources contain approximately **15,595 words** by
 `detex | wc -w`:
 
 | Active chapter source | Words |
 |---|---:|
 | `sample-chap-intro.tex` | 2,637 |
-| `sample-chap-litreview.tex` | 2,162 |
-| `sample-chap-methodology.tex` | 3,695 |
-| `sample-chap-results-p2.tex` | 4,146 |
+| `sample-chap-litreview.tex` | 2,251 |
+| `sample-chap-methodology.tex` | 4,088 |
+| `sample-chap-results-p2.tex` | 4,291 |
 | `sample-chap-conclusion.tex` | 2,328 |
-| **Total** | **14,968** |
+| **Total** | **15,595** |
 
 Reproduction command from the template directory:
 

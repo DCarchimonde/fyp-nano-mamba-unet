@@ -48,9 +48,11 @@ A practical issue in this project is that the local dataset layout contains path
 \section{Patient-Level Training and Validation Split}
 The split was performed at patient level rather than case level. This means all labelled frames from the same patient belong either to training or to validation, never both. This design prevents leakage of patient-specific anatomy into the validation set. With random seed 42 and an 80/20 split, the experiment used 80 training patients and 20 validation patients, corresponding to 160 training cases and 40 validation cases.
 
-Let $\mathcal{P}$ denote the set of all patient identifiers. The split can be expressed as:
+Let $\mathbf{P}$ denote the set of all patient identifiers. The split can be expressed as:
 \begin{equation}
-    \mathcal{P}_{train} \cap \mathcal{P}_{val} = \varnothing, \qquad \mathcal{P}_{train} \cup \mathcal{P}_{val} = \mathcal{P}.
+    \mathbf{P}_{\mathrm{train}} \cap \mathbf{P}_{\mathrm{val}} = \varnothing,
+    \qquad
+    \mathbf{P}_{\mathrm{train}} \cup \mathbf{P}_{\mathrm{val}} = \mathbf{P}.
 \end{equation}
 This condition is the core methodological safeguard of the experiment. It ensures that the validation Dice measures performance on unseen patients rather than on additional frames from patients used during training.
 
@@ -145,17 +147,32 @@ The proposed model follows a 3D U-Net-style encoder-decoder structure. The encod
 \label{fig:full_architecture}
 \end{figure}
 
-Each convolutional block consists of two 3D convolutional layers followed by batch normalization and ReLU activation. A convolutional layer transforms a local neighbourhood into an output feature using learned kernels. For a 3D convolution, this can be written as:
+Each convolutional block in Nano-Mamba U-Net and its two custom ablations
+consists of two 3D convolutional layers followed by batch normalization and
+ReLU activation. This description does not apply to every MONAI comparison
+network; their model-specific normalization choices are stated in
+Section~5.7. A convolutional layer transforms a local neighbourhood into an
+output feature using learned kernels. For a 3D convolution, this can be written
+as:
 \begin{equation}
-    Y_{c_o}(p)=\sum_{c_i}\sum_{q\in\mathcal{K}}W_{c_o,c_i}(q)X_{c_i}(p+q)+b_{c_o}.
+    Y_{c_o}(p)=\sum_{c_i}\sum_{q\in K}W_{c_o,c_i}(q)X_{c_i}(p+q)+b_{c_o}.
 \end{equation}
-Here, $X$ is the input feature map, $Y$ is the output feature map, $\mathcal{K}$ is the local 3D kernel support, and $W$ and $b$ are trainable parameters. This equation also shows the locality of convolution: each output voxel depends on a neighbourhood around position $p$.
+Here, $X$ is the input feature map, $Y$ is the output feature map, $K$ is the local 3D kernel support, and $W$ and $b$ are trainable parameters. This equation also shows the locality of convolution: each output voxel depends on a neighbourhood around position $p$.
 
-Batch normalization stabilizes training by normalizing intermediate features within a mini-batch \cite{ioffe2015batch}. For a feature value $x$, batch normalization can be expressed as:
+For a five-dimensional \texttt{BatchNorm3d} input with shape
+\(N\times C\times D\times H\times W\), the mean and variance for each channel
+are estimated over the combined \(N,D,H,W\) elements, not over the batch axis
+alone \cite{ioffe2015batch}. For a feature value $x$, batch normalization can
+be expressed as:
 \begin{equation}
-    \hat{x}=\frac{x-\mu_{\mathcal{B}}}{\sqrt{\sigma_{\mathcal{B}}^2+\epsilon}}, \qquad y=\gamma\hat{x}+\beta.
+    \hat{x}=\frac{x-\mu_{B}}{\sqrt{\sigma_{B}^2+\epsilon}}, \qquad y=\gamma\hat{x}+\beta.
 \end{equation}
-The parameters $\gamma$ and $\beta$ are learned, allowing the network to recover suitable feature scales after normalization. ReLU activation is then applied as:
+The parameters $\gamma$ and $\beta$ are learned, allowing the network to
+recover suitable feature scales after normalization. Consequently, batch size
+one does not by itself produce an undefined variance when spatial feature
+elements remain available, although its running statistics come from one
+patient volume at a time and are a legitimate comparison confound. ReLU
+activation is then applied as:
 \begin{equation}
     f(x)=\max(0,x).
 \end{equation}
@@ -164,11 +181,11 @@ These components are standard neural network operations and are not claimed as n
 \section{Mamba-Inspired Bottleneck Implementation}
 The bottleneck receives a compressed 3D feature map. Let this tensor be:
 \begin{equation}
-    \mathcal{X}\in\mathbb{R}^{B\times C\times H\times W\times D}.
+    \mathbf{X}\in\mathbb{R}^{B\times C\times H\times W\times D}.
 \end{equation}
 The tensor is serialized across the spatial dimensions to obtain a sequence:
 \begin{equation}
-    \mathbf{X}_{seq}=\mathrm{reshape}(\mathcal{X})\in\mathbb{R}^{B\times L\times C}, \qquad L=HWD.
+    \mathbf{X}_{\mathrm{seq}}=\operatorname{reshape}(\mathbf{X})\in\mathbb{R}^{B\times L\times C}, \qquad L=HWD.
 \end{equation}
 This operation does not create new anatomical or temporal information. It uses a fixed raster order over the spatial grid so that the bottleneck can process compressed volumetric features as a sequence. Here, $D$ is anatomical slice depth, not cardiac time; ED and ES volumes are processed as separate cases.
 
@@ -177,21 +194,60 @@ The implemented bottleneck is Mamba-inspired rather than a full selective scan i
     [\mathbf{U},\mathbf{V}] = \mathrm{split}\!\left(\mathrm{Proj}_{in}(\mathbf{X}_{seq})\right),
 \end{equation}
 \begin{equation}
-    \mathbf{H}=\mathrm{SiLU}\!\left(\mathrm{DWConv1D}(\mathbf{U})\right),
+    \mathbf{H}=\operatorname{SiLU}\!\left(\operatorname{DWConv1D}(\mathbf{U})\right),
     \qquad
-    \mathbf{G}=\sigma\!\left(\mathrm{Proj}_{gate}(\mathbf{H})_{:,:,1}\right),
+    \mathbf{G}=\operatorname{sigmoid}\!\left(\operatorname{Proj}_{\mathrm{gate}}(\mathbf{H})_{:,:,1}\right),
 \end{equation}
 \begin{equation}
-    \mathbf{Y}=\mathrm{Proj}_{out}\!\left(\mathbf{H}\odot\mathbf{G}\odot\mathrm{SiLU}(\mathbf{V})\right),
+    M_{b\ell c}=H_{b\ell c}\,G_{b\ell 1}\,
+      \operatorname{SiLU}(V_{b\ell c}),
     \qquad
-    \mathbf{Z}=\mathbf{Y}+\mathbf{X}_{seq}.
+    \mathbf{Y}=\operatorname{Proj}_{\mathrm{out}}(\mathbf{M}),
+    \qquad
+    \mathbf{Z}=\mathbf{Y}+\mathbf{X}_{\mathrm{seq}}.
 \end{equation}
-Here, $\mathrm{Proj}_{in}$ and $\mathrm{Proj}_{out}$ are learned linear projections, $\mathrm{DWConv1D}$ is the depthwise sequence convolution, $\sigma$ is the sigmoid function, and $\odot$ denotes element-wise multiplication. In the executed implementation, $\mathrm{Proj}_{gate}$ produces $2d_{state}+1$ channels but only its first channel enters $\mathbf{G}$. The remaining legacy projection channels are retained for checkpoint compatibility but have no path to the output. The output sequence is reshaped back into 3D feature form before being passed to the decoder.
+Here, \(\operatorname{Proj}_{\mathrm{in}}\) and
+\(\operatorname{Proj}_{\mathrm{out}}\) are learned linear projections,
+\(\operatorname{DWConv1D}\) is the depthwise sequence convolution, and
+\(\operatorname{sigmoid}\) is the gate activation. The component equation for
+\(M_{b\ell c}\) states the element-wise multiplication explicitly: batch
+index \(b\), token index \(\ell\), and channel index \(c\) are not contracted.
+In the executed implementation, \(\operatorname{Proj}_{\mathrm{gate}}\)
+produces $2d_{state}+1$ channels but only its first channel enters $\mathbf{G}$.
+The remaining legacy projection channels are retained for checkpoint
+compatibility but have no path to the output. The output sequence is reshaped
+back into 3D feature form before being passed to the decoder.
 
 This design choice must be interpreted carefully. The original Mamba paper proposes selective state space sequence modeling \cite{gu2023mamba}. The implementation in this project uses a lightweight PyTorch block inspired by this direction, but it does not claim to reproduce the full hardware-aware selective scan. The research contribution is therefore the integration and evaluation of a compact sequence-inspired bottleneck inside a cardiac MRI segmentation model.
 
 \section{Comparison Models and Ablation Design}
 The experiment compares Nano-Mamba U-Net with several reference architectures. The 3D U-Net baseline represents the standard encoder-decoder approach. Attention U-Net represents attention-gated skip connections. SegResNet16 represents a residual convolutional segmentation model based on the SegResNet family \cite{myronenko2019segresnet}. Two ablation variants are included to study the role of the bottleneck: No-Mamba U-Net replaces the Mamba-inspired bottleneck with convolutional blocks, while Half-Mamba U-Net reduces the bottleneck capacity.
+
+The executed normalization and batch-size combinations are model specific:
+\begin{table}[hbt!]
+\centering
+\caption{Executed normalization and training batch size by model family.}
+\label{tab:normalization_batch_contract}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.32\textwidth}>{\raggedright\arraybackslash}Xc@{}}
+\hline
+Configuration & Executed normalization & Batch size \\
+\hline
+MONAI 3D U-Net & Instance normalization & 2 \\
+Nano-, No-, and Half-Mamba U-Net & \texttt{BatchNorm3d} & 2 \\
+MONAI Attention U-Net & \texttt{BatchNorm3d} & 1 \\
+MONAI SegResNet16 & Group normalization (8 groups) & 1 \\
+\hline
+\end{tabularx}
+\end{table}
+
+Attention U-Net therefore did execute batch normalization at batch size one.
+This did not crash: its recovered training log contains all 150 epochs and its
+best checkpoint is epoch 62. Its three-dimensional batch-normalization layers
+still aggregate over spatial elements for each channel, but the single-volume
+statistics may be noisier and cannot be separated from architecture in the
+reported comparison. SegResNet16 did not have this specific conflict because
+its default executed normalization was group normalization, which does not use
+batch statistics.
 
 The ablations are not parameter matched: the No-Mamba variant contains 2.29M reported parameters, whereas Nano-Mamba U-Net contains 1.46M. It also uses a different two-block convolutional bottleneck. The comparison can therefore describe the observed architecture-level accuracy-efficiency trade-off, but it cannot isolate a causal benefit or harm from sequence gating alone. This distinction is important because No-Mamba U-Net slightly outperformed Nano-Mamba U-Net in mean Dice, while Nano-Mamba U-Net retained the lowest reported parameter count.
 
@@ -202,15 +258,15 @@ The models are trained using a Dice-Cross Entropy objective. Dice loss addresses
 \end{equation}
 The corresponding Dice loss can be written as:
 \begin{equation}
-    \mathcal{L}_{Dice}=1-\frac{1}{C}\sum_{c=1}^{C}\mathrm{DSC}_c.
+    L_{\mathrm{Dice}}=1-\frac{1}{C}\sum_{c=1}^{C}\operatorname{DSC}_c.
 \end{equation}
 The multi-class cross-entropy term is:
 \begin{equation}
-    \mathcal{L}_{CE}=-\sum_i\sum_c g_{i,c}\log(p_{i,c}).
+    L_{\mathrm{CE}}=-\sum_i\sum_c g_{i,c}\log(p_{i,c}).
 \end{equation}
 The total loss used for optimization is:
 \begin{equation}
-    \mathcal{L}_{total}=\mathcal{L}_{Dice}+\mathcal{L}_{CE}.
+    L_{\mathrm{total}}=L_{\mathrm{Dice}}+L_{\mathrm{CE}}.
 \end{equation}
 Here, $p_{i,c}$ denotes the predicted probability for voxel $i$ and class $c$, while $g_{i,c}$ denotes the one-hot ground-truth label. This loss is a standard practical choice for medical segmentation and is implemented using MONAI's Dice-Cross Entropy loss. The executed constructor sets \texttt{to\_onehot\_y=True} and \texttt{softmax=True} but does not override \texttt{include\_background}; under the documented MONAI default, the four-channel training Dice term includes background. By contrast, the reported evaluation Dice is computed only for the three foreground structures. The optimization loss and the reported metric therefore use related but not identical class averaging.
 
@@ -233,7 +289,18 @@ The implementation assigns a class Dice of 1 when both the predicted and referen
 
 For post-hoc uncertainty description, the two ED/ES case values are first averaged within each of the 20 validation patients. A patient-level percentile bootstrap then resamples 20 patients with replacement for 10,000 replicates using audit seed 20260820. This produces 95\% intervals for each model's patient-macro mean Dice and for paired Nano-Mamba differences. Resampling at patient level preserves the dependence between the two cases from one patient and between model predictions on the same patient. These intervals were added after recovery of the original per-case CSVs; they are descriptive, not pre-registered hypothesis tests. Because the same 20 patients were used repeatedly for checkpoint selection, the intervals do not convert the validation results into independent test-set estimates.
 
-The study also reports parameter count and inference speed. The reported parameter count sums every tensor returned by \texttt{model.parameters()}, including the unused legacy outputs of the gate projection described above. Inference speed uses a random batch-one tensor of shape $1\times1\times256\times256\times16$, five warm-up passes, and 30 timed passes with CUDA synchronization. These computational metrics are engineering measurements from one implementation and environment; parameter count is not treated as a direct proxy for speed.
+The study also reports parameter count and inference speed. The reported
+parameter count sums every tensor returned by \texttt{model.parameters()},
+including the unused legacy outputs of the gate projection described above.
+For Nano-Mamba U-Net this sum is exactly 1,456,325 trainable parameters, or
+1.456325 million. The checkpoint state dictionary contains 1,457,747 scalar
+entries because it additionally stores 1,422 non-parameter batch-normalization
+buffers (running means, running variances, and batch counters); this is not a
+parameter-count discrepancy. Inference speed uses a random batch-one tensor of
+shape $1\times1\times256\times256\times16$, five warm-up passes, and 30 timed
+passes with CUDA synchronization. These computational metrics are engineering
+measurements from one implementation and environment; parameter count is not
+treated as a direct proxy for speed.
 
 \section{Full-Cine Spatio-Temporal Analysis}
 \subsection{Cohort, cine discovery, and identity checks}
@@ -242,7 +309,7 @@ The full-cine stage uses the same 20 validation patients as the historical segme
 Before inference, the standalone ED and ES images used by the historical experiment are compared with the corresponding complete-cine frames after the executed intensity normalization. The maximum normalized mean absolute error across the final cohort is zero. Six complete cine files restored from a pinned public ACDC mirror contain raw affine metadata that differs from the standalone endpoint container, although spatial shape, header voxel sizes, and endpoint pixel arrays match, and each endpoint image affine matches its manual label. The pipeline records this discrepancy rather than silently overwriting it. Volumes and distances use the NIfTI header voxel sizes, which agree between the cine and endpoint data.
 
 \subsection{Frame inference and temporal fusion}
-For each cardiac phase $t$, the 3D frame $I_t\in\mathbb{R}^{X\times Y\times Z}$ follows the checkpoint-compatible preprocessing path: channel-first conversion, trilinear resizing to $256\times256\times16$, per-frame min--max intensity scaling, and batch-one inference. Softmax converts the four output logits into class probabilities $P_t$. Frame-wise inference uses $P_t$ directly. The pre-specified temporal alternative uses fixed circular adjacent-frame probability fusion:
+For each cardiac phase $t$, the 3D frame $I_t\in\mathbb{R}^{X\times Y\times Z}$ follows the checkpoint-compatible preprocessing path: channel-first conversion, trilinear resizing to $256\times256\times16$, per-frame min--max intensity scaling, and batch-one inference. Softmax converts the four output logits into class probabilities $P_t$. Frame-wise masks are obtained from the original float32 logits. To limit host-memory use, the executed full-cine run stored the probability maps as float16 before converting them back to float32 for the following fusion arithmetic. The pre-specified temporal alternative uses fixed circular adjacent-frame probability fusion:
 \begin{equation}
     \widetilde{P}_t=0.25P_{t-1}+0.50P_t+0.25P_{t+1},
 \end{equation}
@@ -284,7 +351,23 @@ A smaller value means less frame-to-frame curvature in the global volume traject
 Manual segmentation masks are available only at ED and ES. Both resized-grid endpoint Dice, which connects to the historical experiment, and native-grid endpoint Dice after nearest-neighbour mask restoration are reported. EF error is reported in percentage points, and ED/ES phase detection is reported as exact-frame and within-one-frame accuracy. Patient-level means and paired temporal-fusion-minus-frame-wise differences use 10,000 bootstrap replicates with seed 20260821. The analysis also reports diagnostic-group summaries, but their group sizes range from one to seven patients and are therefore descriptive only. Every frame row, patient row, figure, source hash, checkpoint hash, and aggregate value is preserved in the result bundle and independently recomputed by a second audit script.
 
 \section{Hardware and Reproducibility}
-The experiment used PyTorch \cite{paszke2019pytorch} and MONAI on a single NVIDIA RTX 4060 GPU with 8GB VRAM. The random seed is fixed to 42 for Python, NumPy, and PyTorch, and CuDNN deterministic settings are enabled. All six result rows are accompanied by 40-case metric tables and 150-epoch training logs; their class averages and selected best epochs reproduce the aggregate result table. The full-cine run used Python 3.10.20, PyTorch 2.7.1 with CUDA 11.8, MONAI 1.5.2, the epoch-121 Nano-Mamba checkpoint, and batch size one. The patient split, preprocessing code, model definitions, evaluation code, full-cine result rows, figures, and hashes are retained in the project repository. Deterministic settings and sealed artifacts improve repeatability within a fixed software and hardware stack, but they do not guarantee bitwise identity across library versions or devices.
+The experiment used PyTorch \cite{paszke2019pytorch} and MONAI on a single
+NVIDIA RTX 4060 GPU with 8GB VRAM. Seed 42 is applied to Python's random
+generator, NumPy, PyTorch on the CPU, and PyTorch on every CUDA device. The
+executed entry point also enables the CuDNN deterministic flag, disables the
+CuDNN benchmark flag, and gives both data loaders zero worker processes. Thus,
+none of the seed or CuDNN controls stated in this method is missing from the
+entry point. The historical run did not enable the PyTorch mode that rejects
+nondeterministic operations, so the correct claim is controlled seeding and deterministic
+CuDNN configuration rather than guaranteed bitwise reproducibility. All six result rows are accompanied by 40-case metric
+tables and 150-epoch training logs; their class averages and selected best
+epochs reproduce the aggregate result table. The full-cine run used Python
+3.10.20, PyTorch 2.7.1 with CUDA 11.8, MONAI 1.5.2, the epoch-121 Nano-Mamba
+checkpoint, and batch size one. The patient split, preprocessing code, model
+definitions, evaluation code, full-cine result rows, figures, and hashes are
+retained in the project repository. Deterministic settings and sealed artifacts
+improve repeatability within a fixed software and hardware stack, but they do
+not guarantee bitwise identity across library versions or devices.
 
 \section{Methodological Summary}
 The methodology supports a cautious six-model comparison and a separate full-cine analysis under one patient-level split. It does not provide an independent test set, matched batch sizes, matched-capacity ablations, multi-seed training, augmentation, intermediate-frame manual labels, or external clinical validation. Historical six-model Dice remains a resized-grid measure; the full-cine stage additionally reports native-grid endpoint Dice and physical measurements. The backbone is not a full implementation of the original Mamba selective scan, and fixed probability fusion is not learned temporal modeling. The study therefore addresses both the compact accuracy--efficiency trade-off and a bounded segmentation-derived cardiac-cycle analysis, not universal architectural superiority or dense motion tracking.

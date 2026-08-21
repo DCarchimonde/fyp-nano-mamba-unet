@@ -5,7 +5,7 @@
 | Item | Status | Evidence / final action |
 |---|---|---|
 | Registered title exact and unchanged | Pass | Canonical LaTeX title and PDF cover |
-| Chapters 1--8 and references present | Pass | Canonical 86-page PDF |
+| Chapters 1--8 and references present | Pass | Canonical 88-page PDF |
 | Main table tied to rigorous CSV | Pass | Aggregate-consistency audit and committed evidence copies |
 | Patient split is deterministic, disjoint, and complete | Pass | Seed 42; 80/20 patients; 160/40 cases |
 | Quantitative figures use experiment evidence | Pass | Spatial summary/training plots plus audited full-cine curve, EF, and endpoint-overlay figures |
@@ -13,7 +13,7 @@
 | Invalid qualitative validation figure removed | Pass | Restoration requires explicit checkpoint and validation case |
 | False/malformed reference removed | Pass | 27 active citations; 27 verified bibliography keys |
 | Clean thesis build | Pass | Exit 0; A4; no undefined references/citations; no overfull boxes |
-| Full PDF visual QA | Pass | All 86 pages rendered and reviewed; full-size checks include the new method/result/overlay pages |
+| Full PDF visual QA | Pass | All 88 pages rendered and reviewed; full-size checks include every corrected equation, the normalization table, results, limitations, and overlay pages |
 | Final artifact manifest | Pass | Scientific scope, experiment design, hashes, build command, versions, and page/slide counts |
 | Exact image-processing explanation | Pass | Thesis method, dedicated slide, bilingual cheat sheet, and viva Q5--12 |
 | Exact tensor/sequence explanation | Pass | Input, bottleneck, token, and output shapes tied to code |
@@ -21,7 +21,7 @@
 | Full-cine independent audit | Pass | Artifact/hash/source/checkpoint/cohort/arithmetic/bootstrap checks |
 | Image and cine processing explanation | Pass | Frame extraction, resize, scaling, fusion, argmax, native restoration, physical units |
 | Spatio-temporal claim boundary | Pass | Complete global trajectories; spatial backbone + fixed fusion; no dense motion/strain claim |
-| 15-minute defence package | Pass | 14-slide deck; all slides rendered/reviewed; notes on every slide; 60-question viva bank and bilingual cheat sheet |
+| 15-minute defence package | Pass | 14-slide deck; all slides rendered/reviewed; notes on every slide; 65-question viva bank and bilingual cheat sheet |
 | Public-repository privacy cleanup | Partial | Current copies removed; Git-history purge remains separate |
 | Original per-case rows and training logs | Pass | Six 40-case tables and six 150-epoch logs are present and cross-validated |
 | Patient-level CIs/paired differences | Pass | 10,000-replicate patient bootstrap, seed 20260820; explicitly post-hoc/descriptive |
@@ -31,6 +31,15 @@
 | Native-space preprocessing / augmentation | Partial | Predictions restored to native array shape and physical units use header spacings; training still uses direct resize and no augmentation |
 | Phase and pathology analysis | Pass with boundary | Phase timing evaluated; pathology groups descriptive only (n=1--7) |
 | Surface/dense-motion metrics | Not performed | Global centroid/radial surrogates are complete; no Hausdorff/ASD, optical flow, deformation, tissue correspondence, or regional strain claim |
+| High-risk formula portability | Pass after rebuild | Set, loss, operator, and attention equations use portable semantic notation; exact pages are visually/textually checked |
+| Batch-size / normalization contract | Pass with limitation | Attention U-Net: BatchNorm3d/BS1; SegResNet16: GroupNorm/BS1; comparison confound disclosed |
+| Temporal circular boundaries | Pass | Dedicated first/last-frame modulo-index regression test |
+| Physical volume units | Pass | Native voxel count multiplied by `sx*sy*sz/1000` mL; independent audit reproduces values |
+| Seed-entry-point completeness | Pass with boundary | Python/NumPy/PyTorch CPU+CUDA, CuDNN flags, and zero-worker loaders present; no bitwise-reproducibility claim |
+| Native-grid restoration | Pass with limitation | Nearest-neighbour/original axis order/class preservation verified; 6.861 pp grid difference not assigned solely to Z anisotropy |
+| Exact Nano parameter count | Pass | 1,456,325 trainable parameters; 1,422 extra checkpoint entries are normalization buffers |
+| Affine-mismatch safety | Pass with boundary | Six cases pass shape/zoom/pixel/label checks; scalar metrics supported, dense correspondence not claimed |
+| Fusion probability precision | Pass with disclosure | Float32 logits/softmax and fusion arithmetic; float16 probability storage; no precision-independent Dice/EF claim |
 
 ## Private fields before upload
 
@@ -48,8 +57,16 @@
 python src/22_p2_evidence_audit.py
 python src/25_spatiotemporal_result_audit.py --result-dir evidence/spatiotemporal_cine/raw --repo-root .
 python -m unittest discover -s tests -v
+python -m py_compile src/26_native_grid_roundtrip_audit.py
 python src/16_thesis_visualization.py
 bash scripts/build_thesis.sh
+```
+
+Optional local-data diagnostic (no training or model inference):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\run_native_grid_roundtrip_audit.ps1 `
+  -ProjectRoot D:\AI_FYP
 ```
 
 `--strict-closure` is an optional archival-forensics mode. It is not a thesis,

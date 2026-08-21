@@ -80,7 +80,7 @@ The historical training pipeline did not use explicit `Orientationd` or `Spacing
 
 ### 17. Why report both resized-grid and native-grid Dice?
 
-Resized-grid Dice reproduces the historical experiment and tests the model on its computational grid. Native-grid Dice evaluates the restored categorical mask against the original-shape endpoint mask. The latter is lower—about 77.92% versus 84.79%—which exposes the cost of the non-native geometry rather than hiding it.
+Resized-grid Dice reproduces the historical experiment and tests the model on its computational grid. Native-grid Dice evaluates the restored categorical mask against the original-shape endpoint mask. The latter is lower—about 77.92% versus 84.79%. Code review confirms that the restoration uses nearest-neighbour interpolation, the original three-axis shape, and no axis permutation. I do not attribute the entire gap to the Z axis: it combines direct array-size resampling, heterogeneous in-plane and through-plane geometry, boundary discretization—especially for thin myocardium—and model error on a changed evaluation grid. The repository includes a native-label round-trip audit to isolate the resampling component without retraining.
 
 ### 18. How is the final mask created?
 
@@ -276,6 +276,28 @@ Create a true train/validation/test or cross-validation design and run multiple 
 
 Nano-Mamba U-Net is a compact spatial 3D segmenter rather than the most accurate model. The completed full-cine extension produces audited functional and global motion trajectories for all 550 phases. Fixed temporal fusion consistently smooths LV curves, but it does not establish a Dice or EF improvement and does not constitute dense cardiac motion tracking.
 
+## Last-minute methodology challenges
+
+### 61. Did batch size one make BatchNorm invalid?
+
+Attention U-Net did use `BatchNorm3d` at batch size one, but that does not make its variance automatically undefined because the normalization statistics also span the 3D spatial elements for each channel. The model completed all 150 epochs and selected epoch 62. It is still an experimental confound because single-volume statistics, optimizer-step count, and normalization differ across models. SegResNet16 used GroupNorm, not BatchNorm.
+
+### 62. Is 1.456325 million the exact Nano-Mamba parameter count?
+
+Yes. Summing every trainable tensor gives exactly 1,456,325 parameters. The checkpoint state dictionary has 1,457,747 scalar entries because it also stores 1,422 BatchNorm running-statistic and counter buffers. Those buffers are not trainable parameters.
+
+### 63. Were all random seeds and CuDNN controls actually set?
+
+Yes: Python `random`, NumPy, CPU PyTorch, and all CUDA devices use seed 42; `cudnn.deterministic=True`, `cudnn.benchmark=False`, and both loaders use `num_workers=0`. The run did not enable `torch.use_deterministic_algorithms`, so I claim controlled reproducibility, not guaranteed bit-for-bit identity across systems.
+
+### 64. Did the six affine mismatches corrupt volume or motion measurements?
+
+No evidence of that was found for the reported scalar metrics. The pipeline verified shape, voxel sizes, endpoint pixels, and endpoint image--label alignment and recorded the raw mismatch. Volume uses header spacings; global distances use spacings and reliable direction information. I do not use those files to claim dense world-coordinate correspondence, deformation, or strain.
+
+### 65. Was temporal fusion performed entirely at float32 precision?
+
+No. The sealed run computed logits and softmax in float32 with AMP disabled and preserved the frame-wise argmax, then stored the probability maps as float16 on CPU. Each neighbour map was converted back to float32 for the weighted fusion. Therefore I report the executed pipeline and do not claim that its tiny Dice or EF differences are precision-independent; the supported result is the smoother global LV curve.
+
 ## Evidence pointers
 
 - Spatial experiment: `src/21_rigorous_experiment_pipeline.py`
@@ -283,6 +305,8 @@ Nano-Mamba U-Net is a compact spatial 3D segmenter rather than the most accurate
 - Full-cine execution: `src/23_spatiotemporal_cine_analysis.py`
 - Function/motion formulas: `src/cardiac_motion_metrics.py`
 - Independent recomputation: `src/25_spatiotemporal_result_audit.py`
+- Native-grid round-trip diagnostic: `src/26_native_grid_roundtrip_audit.py`
+- Eleven-item deep audit: `paper_write/METHODOLOGY_DEEP_AUDIT_2026-08-22.md`
 - Spatial evidence: `evidence/rigorous_patient_split/`
 - Full-cine raw evidence: `evidence/spatiotemporal_cine/raw/`
 - Full-cine audit: `evidence/spatiotemporal_cine/INDEPENDENT_AUDIT.json`

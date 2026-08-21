@@ -83,6 +83,22 @@ These are explicitly post-hoc descriptive analyses. They do not turn the
 single 80/20 split into an independent test set and do not replace multi-seed
 or external validation.
 
+## Normalization, batch size, and deterministic controls
+
+The executed configurations are not normalization matched: MONAI 3D U-Net
+uses InstanceNorm; the three custom U-Net variants use BatchNorm3d at training
+batch size two; Attention U-Net uses BatchNorm3d at batch size one; and
+SegResNet16 uses GroupNorm at batch size one. Attention U-Net's recovered log
+contains all 150 finite epochs, so batch size one did not create an execution
+failure. The mixture remains a comparison confound and prevents a causal claim
+that architecture alone caused the ranking.
+
+The historical entry point sets seed 42 for Python, NumPy, PyTorch CPU, and all
+CUDA devices, enables deterministic CuDNN behavior, disables CuDNN benchmarking,
+and uses zero DataLoader workers. It did not enable PyTorch's global
+deterministic-algorithm enforcement, so cross-device bitwise identity is not
+claimed.
+
 ## Historical reporting language
 
 > All models were trained using the same deterministic patient-level 80/20

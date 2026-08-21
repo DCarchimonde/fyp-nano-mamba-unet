@@ -31,6 +31,7 @@ python -m py_compile \
   src/23_spatiotemporal_cine_analysis.py \
   src/24_restore_missing_acdc_cine.py \
   src/25_spatiotemporal_result_audit.py \
+  src/26_native_grid_roundtrip_audit.py \
   src/cardiac_motion_metrics.py \
   src/nano_mamba_core.py
 ```
@@ -41,6 +42,18 @@ lineage, figure inputs, recovery guards, motion metrics, and core model
 behavior used by the thesis. PyTorch-dependent tests pass when PyTorch is
 installed and otherwise skip explicitly; the exact test count is reported in
 the final artifact manifest.
+
+The local-data native-grid diagnostic does not retrain or run a model:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\run_native_grid_roundtrip_audit.ps1 `
+  -ProjectRoot D:\AI_FYP
+```
+
+It applies the exact nearest-neighbour label round trip to the 40 validation
+endpoints and separates resampling fidelity from model error. Its output is a
+diagnostic for interpreting the resized/native Dice difference, not a new
+submission gate.
 
 The repository enforces LF for audited text through `.gitattributes`. The
 lineage validator also canonicalizes CRLF to LF for current source files, so a
@@ -91,7 +104,7 @@ Clean-build acceptance criteria:
 - no undefined citations or references;
 - no overfull boxes;
 - title exactly matches the registered title; and
-- all 86 pages visually inspected after rendering.
+- all 88 pages visually inspected after rendering.
 
 ## 4. Scientific scope of reproduction
 
