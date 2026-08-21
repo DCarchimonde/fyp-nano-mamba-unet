@@ -3,6 +3,14 @@
 This guide reproduces every public, data-free submission artefact and separates
 those checks from GPU/data-dependent inference or training.
 
+## Full-cine spatio-temporal completion
+
+The historical ED/ES experiment remains unchanged. The separate full-cine
+analysis and its one-command Windows runner are documented in
+[`SPATIOTEMPORAL_ANALYSIS.md`](SPATIOTEMPORAL_ANALYSIS.md). Do not copy its
+metrics into the thesis until a complete 20-patient real-data bundle has been
+generated and audited.
+
 ## 1. Data-free verification
 
 From the repository root:
@@ -15,11 +23,14 @@ python -m py_compile \
   src/16_thesis_visualization.py \
   src/21_rigorous_experiment_pipeline.py \
   src/22_p2_evidence_audit.py \
+  src/23_spatiotemporal_cine_analysis.py \
+  src/cardiac_motion_metrics.py \
   src/nano_mamba_core.py
 ```
 
-Expected result: the aggregate-consistency audit passes; seventeen data-free audit
-and visualization tests pass; three PyTorch-dependent architecture tests pass
+Expected result: the aggregate-consistency audit passes; twenty-nine data-free
+audit, visualization, and cine-analysis tests pass; four PyTorch-dependent
+architecture tests pass
 when PyTorch is installed and otherwise skip explicitly. This verifies the
 split, result arithmetic, case tables, curves, figure inputs, and core model
 behavior used by the thesis.
