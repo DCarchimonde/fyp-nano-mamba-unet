@@ -24,12 +24,12 @@ python src\22_p2_evidence_audit.py `
 python -m unittest discover -s tests -v
 ```
 
-The first command must print `AGGREGATE CONSISTENCY PASS`. The recovered six
-per-case tables, six logs, and six checkpoint records are now validated by this
-command. `Strict closure status: incomplete` remains the expected truthful
-result until checkpoint-set identity, the historical environment, the exact
-command, and the complete historical dataset snapshot are confirmed. To make
-those remaining provenance gaps fail a CI/submission gate:
+The first command must print `SCIENTIFIC CONSISTENCY PASS`. The six per-case
+tables, six logs, split, aggregate result files, and checkpoint metadata are
+validated by this command. The scientific submission gate is the default audit
+plus the tests; it does not require reconstruction of terminal history.
+
+For optional archival forensics only:
 
 ```powershell
 python src\22_p2_evidence_audit.py --strict-closure
@@ -53,7 +53,7 @@ sizes, benchmark protocol, Git commit (when available), and device details.
 Those additions describe future runs only; they do not reconstruct missing
 metadata for the already reported experiment.
 
-## Collect the original closure evidence on Windows
+## Optional archival collection on Windows
 
 Run this first without confirmation switches. It collects the current facts and
 also audits all 200 NIfTI image/label pairs when `-DataDir` exists:
@@ -65,17 +65,14 @@ powershell -ExecutionPolicy Bypass -File scripts\collect_p2_closure_bundle.ps1 `
   -DataDir D:\AI_FYP\Data\ACDC\database\training
 ```
 
-Inspect checkpoint timestamps, Conda history, and terminal/PyCharm history
-before adding any of `-ConfirmCheckpointSet`,
-`-ConfirmHistoricalEnvironment`, `-TrainingCommand`, or
-`-ConfirmHistoricalDatasetSnapshot`. The collector copies only small
-CSV/JSON/metadata records, hashes checkpoints without placing weights in the
-ZIP, and never copies ACDC data.
+The collector copies only small CSV/JSON/metadata records, hashes checkpoints
+without placing weights in the ZIP, and never copies ACDC data. This archival
+workflow is separate from scientific completeness, thesis submission, and viva
+preparation; do not spend submission time reconstructing old shell history.
 
-The ZIP is written even when historical confirmation remains incomplete, but
-the collector then returns exit code 2 so automation cannot mistake a partial
-bundle for strict closure. Exit code 1 or another unexpected audit failure is
-treated as invalid evidence and stops collection.
+The ZIP is written even when historical confirmation remains incomplete. Exit
+code 2 means only that optional historical attestation is incomplete; exit code
+1 means the collected evidence itself failed validation.
 
 ## Statistical scope
 

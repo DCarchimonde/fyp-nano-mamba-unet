@@ -1,204 +1,255 @@
 # P2 Viva Questions and Defensible Answers
 
-Use these answers as evidence-bounded speaking notes. Give the direct answer
-first, then add detail only if the examiner asks for it.
+Give the direct answer first. Add the second paragraph only when the examiner
+asks for detail. Every answer below is aligned with the executed pipeline and
+the final thesis.
 
-## Scientific scope
+## Scope and the title
 
-### 1. Your title says “Spatio-Temporal Framework.” Did you actually model time?
+### 1. Your title says “Spatio-Temporal Framework.” Did you model time?
 
 No. The completed experiment is four-class 3D cardiac MRI segmentation. ED and
-ES volumes are processed independently, and the tensor depth dimension contains
-anatomical slices rather than cardiac time. The registered title is retained,
-while true temporal motion analysis is stated as future work.
+ES volumes are processed independently, and tensor depth contains anatomical
+slices rather than cardiac time. True temporal motion analysis is future work.
 
-### 2. Why is cardiac motion analysis in the title if no motion field is estimated?
+### 2. Why is cardiac motion analysis in the title?
 
-Segmentation at ED and ES is a prerequisite for later phase-specific volume and
-functional analysis, which motivated the project. However, this study does not
-perform registration, displacement estimation, optical flow, temporal
-consistency modelling, or ejection-fraction calculation. I therefore present
-the implemented contribution as segmentation, not a complete motion-analysis
-system.
+ED and ES segmentation is a prerequisite for later phase-specific volumes,
+ejection fraction, and motion analysis, which motivated the registered title.
+This experiment does not estimate displacement, optical flow, temporal
+consistency, registration, ejection fraction, or any full-cine motion output.
 
-### 3. What exactly is the prediction task?
+### 3. What exactly is one sample and one prediction?
 
-For each independently processed 3D volume, the model predicts four voxel
-classes: background, right-ventricular cavity, myocardium, and left-ventricular
-cavity. The reported foreground mean Dice averages RV, MYO, and LV Dice.
+One sample is one labelled 3D ED or ES volume from one patient. The model
+outputs one four-class voxel map: background, right-ventricular cavity,
+myocardium, and left-ventricular cavity.
 
-### 4. Is the depth axis a temporal sequence?
+### 4. Did you compare ED against ES performance?
 
-No. Depth is the ordered stack of anatomical slices within one 3D volume. The
-model never receives a cine sequence indexed by cardiac phase.
+No phase-stratified result is reported. Each validation patient contributes one
+ED and one ES case, but the final table pools all 40 cases. Therefore I cannot
+claim that the model is better at one phase.
+
+## Image processing: exact executed path
+
+### 5. How did you process each MRI image?
+
+The exact order was: load the paired NIfTI image and label; add a channel axis;
+resize both to 256 by 256 by 16; scale the image intensity to 0--1; and convert
+both arrays to PyTorch tensors. This is implemented by `LoadImaged`,
+`EnsureChannelFirstd`, `Resized`, `ScaleIntensityd`, and `ToTensord`.
+
+### 6. Why are image and label resized differently?
+
+The MRI image is continuous, so trilinear interpolation estimates intermediate
+intensities smoothly. The label is categorical, so nearest-neighbour
+interpolation is used to avoid creating invalid fractional class labels.
+
+### 7. What does intensity scaling do?
+
+For each loaded single-channel volume, the minimum intensity is mapped to 0 and
+the maximum to 1. It is volume-wise min--max scaling. It is not z-score,
+histogram matching, dataset-wide normalization, or scanner harmonization.
+
+### 8. Did you use data augmentation?
+
+No. There was no random crop, rotation, flip, elastic deformation, or intensity
+augmentation. The train and validation datasets used the same deterministic
+transform; only training case order was shuffled. This limits robustness and is
+reported as a limitation.
+
+### 9. Did you standardize orientation or voxel spacing?
+
+No. The pipeline has no `Orientationd` or `Spacingd`. It resizes array dimensions
+directly to a common shape, so it is a fixed-grid comparison rather than a
+native physical-space evaluation. This may distort geometry.
+
+### 10. Did you crop the heart or restore predictions to native resolution?
+
+No. There is no heart crop and no inverse resampling. Prediction and reference
+labels are compared on the common 256 by 256 by 16 resized grid.
+
+### 11. What is the model input tensor shape?
+
+After batching, it is `B x 1 x 256 x 256 x 16`. The one is the MRI channel. The
+last dimension is the stack of anatomical slices, not time.
+
+### 12. How is the final mask produced?
+
+The network outputs four logits per voxel with shape
+`B x 4 x 256 x 256 x 16`. `argmax` selects the class with the largest logit.
+There is no threshold, connected-component filtering, hole filling, or other
+mask post-processing.
 
 ## Architecture and novelty
 
-### 5. Is your bottleneck a full Mamba implementation?
+### 13. Where does the sequence module operate?
 
-No. It is an implementation-faithful, Mamba-inspired gated sequence module. It
-flattens the compressed spatial grid, applies a depthwise one-dimensional
-convolution, a scalar sigmoid gate, an output projection, and a residual path,
-then restores the 3D grid. It does not implement Mamba's selective scan or its
-hardware-aware state-space algorithm.
+After three pooling operations, Nano-Mamba has a feature tensor of
+`B x 128 x 32 x 32 x 2`. The spatial grid is flattened to 2,048 tokens with
+128 channels, processed, and reshaped back before decoding.
 
-### 6. Why call it Mamba-inspired at all?
+### 14. Is the bottleneck a full Mamba implementation?
 
-The inspiration is the conversion of a compact feature grid into a sequence and
-the use of lightweight gated sequence processing in the U-Net bottleneck. The
-term is qualified throughout the final thesis so it does not imply algorithmic
-equivalence to the original Mamba architecture.
+No. It is Mamba-inspired: an input projection, depthwise one-dimensional
+convolution, scalar sigmoid gate, output projection, and residual connection.
+It does not implement selective scan or the original hardware-aware state-space
+algorithm.
 
-### 7. Where is the sequence module placed, and why?
+### 15. Why use the term Mamba-inspired?
 
-It is placed at the most compressed encoder representation. Sequence processing
-there operates on fewer tokens than at full resolution, which keeps the added
-module compact while retaining the U-Net encoder, decoder, and skip connections.
+The inspiration is lightweight gated processing of a serialized feature
+sequence at the bottleneck. The final thesis qualifies the term everywhere and
+does not claim algorithmic equivalence to Mamba.
 
-### 8. What is the defensible technical contribution?
+### 16. Why place it at the bottleneck?
 
-The contribution is an implemented compact 3D U-Net variant with a spatial
-sequence gate, plus a transparent comparison of its accuracy–efficiency design
-point. It is not a claim of a new selective state-space algorithm or a universal
-accuracy improvement.
+The bottleneck has only 2,048 tokens rather than 65,536 full-resolution voxels,
+so sequence processing is cheaper. The trade-off is that fine boundary detail
+may already be compressed; skip connections help but cannot guarantee recovery.
 
-## Experimental design
+### 17. What is the defensible novelty?
 
-### 9. How was data leakage controlled?
+The contribution is the implementation and evaluation of a compact spatial
+sequence gate inside a 3D U-Net, together with an accuracy--efficiency
+comparison. It is not a new state-space algorithm and not a true temporal
+framework.
 
-The ACDC training cohort was split at patient level with seed 42: 80 patients
-for training and 20 for validation. Both ED and ES cases from one patient remain
-on the same side. The audited split is disjoint, contains all 100 patients
-exactly once, and corresponds to 160 training cases and 40 validation cases.
+## Training and evaluation
 
-### 10. Is the reported validation set an independent test set?
+### 18. How was patient leakage prevented?
 
-No. The same 20-patient validation cohort was used to select the best checkpoint
-and to produce the reported table. I therefore describe the results as held-out
-validation performance, not independent test performance.
+The split was created at patient level with seed 42: 80 patients for training
+and 20 for validation. Both labelled phases from one patient stay on the same
+side, giving 160 training cases and 40 validation cases with no patient overlap.
 
-### 11. Were all models trained under a perfectly matched protocol?
+### 19. Is the reported validation set an independent test set?
 
-They share the patient split, preprocessing, validation calculation, epoch
-budget, optimizer family, and checkpoint-selection rule. However, batch sizes
-differed because of memory limits, the custom models used BatchNorm, and the
-ablation capacities are not parameter-matched. The table compares executed
-systems but does not isolate a pure causal effect of the gate.
+No. The same 20-patient validation cohort was checked every epoch to select the
+best checkpoint and then used for the final descriptive table. I report
+held-out validation performance, not independent or official ACDC test
+performance.
 
-### 12. How is Dice computed when a class is absent in both prediction and label?
+### 20. What loss and optimizer were used?
 
-The pipeline assigns Dice equal to 1.0 when both masks are empty. This convention
-is implemented consistently, but it can increase class averages for truly absent
-structures and should be reported explicitly. The recovered 240 case rows contain
-720 foreground class scores, none exactly equal to 1.0, so that special branch did
-not affect the reported table.
+The loss was MONAI Dice plus cross entropy with one-hot labels and softmax. The
+optimizer was AdamW with learning rate `1e-4` and weight decay `1e-5` for 150
+epochs. There was no scheduler or early stopping.
 
-### 13. Why report parameter count and FPS together?
+### 21. Does training Dice use the same classes as reported Dice?
 
-Parameter count measures model size, while FPS measures runtime under a specific
-benchmark. They are related but not interchangeable. In the recorded aggregate
-results, the 3D U-Net was fastest even though Nano-Mamba was smallest, showing
-that parameter count alone does not predict measured latency.
+Not exactly. The default Dice term in the executed Dice-CE loss includes the
+background channel. The reported metric excludes background and averages RV,
+MYO, and LV. The objectives are related, but their class averaging is not
+identical.
 
-### 14. Can the FPS numbers be reproduced exactly?
+### 22. How was reported Dice computed?
 
-Not exactly. The benchmark procedure is known—batch one, random 256×256×16
-input, five warm-ups, and 30 timed runs. A current-machine capture records
-PyTorch 2.7.1, MONAI 1.5.2, CUDA 11.8, cuDNN 9.1, and an RTX 4060 Laptop GPU,
-but it has not been confirmed as the historical benchmark environment. I
-therefore treat FPS as a recorded benchmark, not a portable property.
+For every case, `argmax` predictions were compared with integer labels for RV,
+MYO, and LV. Class Dice was averaged over the 40 cases, then the three class
+means were averaged. Because every patient has two cases, the aggregate gives
+equal case weight and equal total weight per patient.
 
-## Results and interpretation
+### 23. What happens when a class is absent in prediction and reference?
 
-### 15. Which model achieved the highest Dice?
+The executed metric returns Dice 1 for that class. None of the 720 recorded
+foreground class scores equals exactly 1, so that special branch did not affect
+the final table.
+
+### 24. Were all models trained under a perfectly controlled protocol?
+
+No. They shared the split, preprocessing, epoch budget, AdamW settings,
+checkpoint rule, and metric. However, batch sizes were 1 or 2, optimizer steps
+per epoch therefore differed, model families used different normalization and
+regularization, and the ablations were not parameter matched. This is a
+comparison of executed systems, not a pure causal test of one module.
+
+### 25. Did the models overfit?
+
+Training loss continued to fall while validation performance peaked earlier.
+The best-to-final validation drop was small for Nano-Mamba at 0.29 percentage
+points, but 3.05 points for Attention U-Net. This is why the best validation
+checkpoint was used, while also showing that the validation cohort is not an
+independent final test.
+
+## Results and failure analysis
+
+### 26. Which model achieved the highest Dice?
 
 SegResNet16 achieved the highest validation mean Dice at 86.70%. Nano-Mamba
-achieved 84.78%, so I do not claim that Nano-Mamba is the most accurate model.
+achieved 84.78%, so it is not the most accurate model in this experiment.
 
-### 16. What is Nano-Mamba's main quantitative advantage over 3D U-Net?
+### 27. What is Nano-Mamba's main advantage over 3D U-Net?
 
-Nano-Mamba improved validation mean Dice from 80.83% to 84.78%, a gain of 3.945
-percentage points, while using 1.456 million instead of 4.809 million reported
-parameters—a 69.714% reduction.
+Nano-Mamba improved mean Dice by 3.945 percentage points and used 69.714% fewer
+reported parameters: 1.456 million versus 4.809 million.
 
-### 17. How does Nano-Mamba compare with SegResNet16?
+### 28. Why did No-Mamba outperform Nano-Mamba?
 
-Nano-Mamba is 1.918 percentage points lower in validation mean Dice, but uses
-69.021% fewer reported parameters. This supports an accuracy–efficiency
-trade-off claim, not an accuracy leadership claim.
+The experiment cannot identify one cause. No-Mamba scored 0.862 percentage
+points higher but had 57.076% more parameters and a structurally different
+convolutional bottleneck. A capacity-matched, multi-seed ablation would be
+needed for a causal conclusion.
 
-### 18. Why did the No-Mamba ablation outperform Nano-Mamba?
+### 29. Which class was hardest?
 
-No-Mamba achieved 85.64%, which is 0.862 percentage points higher than
-Nano-Mamba. The result shows that this experiment does not demonstrate that the
-gate improves Dice. Because No-Mamba also has 57.076% more parameters, a
-matched-capacity, multi-seed study would be required for a stronger causal
-conclusion.
+MYO had the lowest aggregate class Dice among the stronger models. A plausible
+reason is its thin boundary-sensitive structure, but the study did not report
+surface distances or a blinded error review, so this explanation remains an
+interpretation rather than a tested mechanism.
 
-### 19. What did the Half-Mamba ablation show?
+### 30. What was Nano-Mamba's worst validation case?
 
-Half-Mamba achieved 84.95%, 0.174 percentage points above Nano-Mamba in the
-aggregate table. The recovered paired patient-bootstrap interval for Nano minus
-Half-Mamba is -0.91 to +0.55 percentage points, so it crosses zero. The ordering
-is not resolved by this single split, and repeated seeds are still needed.
+`patient049_frame11` had 57.86% mean Dice, including only 26.04% RV Dice. It was
+also the worst case for four other model families, suggesting a shared difficult
+case rather than a Nano-only failure. I do not assign a pathology or geometric
+cause without inspecting that patient's metadata and image overlay.
 
-### 20. Which anatomical class was hardest?
+### 31. Are the reported differences statistically significant?
 
-MYO had the lowest class Dice among the principal models in the audited table.
-This is consistent with the myocardium being a thinner structure with more
-boundary ambiguity than the ventricular cavities, but the experiment did not
-include boundary metrics or pathology-stratified analysis to test that
-explanation directly.
+No significance claim is made. Post-hoc paired patient-bootstrap intervals are
+descriptive and use the same patients involved in checkpoint selection. They
+do not replace multiple training seeds or an independent test cohort.
 
-### 21. Are the differences statistically significant?
+### 32. Why is the smallest model not the fastest?
 
-No significance claim is made. The recovered per-case rows support post-hoc
-patient-level bootstrap intervals: Nano minus UNet is +2.83 to +5.01 percentage
-points; Nano minus No-Mamba is -1.48 to -0.23; and Nano minus Half-Mamba is
--0.91 to +0.55. These are descriptive intervals on the validation patients
-used for checkpoint selection, not pre-registered tests or independent-test
-evidence, and no p-values are reported.
+Parameter count and runtime measure different things. Kernel efficiency,
+memory movement, framework implementation, and operator launch overhead also
+matter. In this benchmark, 3D U-Net was fastest; Nano-Mamba was smallest.
 
-## Reproducibility and limitations
+## Limitations and conclusion
 
-### 22. What evidence has been independently audited?
+### 33. What are the most important experimental limitations?
 
-The aggregate CSV/JSON, seed-42 split, six 40-case tables, six 150-epoch logs,
-and six checkpoint metadata/hash records agree. Every best log row and
-checkpoint epoch/Dice matches the table. The audit also verifies that the empty
-class branch did not fire and regenerates patient-level intervals and figures
-from the recovered records. This is stronger than aggregate arithmetic, but it
-is still narrower than complete historical run attestation.
+There is one patient split and seed, no independent test set, no augmentation,
+no orientation or spacing standardization, no native-space evaluation, no
+phase- or pathology-stratified analysis, no matched-capacity ablation, and no
+surface-distance metric. The model also does not perform temporal analysis.
 
-### 23. What remains missing from the original experiment evidence?
+### 34. What would you improve first?
 
-Four historical links remain open: the currently found checkpoint directory is
-not confirmed unchanged from training day; the current environment is not
-confirmed as historical; the exact command is unconfirmed; and the old
-discovery report lacks a complete 200-case content manifest. The strict audit
-therefore remains incomplete even though the numerical and checkpoint-metadata
-consistency checks now pass.
+First, use train/validation/test separation or nested cross-validation and run
+multiple seeds. Then add spacing- and orientation-aware preprocessing,
+augmentation, matched-capacity ablations, surface metrics, pathology and ED/ES
+subgroup analysis, and validation-case qualitative overlays. True 4D temporal
+modeling is a separate architectural extension.
 
-### 24. How would you strengthen the study next?
+### 35. What is the one-sentence conclusion?
 
-I would confirm the remaining historical provenance, run multiple seeds, use a
-separate test cohort, add matched-capacity ablations, report surface-distance
-and pathology-stratified results, and validate externally. Only after that
-would I extend the model to full cine sequences and evaluate temporal
-consistency or motion-related outputs.
-
-### 25. What is the one-sentence conclusion you can defend?
-
-Nano-Mamba U-Net is a compact Mamba-inspired 3D segmentation model that achieves
-competitive held-out validation Dice with the smallest reported parameter count
-among the evaluated models, while SegResNet16 remains the most accurate and the
-current evidence does not establish a causal advantage from the gate.
+Nano-Mamba U-Net is a compact Mamba-inspired 3D segmentation model that
+achieves competitive held-out validation Dice with the smallest reported
+parameter count among the evaluated configurations, while SegResNet16 remains
+the accuracy leader and the current experiment does not prove a causal benefit
+from the sequence gate.
 
 ## Evidence pointers
 
-- Main executed pipeline: `src/21_rigorous_experiment_pipeline.py`
-- Main result table: `evidence/rigorous_patient_split/summary_metrics.csv`
+- Executed pipeline: `src/21_rigorous_experiment_pipeline.py`
+- Bottleneck implementation: `src/nano_mamba_core.py`
+- Result table: `evidence/rigorous_patient_split/summary_metrics.csv`
 - Patient split: `evidence/rigorous_patient_split/patient_split_seed42.json`
-- Automated audit: `src/22_p2_evidence_audit.py`
-- Scientific boundary statement: `SCIENTIFIC_BOUNDARIES.md`
-- Final thesis results: `paper_write/Universiti_Malaya_Thesis_Template/sample-chap-results-p2.tex`
+- Case metrics and curves: `evidence/rigorous_patient_split/per_case_*.csv` and
+  `training_log_*.csv`
+- Thesis methodology and results: `sample-chap-methodology.tex` and
+  `sample-chap-results-p2.tex`

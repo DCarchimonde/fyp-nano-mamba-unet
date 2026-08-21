@@ -10,6 +10,12 @@ viva answers.
 - Labelled ED and ES volumes are processed as separate samples.
 - Tensor depth is anatomical slice depth. A fixed raster order converts a 3D
   latent grid to a one-dimensional spatial token sequence.
+- Each input follows the same deterministic path: NIfTI load, channel-first,
+  image/label resize to `256 x 256 x 16`, per-volume image min--max scaling,
+  and tensor conversion. Image interpolation is trilinear; label interpolation
+  is nearest-neighbour.
+- The Nano-Mamba bottleneck receives `B x 128 x 32 x 32 x 2`, flattens the
+  spatial grid to 2,048 tokens, and returns it to the decoder.
 - The bottleneck is a lightweight Mamba-inspired gated sequence module. It is
   not the original Mamba selective scan or a full state-space implementation.
 - Main values come only from the rigorous patient-split pipeline and audited
@@ -21,11 +27,11 @@ viva answers.
   fewer reported parameters.
 - The No-Mamba ablation achieved 85.64%, 0.862 percentage points above
   Nano-Mamba, with 57.076% more reported parameters.
-- Recovered per-case rows support a post-hoc paired patient-bootstrap interval
+- Audited per-case rows support a post-hoc paired patient-bootstrap interval
   of [+2.829, +5.009] percentage points for Nano-Mamba minus UNet3D.
 - The corresponding interval crosses zero for Nano-Mamba versus Half-Mamba,
   while it lies below zero versus No-Mamba and SegResNet16.
-- Six recovered 150-epoch logs and six checkpoint metadata/hash records agree
+- Six available 150-epoch logs and six checkpoint metadata/hash records agree
   with every selected epoch and mean Dice in the summary table.
 
 ## Claims that must not be made
@@ -33,6 +39,10 @@ viva answers.
 - No temporal tracking, temporal registration, displacement, optical flow,
   ejection fraction, or true 4D cine sequence was implemented or evaluated.
 - Depth must never be described as cardiac time.
+- No data augmentation, orientation standardization, spacing standardization,
+  native-resolution inverse transform, or mask post-processing was executed.
+  Dice is measured on the resized grid.
+- No ED-versus-ES or pathology-stratified result was reported.
 - Nano-Mamba U-Net is not the best model by Dice in this experiment.
 - The ablation does not causally prove that Mamba-inspired gating improves or
   harms accuracy because capacity, normalization, and batch-size confounds
@@ -43,9 +53,7 @@ viva answers.
   statistical significance, training robustness, pathology-specific
   performance, or external generalization. No p-values are claimed.
 - Reported FPS is not a universal architecture property; it is an
-  environment-specific batch-one random-input benchmark. A current environment
-  capture exists, but its identity with the historical benchmark environment
-  is unconfirmed.
+  environment-specific batch-one random-input benchmark.
 - The legacy gate projection contains trainable channels without an output path;
   published parameter counts include those channels.
 

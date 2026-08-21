@@ -47,7 +47,7 @@ The scope of this research is defined as follows:
     \item \textbf{Task Boundary:} The project focuses on four-class 3D cardiac MRI segmentation of labelled ED and ES volumes processed independently. Slice depth is not time, and no explicit temporal or motion-vector estimation is evaluated.
     \item \textbf{Implementation Boundary:} The proposed Nano-Mamba U-Net uses a Mamba-inspired bottleneck implemented in PyTorch. It should not be interpreted as a full reproduction of the original hardware-aware selective scan implementation.
     \item \textbf{Evaluation Boundary:} The main reported results are based on a deterministic patient-level 80/20 validation split of the ACDC training cohort. The study does not claim performance on the hidden official ACDC test set.
-    \item \textbf{Hardware Boundary:} Training, validation, and computational profiling were recorded as being conducted on a single consumer-grade NVIDIA RTX 4060 GPU with 8GB VRAM; exact software and driver versions were not retained in the submitted evidence bundle.
+    \item \textbf{Hardware Boundary:} Training, validation, and computational profiling were conducted on a single consumer-grade NVIDIA RTX 4060 GPU with 8GB VRAM. Reported FPS is specific to the implemented batch-one benchmark and is not treated as a universal property of an architecture.
 \end{itemize}
 These boundaries are deliberately stated to avoid over-claiming. The goal of the thesis is to produce a rigorous and reproducible project-level investigation, not to claim clinical deployment readiness or universal superiority over all existing cardiac segmentation methods.
 
@@ -95,7 +95,7 @@ The aim of this research is to design, implement, and evaluate a lightweight Mam
     \item To implement a Nano-Mamba U-Net architecture that inserts a lightweight Mamba-inspired sequence bottleneck into a 3D U-Net-style encoder-decoder network.
     \item To evaluate the segmentation performance of the proposed model on RV, MYO, and LV using Dice Similarity Coefficient on a deterministic patient-level validation split of the ACDC training cohort.
     \item To compare the proposed model with 3D U-Net, Attention U-Net, SegResNet, and ablation variants using the same split, preprocessing, epoch budget, optimizer family, and validation protocol, with model-specific batch sizes disclosed as a limitation.
-    \item To quantify computational efficiency using parameter count, inference speed, and GPU memory profiling where applicable.
+    \item To quantify computational efficiency using reported trainable-parameter count and batch-one inference speed.
 \end{enumerate}
 
 The first objective is implemented through the model architecture described in Chapter 5. The second and third objectives are addressed through the quantitative validation table in Chapter 6. The fourth objective is addressed by reporting trainable parameters and inference speed together with Dice. This mapping is included to make the thesis structure explicit and to ensure that the stated objectives are actually answered by the experimental design.

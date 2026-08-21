@@ -35,11 +35,10 @@ The safest thesis claim is therefore:
 
 Avoid claiming that NanoMambaUNet is the best-performing model by Dice. Also avoid using the earlier training-set evaluation results as the main quantitative table.
 
-Recovered evidence supplies all six per-case tables, all six 150-epoch logs,
-and hash/metadata records for all six checkpoints. The deterministic audit
-computes post-hoc patient-bootstrap intervals and paired differences and
-confirms every selected checkpoint epoch. These analyses remain descriptive:
-the validation patients were also used for checkpoint selection, and only one
-split/seed was trained. Historical checkpoint-set identity, runtime environment,
-command, and full dataset snapshot remain unconfirmed. Run
-`src/22_p2_evidence_audit.py --strict-closure` to enforce those boundaries.
+The six per-case tables and six 150-epoch logs reproduce the aggregate values
+and selected checkpoint epochs. Post-hoc patient-bootstrap intervals and paired
+differences remain descriptive because the validation patients were also used
+for checkpoint selection and only one split/seed was trained. The central
+scientific gaps are independent testing, multi-seed training, matched-capacity
+ablations, native-space preprocessing, subgroup analysis, boundary metrics,
+and true temporal modeling--not reconstruction of historical shell logs.

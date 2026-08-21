@@ -4,17 +4,17 @@
 
 **Canonical entry point:** `Universiti_Malaya_Thesis_Template/thesis.tex`
 
-The five active body-chapter sources contain approximately **12,112 words** by
+The five active body-chapter sources contain approximately **12,411 words** by
 `detex | wc -w`:
 
 | Active chapter source | Words |
 |---|---:|
-| `sample-chap-intro.tex` | 2,328 |
+| `sample-chap-intro.tex` | 2,329 |
 | `sample-chap-litreview.tex` | 2,162 |
-| `sample-chap-methodology.tex` | 2,698 |
-| `sample-chap-results-p2.tex` | 2,923 |
-| `sample-chap-conclusion.tex` | 2,001 |
-| **Total** | **12,112** |
+| `sample-chap-methodology.tex` | 2,850 |
+| `sample-chap-results-p2.tex` | 3,096 |
+| `sample-chap-conclusion.tex` | 1,974 |
+| **Total** | **12,411** |
 
 Reproduction command from the template directory:
 
@@ -24,8 +24,7 @@ detex sample-chap-intro.tex sample-chap-litreview.tex \
   sample-chap-conclusion.tex | wc -w
 ```
 
-As a cross-check, `pdftotext` over the body-page range returned approximately
-12,366 tokens separated as words; that method includes headings, captions, and
-page artefacts. The `detex` count excludes abstracts, front matter, references,
-and inactive legacy/P1 files. If the faculty mandates `texcount`, record its
-final output separately because counting rules differ.
+The `detex` count excludes abstracts, front matter, references, and inactive
+legacy/P1 files. PDF-text counts are expected to be slightly higher because
+they include headings, captions, and page artefacts. If the faculty mandates
+`texcount`, record its final output separately because counting rules differ.

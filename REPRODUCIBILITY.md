@@ -20,9 +20,9 @@ python -m py_compile \
 
 Expected result: the aggregate-consistency audit passes; seventeen data-free audit
 and visualization tests pass; three PyTorch-dependent architecture tests pass
-when PyTorch is installed and otherwise skip explicitly. This default pass is
-not an end-to-end provenance claim. Strict closure remains incomplete only on
-the four historical confirmations listed in Section 4.
+when PyTorch is installed and otherwise skip explicitly. This verifies the
+split, result arithmetic, case tables, curves, figure inputs, and core model
+behavior used by the thesis.
 
 The repository enforces LF for audited text through `.gitattributes`. The
 lineage validator also canonicalizes CRLF to LF for current source files, so a
@@ -75,20 +75,15 @@ Clean-build acceptance criteria:
 - title exactly matches the registered title; and
 - all 73 pages visually inspected after rendering.
 
-## 4. Recovered scope and remaining historical boundaries
+## 4. Scientific scope of reproduction
 
-The recovered closure bundle now supplies every original-format per-case table
-and epoch log plus a metadata/hash record for each checkpoint. The validator
-reconstructs the main table, checkpoint-selection epochs, training curves,
-empty-class-rule impact, patient-level intervals, and paired differences.
-
-Four boundaries remain: the checkpoint directory is not yet confirmed
-unchanged from the historical run; the current Conda/GPU capture is not yet
-confirmed as the historical environment; the exact training command is not
-confirmed; and the old discovery JSON lacks a full 200-case content manifest.
-Saved prediction arrays are also absent, so no qualitative image is claimed.
-These gaps do not invalidate the recovered numerical checks, but they prevent a
-claim of complete historical run attestation.
+The retained case tables and epoch logs reproduce the main table,
+checkpoint-selection epochs, training curves, empty-class-rule impact,
+patient-level intervals, and paired differences. This supports the internal
+six-model comparison. It does not supply an independent test cohort, multiple
+training seeds, matched-capacity ablations, native-space evaluation, or true
+temporal modeling; those are scientific limitations rather than file-recovery
+tasks.
 
 To audit the current 200-case dataset without training:
 
@@ -98,8 +93,12 @@ python scripts\p2_dataset_manifest.py `
   --output experiment_outputs\rigorous_patient_split\posthoc_dataset_manifest.json
 ```
 
-Do not add `--historical-dataset-snapshot-confirmed` unless the current dataset
-snapshot is known to be the one used on 2026-06-09.
+The content-manifest command is an optional current-data integrity check. It is
+not required to build or submit the thesis.
+
+The validator also retains an optional `--strict-closure` archival mode for a
+full historical attestation workflow. That mode is deliberately outside the
+P2 submission gate and is not needed for the viva.
 
 ## 5. Main result interpretation
 

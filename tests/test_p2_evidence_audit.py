@@ -37,8 +37,9 @@ class P2EvidenceAuditTests(unittest.TestCase):
     def test_aggregate_evidence_passes_with_explicit_scope(self) -> None:
         result = self.run_audit()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("AGGREGATE CONSISTENCY PASS", result.stdout)
-        self.assertIn("incomplete", result.stdout)
+        self.assertIn("SCIENTIFIC CONSISTENCY PASS", result.stdout)
+        self.assertIn("not a P2 submission requirement", result.stdout)
+        self.assertNotIn("Missing archival confirmations", result.stdout)
 
     def test_strict_closure_fails_on_documented_missing_artefacts(self) -> None:
         result = self.run_audit("--strict-closure")

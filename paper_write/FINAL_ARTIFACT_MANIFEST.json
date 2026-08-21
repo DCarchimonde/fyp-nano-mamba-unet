@@ -1,146 +1,203 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "audit_date": "2026-08-21",
   "branch": "p2-final-audit-2026-08-20",
-  "audited_source_commit": "70654969ea3b1c78a15de91293da5d6dc8bd9063",
-  "audited_source_tree": "2e95c372f8248705d941c3fa77a5b44c5b532589",
   "registered_title": "Nano-Mamba U-Net: A Spatio-Temporal Framework for Cardiac Motion Analysis",
   "scientific_scope": {
-    "task": "Four-class 3D cardiac MRI segmentation of independently processed ED and ES volumes",
-    "depth_axis": "Anatomical slice depth, not cardiac time",
-    "bottleneck": "Mamba-inspired gated spatial sequence module; not full Mamba selective scan",
-    "claim": "Competitive accuracy-efficiency trade-off; not the highest Dice and not a causal gate advantage",
+    "executed_task": "Four-class 3D cardiac MRI segmentation of independently processed ED and ES volumes",
+    "input_tensor": "B x 1 x 256 x 256 x 16",
+    "bottleneck_tensor": "B x 128 x 32 x 32 x 2",
+    "serialized_sequence": "B x 2048 x 128; 2048 = 32 x 32 x 2 spatial tokens",
+    "output_tensor": "B x 4 x 256 x 256 x 16 followed by argmax over the class axis",
+    "temporal_boundary": "The depth axis is anatomical slice depth. ED and ES are not jointly modelled; no tracking, registration, displacement, optical flow, temporal consistency, ejection fraction, or true 4D motion output was evaluated.",
+    "mamba_boundary": "The bottleneck is a Mamba-inspired gated spatial sequence module, not a full selective-scan Mamba implementation.",
+    "supported_claim": "Nano-Mamba provides a compact accuracy-efficiency trade-off. It is not the highest-Dice model and the executed ablations do not establish a causal gate advantage.",
     "boundary_file": "SCIENTIFIC_BOUNDARIES.md",
-    "boundary_file_sha256": "0128ee770649ed6c960a07b34e89500177c1c72a0f1d7f875198f8e9ddee7974"
+    "boundary_file_sha256": "38f7f7e4efc117af5ab7d81343449a6ac8a5569268de8787a7dee2d25fff3da6"
   },
-  "main_result_evidence": {
+  "image_processing": {
+    "executed_order": [
+      "LoadImaged loads paired NIfTI image and integer label volumes",
+      "EnsureChannelFirstd maps H x W x D to 1 x H x W x D",
+      "Resized maps image and label to 256 x 256 x 16",
+      "ScaleIntensityd performs per-volume linear 0-1 MRI intensity scaling",
+      "ToTensord converts both arrays to tensors"
+    ],
+    "interpolation": {
+      "image": "trilinear",
+      "label": "nearest-neighbour"
+    },
+    "not_executed": [
+      "data augmentation",
+      "orientation canonicalization",
+      "physical voxel-spacing normalization",
+      "heart or foreground cropping",
+      "inverse resampling to native geometry",
+      "connected-component or other mask post-processing"
+    ],
+    "evaluation_grid": "All reported Dice values are measured on the resized 256 x 256 x 16 grid."
+  },
+  "experiment_design": {
+    "dataset": "ACDC labelled training cohort",
+    "patients": 100,
+    "cases": 200,
+    "patient_split_seed": 42,
+    "train_patients": 80,
+    "validation_patients": 20,
+    "train_cases": 160,
+    "validation_cases": 40,
+    "patient_leakage": false,
+    "independent_test_set": false,
+    "training_seeds_reported": 1,
+    "models": 6,
+    "epochs_per_model": 150,
+    "checkpoint_rule": "Maximum validation mean foreground Dice",
+    "loss": "DiceCELoss(to_onehot_y=true, softmax=true); default training loss includes background",
+    "reported_metric": "Case-level Dice for RV, MYO, and LV, followed by model-level means over the 40 validation cases",
+    "training_confounders": [
+      "batch size differs across model families (1 or 2)",
+      "normalization implementations differ",
+      "optimizer-step counts per epoch differ with batch size",
+      "No-Mamba is not parameter matched to Nano-Mamba"
+    ],
     "pipeline": "src/21_rigorous_experiment_pipeline.py",
     "pipeline_sha256": "64e9266eff9df9591a37730b46740bff5ba4c00473165e867ffa262ce1ce9361",
+    "model_core": "src/nano_mamba_core.py",
+    "model_core_sha256": "00a8270c109e7747a45b9ac613e3d319d380b01222149461f6364ae783803b96"
+  },
+  "evidence_consistency": {
+    "default_audit_status": "scientific consistency pass",
+    "audit_script": "src/22_p2_evidence_audit.py",
+    "audit_script_sha256": "1cca674bfd649eab364fb54d68996e81f8283f6018a8acc414a51b08db7f907e",
+    "audit_report": "evidence/rigorous_patient_split/evidence_audit_report.json",
+    "audit_report_sha256": "c2cc3b863f9a4a6117fa2e1b56955e43439e295bdc883aa029222431cb0983f2",
     "summary_csv": "evidence/rigorous_patient_split/summary_metrics.csv",
     "summary_csv_sha256": "db5d2109f5195ad0ae7ea82d970dd57edaa9767f3b9a915e038a412a0e9cce5a",
     "split_json": "evidence/rigorous_patient_split/patient_split_seed42.json",
     "split_json_sha256": "e79f1c238d73389900364ea32a92d954458e17e461e1c81a2e595ba653456280",
-    "audit_report": "evidence/rigorous_patient_split/evidence_audit_report.json",
-    "audit_report_sha256": "683f01237cad6a5ef7105d5a0a8b432cf24e125a0feb780d205cd3cacc6aad91",
-    "aggregate_consistency_status": "pass",
-    "strict_closure_status": "incomplete",
-    "strict_closure_exit": 2,
-    "remaining_historical_confirmations": [
-      "The recovered six-checkpoint set has not been confirmed unchanged from the historical run.",
-      "The historical discovery record lacks a full 200-case NIfTI content manifest.",
-      "The current environment capture has not been confirmed as the historical training/benchmark environment.",
-      "The exact historical command and working directory remain unconfirmed."
-    ],
-    "historical_source_lineage": "evidence/rigorous_patient_split/historical_source_lineage.json",
-    "historical_source_lineage_sha256": "fc37e621ccc98ffd5abe3c94149329df4c8d516cb98f9395ac80b5226e9adb0e",
-    "lineage_scope": "Validated temporal/source context only; not end-to-end run attestation."
-  },
-  "recovered_closure": {
-    "source_archive": "p2_closure_20260821_020939.zip",
-    "source_archive_sha256": "16fbbe31db97e9695fc78aadbb46e9cf04f99fa1e1fd2d9e735f03d75d14a3b3",
-    "receipt": "evidence/rigorous_patient_split/RECOVERED_CLOSURE_RECEIPT.json",
-    "receipt_sha256": "613a7c1143bc66a44bf3cd7e1854ddb7e50b4b9bf867f1dcf6cc5665574ff511",
-    "raw_checksum_list": "evidence/rigorous_patient_split/RECOVERED_CLOSURE_SHA256SUMS.txt",
-    "raw_checksum_list_sha256": "b6af4d005d2177dcb0564a15e62f5f74fe392480d7a6a94aa1cefbee01d1bf8b",
-    "raw_member_verification": "19 of 19 listed archive members passed SHA-256 after extraction and repository placement",
     "per_case_csv_files": 6,
     "per_case_rows": 240,
     "foreground_class_scores_checked": 720,
-    "exact_unity_scores": 0,
+    "empty_empty_exact_unity_scores": 0,
     "training_log_csv_files": 6,
     "training_log_rows": 900,
     "checkpoint_records": 6,
-    "unique_checkpoint_hashes": 6,
-    "checkpoint_manifest_sha256": "adc29abf93026aa8a8241c5298172e6aa65fdb82a17d2126c1b907316cf16e68",
-    "current_environment_capture_sha256": "cf47ebed361dab3ba502d52e04a31162d2d341b54f670a26847f49932839668d",
-    "unconfirmed_transcript_sha256": "a49604cbd875daf4b80fe2d35fc4acb50582670267501854c3755d0ebca4fdb8"
+    "checks": [
+      "patient split is disjoint and covers the reported 200 cases",
+      "every aggregate Dice value is reproduced from case rows",
+      "all best epochs are reproduced from 150-epoch curves",
+      "checkpoint metadata agrees with model names and reported epochs",
+      "non-finite and out-of-range values are rejected",
+      "source-lineage comparison is CRLF-neutral but rejects content changes"
+    ],
+    "archival_history_note": "Optional historical command/environment identity is not a P2 submission requirement and is excluded from the scientific readiness decision."
   },
-  "posthoc_patient_bootstrap": {
-    "method": "Patient-level percentile bootstrap; 10000 replicates; seed 20260820; descriptive only",
-    "NanoMambaUNet_95_ci": [0.8205, 0.8690],
-    "paired_differences_percentage_points": {
-      "versus_UNet3D": {"estimate": 3.945, "ci95": [2.829, 5.009]},
-      "versus_AttentionUNet": {"estimate": 10.001, "ci95": [3.508, 18.294]},
-      "versus_SegResNet16": {"estimate": -1.918, "ci95": [-3.010, -0.884]},
-      "versus_NoMamba": {"estimate": -0.862, "ci95": [-1.482, -0.230]},
-      "versus_HalfMamba": {"estimate": -0.174, "ci95": [-0.909, 0.551]}
-    }
+  "main_results": {
+    "validation_mean_dice_percent": {
+      "SegResNet16": 86.70,
+      "Ablation_NoMamba_UNet": 85.64,
+      "Ablation_HalfMamba_UNet": 84.95,
+      "NanoMambaUNet": 84.78,
+      "UNet3D": 80.83,
+      "AttentionUNet": 74.78
+    },
+    "nano_parameters_millions": 1.456,
+    "nano_foreground_dice_percent": {
+      "RV": 82.11,
+      "MYO": 80.35,
+      "LV": 91.88
+    },
+    "nano_patient_bootstrap_95_ci": [0.8205, 0.8690],
+    "paired_nano_minus_model_percentage_points": {
+      "UNet3D": {
+        "estimate": 3.945,
+        "ci95": [2.829, 5.009]
+      },
+      "SegResNet16": {
+        "estimate": -1.918,
+        "ci95": [-3.010, -0.884]
+      },
+      "Ablation_NoMamba_UNet": {
+        "estimate": -0.862,
+        "ci95": [-1.482, -0.230]
+      },
+      "Ablation_HalfMamba_UNet": {
+        "estimate": -0.174,
+        "ci95": [-0.909, 0.551]
+      }
+    },
+    "curve_interpretation": "All six training losses decline while final validation Dice is below the selected maximum; the largest decline is Attention U-Net at 3.05 percentage points, consistent with late-epoch overfitting or instability in that run.",
+    "shared_difficult_case": "patient049_frame11 is the lowest-mean case for Nano-Mamba, UNet3D, SegResNet16, No-Mamba, and Half-Mamba; Nano-Mamba mean Dice is 57.86% with RV 26.04%, MYO 64.87%, and LV 82.66%."
   },
-  "quantitative_figures": {
-    "provenance_manifest": "figures/quantitative_figure_provenance.json",
-    "provenance_manifest_sha256": "09c137e901f96f95834353e3e979eba03d0d34ca02c0a0230566c6688673ddfc",
-    "generator_sha256": "65c4de4d10d8940ba214793ec247040392d804761d4532665727b6a8f7e184f1",
-    "count": 4,
-    "scope": "Three figures read the audited summary CSV; one reads all six recovered raw 150-epoch logs."
-  },
-  "collection_and_validation_tools": {
-    "attributes_sha256": "87f9c41800b59cc63a5b3956ed7557f8b1e3507d019264f8b0c80a2627f8c5a6",
-    "audit_script_sha256": "e59fde636f363ba5181af9dd999f8bd1add4f35da74e3d2d8a67d98e081b1931",
-    "collector_sha256": "d4f97d79bf50a18acbd6c9a7c114d0a9c12610293f71794f9f78c2de087954fa",
-    "checkpoint_manifest_tool_sha256": "f93af34a9305e60555e5bcc2b0da4b8aaa0cb1a17d559864990acf3645870de4",
-    "environment_capture_tool_sha256": "7f4b7d581858d54cf3e13d13eb448a6b80753990d23c5788aae566ee12d131c8",
-    "dataset_manifest_tool_sha256": "7b93628963cb98dd1fd001f4f02790662901c7c92780a91f14c483369aca2c6e",
-    "policy": "Recovered evidence bytes are preserved; current-source hashes are CRLF-neutral; collection redacts URL credentials and common user-home paths; unexpected audit failures stop collection."
-  },
+  "open_scientific_limits": [
+    "validation patients select checkpoints and supply the final table; there is no independent test cohort",
+    "only one patient split and one seed are reported",
+    "no augmentation or native-space evaluation was performed",
+    "ablations are not capacity or optimization matched",
+    "ED versus ES and pathology subgroups were not analysed",
+    "HD95, ASD, calibration, and formal blinded qualitative review were not evaluated",
+    "the architecture does not implement temporal motion modelling"
+  ],
   "thesis": {
     "entry_point": "paper_write/Universiti_Malaya_Thesis_Template/thesis.tex",
     "entry_point_sha256": "4da4aa15fcfd68288fa01e7e89855bcb3905ae670095b75f63ea31391eca84d5",
     "bibliography": "paper_write/Universiti_Malaya_Thesis_Template/myrefs.bib",
     "bibliography_sha256": "79edb4432a8efc74da2f4177c237fcf09faef68637d4b03a5347fe2ba7271ba7",
     "pdf": "paper_write/Universiti_Malaya_Thesis_Template/thesis.pdf",
-    "pdf_sha256": "f6eaec329b35edf6be675117132b0949947e200e6aa1b8217b3ca3f1dfc9a3e5",
-    "bytes": 770981,
+    "pdf_sha256": "5a62f38da70922077e26ba1a79e2eafeb4a5161ea80ea09855a826c62895b24c",
+    "bytes": 774872,
     "pages": 73,
     "page_size": "A4 (595.276 x 841.89 pt)",
     "pdf_version": "1.5",
     "build_command": "bash scripts/build_thesis.sh",
     "build_script_sha256": "507a02c7f1e07cb72ee3ac28ce238846a1a9275991822fabd76e36c5f64e2793",
     "acceptance_checks": [
-      "Build exit status 0",
-      "No undefined citations or references",
-      "No overfull boxes",
-      "No missing figures",
-      "All 73 pages rendered and visually reviewed",
-      "Latest 73 raster pages pixel-match the fully reviewed render"
+      "build exit status 0",
+      "final LaTeX pass has no undefined citations or references",
+      "final LaTeX pass has no overfull boxes",
+      "all 73 pages rendered and visually reviewed"
     ]
   },
   "word_count": {
     "record": "paper_write/WORD_COUNT.md",
-    "record_sha256": "53547d51cf3c1372311d246d60dfe84230a8673eb89556247e17b7ea7e1c5a76",
+    "record_sha256": "aedf249d3dc5a292f0819af09261de04956b6ac0fb647570faaeb27d4319873c",
     "method": "detex over the five active body-chapter sources, then wc -w",
-    "active_body_words": 12112,
-    "cross_check_pdf_body_words": 12366,
+    "active_body_words": 12411,
     "scope": "Excludes abstracts, front matter, references, and inactive legacy files."
   },
   "presentation": {
     "deck": "presentation/P2_Final_Defense_Tong_Siyuan.pptx",
-    "deck_sha256": "6ae5b8884b044bc0dcd70c259bba7b4f6156e981c95c01123d6da085d5908fc6",
-    "bytes": 364033,
+    "deck_sha256": "e02f00cbff35bb9e1f64bf3bda833038d5769ce5cf7c3c88376f57ca66cb7719",
+    "bytes": 364256,
     "slides": 13,
     "target_duration_minutes": 15,
     "viva_bank": "presentation/P2_VIVA_QA.md",
-    "viva_bank_sha256": "ad589dd776b1b793d6789e3adb6a37e40853c9170a653f8e5e460bd028389dd9",
-    "qa": "All slides rendered and individually reviewed; layout test reports no overflow; template-fidelity test reports no issues."
+    "viva_bank_sha256": "f4d9b6111943cda387af6234f91a73fc5070b1fcbfb5f94a9313ba5ac0f995a3",
+    "method_cheatsheet": "presentation/P2_DEFENSE_METHOD_CHEATSHEET.md",
+    "method_cheatsheet_sha256": "4abdda7e52cf1f978409142821a4ad55225ce1403cb38d59f563631b24661feb",
+    "qa": [
+      "all 13 slides rendered and reviewed",
+      "layout overflow test passed",
+      "template-fidelity test passed with zero issues",
+      "method, preprocessing, temporal boundary, limitations, and result interpretation are explicitly covered"
+    ]
   },
   "final_audit": {
     "file": "paper_write/P2_FINAL_AUDIT.md",
-    "sha256": "77b8604cd86ea7d07e8db0583537a820dcff932295048587a03b39ef68a1e6c3",
-    "disposition": "Conditionally ready for submission with four historical provenance confirmations and private declaration fields explicitly outstanding."
+    "sha256": "15f72231f09cf66df1e113f77addfc3574e9e463562a062a096e04952340b643",
+    "disposition": "Scientifically and defensively ready for P2 submission with all open design limitations stated. Stronger generalization, causal, native-space, or temporal claims require new experiments."
   },
   "verification": {
-    "data_free_tests": "17 passed on the sealed source state",
-    "pytorch_architecture_tests": "3 passed in the candidate's Windows nanomamba environment before this evidence-only update; the unchanged architecture tests skip because PyTorch is not installed in the audit container",
-    "python_compile": "pass",
-    "raw_evidence_checksum": "pass (19/19)",
-    "aggregate_evidence_audit": "pass",
-    "strict_closure_test": "expected exit 2 on exactly four historical confirmation gaps",
-    "pdf_visual_review": "all 73 pages reviewed; final rebuild raster is pixel-identical to the reviewed raster",
+    "unit_tests_container": "20 run: 17 passed and 3 PyTorch architecture tests skipped because PyTorch is unavailable in the audit container",
+    "unit_tests_candidate_windows": "20 passed in the candidate's nanomamba environment",
+    "scientific_evidence_audit": "pass",
+    "pdf_visual_review": "all 73 pages reviewed",
+    "presentation_visual_review": "all 13 slides reviewed",
     "presentation_overflow_test": "pass",
-    "non_raw_git_diff_check": "pass"
+    "presentation_template_fidelity": "pass"
   },
   "tool_versions": {
     "python": "3.12.13",
-    "matplotlib": "3.10.8",
     "pdftex": "3.141592653-2.6-1.40.25 (TeX Live 2023/Debian)",
     "bibtex": "0.99d (TeX Live 2023/Debian)",
     "pdfinfo": "26.05.0",
