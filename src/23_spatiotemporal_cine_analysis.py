@@ -169,29 +169,131 @@ def discover_endpoint_pairs(patient_dir: Path) -> Dict[int, Dict[str, Path]]:
     return endpoints
 
 
-def discover_cine_nifti(patient_dir: Path) -> Path:
-    containers = sorted(
-        [Path(match) for match in glob.glob(str(patient_dir / "patient*_4d.nii*"))],
-        key=lambda path: natural_sort_key(path.name),
-    )
+def patient_nifti_candidates(patient_dir: Path) -> List[Path]:
+    """Return files that could be NIfTIs, including files inside .nii directories.
+
+    Some locally unpacked ACDC copies represent an original NIfTI archive as a
+    directory whose name ends in ``.nii`` and place the real NIfTI below it with
+    a non-standard name. Candidate discovery must therefore inspect the full
+    relative path rather than require a canonical top-level filename.
+    """
+
     candidates: List[Path] = []
-    for container in containers:
-        candidates.extend(
-            path
-            for path in nifti_files(container)
-            if "_gt" not in path.name.lower()
+    for path in patient_dir.rglob("*"):
+        if not is_nonempty_file(path):
+            continue
+        relative_parts = [part.lower() for part in path.relative_to(patient_dir).parts]
+        if any(part.endswith((".nii", ".nii.gz")) for part in relative_parts):
+            candidates.append(path)
+    return sorted(set(candidates), key=lambda path: natural_sort_key(str(path)))
+
+
+def _cine_candidate_diagnostic(
+    patient_dir: Path,
+    inspected: Sequence[Tuple[Path, Optional[Tuple[int, ...]], Optional[str]]],
+) -> str:
+    if not inspected:
+        return "no NIfTI-like files were found recursively"
+    details: List[str] = []
+    for path, shape, error in inspected[:20]:
+        relative = path.relative_to(patient_dir).as_posix()
+        if shape is not None:
+            details.append(f"{relative} -> shape={shape}")
+        else:
+            details.append(f"{relative} -> unreadable ({error})")
+    if len(inspected) > 20:
+        details.append(f"... {len(inspected) - 20} additional candidates omitted")
+    return "; ".join(details)
+
+
+def discover_cine_nifti(patient_dir: Path, expected_frames: int, nib: Any) -> Path:
+    """Identify the cine by its NIfTI header, not by a fragile filename rule."""
+
+    if expected_frames < 2:
+        raise ValueError(f"Invalid expected cine frame count: {expected_frames}")
+    inspected: List[Tuple[Path, Optional[Tuple[int, ...]], Optional[str]]] = []
+    matches: List[Path] = []
+    for path in patient_nifti_candidates(patient_dir):
+        try:
+            image = nib.load(str(path))
+            shape = tuple(int(value) for value in image.shape)
+        except Exception as exc:  # nibabel raises format-specific exception classes
+            inspected.append((path, None, f"{type(exc).__name__}: {exc}"))
+            continue
+        inspected.append((path, shape, None))
+        if len(shape) == 4 and shape[-1] == expected_frames:
+            matches.append(path)
+
+    if not matches:
+        diagnostic = _cine_candidate_diagnostic(patient_dir, inspected)
+        raise FileNotFoundError(
+            f"No NIfTI with shape (X, Y, Z, {expected_frames}) was found recursively "
+            f"in {patient_dir}. Inspected: {diagnostic}"
         )
-    candidates = sorted(
-        set(candidates), key=lambda path: (-path.stat().st_size, natural_sort_key(str(path)))
-    )
-    if not candidates:
-        raise FileNotFoundError(f"No full 4D cine NIfTI found in {patient_dir}")
-    if len(candidates) > 1 and candidates[0].stat().st_size == candidates[1].stat().st_size:
+
+    # A path carrying the original 4D marker is preferred only after its header
+    # has proved that it is the requested cine. Never choose by file size.
+    marked = [
+        path
+        for path in matches
+        if any(
+            "4d" in part.lower()
+            for part in path.relative_to(patient_dir).parts
+        )
+    ]
+    eligible = marked or matches
+    if len(eligible) != 1:
         raise ValueError(
-            f"Ambiguous equal-sized 4D cine candidates in {patient_dir}: "
-            + ", ".join(str(path) for path in candidates[:3])
+            f"Ambiguous full-cine NIfTIs for NbFrame={expected_frames} in "
+            f"{patient_dir}: "
+            + ", ".join(path.relative_to(patient_dir).as_posix() for path in eligible)
         )
-    return candidates[0]
+    return eligible[0]
+
+
+def preflight_patient_inputs(
+    data_dir: Path,
+    patient_ids: Sequence[str],
+    nib: Any,
+) -> Dict[str, Dict[str, object]]:
+    """Resolve every patient's required input before the first model inference."""
+
+    resolved: Dict[str, Dict[str, object]] = {}
+    errors: List[str] = []
+    for patient_id in patient_ids:
+        try:
+            patient_dir = data_dir / patient_id
+            if not patient_dir.is_dir():
+                raise FileNotFoundError(f"patient directory is missing: {patient_dir}")
+            info_path = patient_dir / "Info.cfg"
+            if not info_path.is_file():
+                raise FileNotFoundError(f"Info.cfg is missing: {info_path}")
+            info = parse_info_cfg_text(info_path.read_text(encoding="utf-8-sig"))
+            endpoints = discover_endpoint_pairs(patient_dir)
+            for frame in (int(info["ED"]), int(info["ES"])):
+                if frame not in endpoints:
+                    raise ValueError(
+                        f"Info.cfg frame {frame} has no standalone image/label pair"
+                    )
+            cine_path = discover_cine_nifti(patient_dir, int(info["NbFrame"]), nib)
+            resolved[patient_id] = {
+                "patient_dir": patient_dir,
+                "info_path": info_path,
+                "info": info,
+                "endpoints": endpoints,
+                "cine_path": cine_path,
+            }
+        except Exception as exc:
+            message = str(exc).replace("\n", "\n    ")
+            errors.append(f"{patient_id}: {type(exc).__name__}: {message}")
+
+    if errors:
+        raise RuntimeError(
+            "Full-cine dataset preflight failed before inference. Correct every listed "
+            "patient and rerun; no result was generated:\n  - "
+            + "\n  - ".join(errors)
+        )
+    return resolved
 
 
 def load_split(path: Path) -> Dict[str, object]:
@@ -1026,9 +1128,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             raise FileNotFoundError(f"Missing {label}: {path}")
     if output_dir.exists() and any(output_dir.iterdir()):
         raise FileExistsError(f"Output directory is not empty: {output_dir}")
-    output_dir.mkdir(parents=True, exist_ok=True)
-    figures_dir = output_dir / "figures"
-    figures_dir.mkdir()
 
     split = load_split(split_path)
     historical_per_case = load_historical_per_case(historical_per_case_path)
@@ -1058,6 +1157,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     device = torch.device(device_text)
 
+    patient_inputs = preflight_patient_inputs(data_dir, selected_patients, nib)
+    print(
+        f"Full-cine dataset preflight: PASS ({len(patient_inputs)} patients; "
+        "NIfTI headers match each Info.cfg NbFrame)"
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    figures_dir = output_dir / "figures"
+    figures_dir.mkdir()
+
     all_frame_rows: List[Dict[str, object]] = []
     all_patient_rows: List[Dict[str, object]] = []
     input_records: List[Dict[str, object]] = []
@@ -1065,19 +1173,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     for patient_index, patient_id in enumerate(selected_patients, start=1):
         patient_start = time.perf_counter()
-        patient_dir = data_dir / patient_id
-        info_path = patient_dir / "Info.cfg"
-        if not info_path.is_file():
-            raise FileNotFoundError(f"Missing Info.cfg: {info_path}")
-        info = parse_info_cfg_text(info_path.read_text(encoding="utf-8-sig"))
-        endpoints = discover_endpoint_pairs(patient_dir)
-        for frame in (int(info["ED"]), int(info["ES"])):
-            if frame not in endpoints:
-                raise ValueError(
-                    f"{patient_id} Info.cfg frame {frame} has no standalone image/label pair"
-                )
-
-        cine_path = discover_cine_nifti(patient_dir)
+        inputs = patient_inputs[patient_id]
+        patient_dir = inputs["patient_dir"]
+        info_path = inputs["info_path"]
+        info = inputs["info"]
+        endpoints = inputs["endpoints"]
+        cine_path = inputs["cine_path"]
+        if not isinstance(patient_dir, Path) or not isinstance(info_path, Path):
+            raise TypeError("Internal preflight path record is invalid")
+        if not isinstance(info, dict) or not isinstance(endpoints, dict):
+            raise TypeError("Internal preflight metadata record is invalid")
+        if not isinstance(cine_path, Path):
+            raise TypeError("Internal preflight cine record is invalid")
         cine_image = nib.load(str(cine_path))
         if len(cine_image.shape) != 4:
             raise ValueError(f"Expected a 4D NIfTI for {patient_id}, got {cine_image.shape}")

@@ -15,7 +15,8 @@ their reported comparison.
 
 For each of the 20 existing validation patients:
 
-1. load the complete 4D cine NIfTI and verify `NbFrame`, ED, and ES against
+1. recursively inspect NIfTI headers to locate the complete 4D cine (including
+   unpacked `.nii` directory layouts), then verify `NbFrame`, ED, and ES against
    `Info.cfg`;
 2. prove that the cine ED/ES image frames match the standalone 3D endpoint
    images used by the original experiment;
@@ -63,7 +64,11 @@ defence deck.
 
 ## Fail-closed checks
 
-The run stops instead of emitting reportable results when any of these occur:
+Before the first model inference, all 20 patient directories are scanned and
+their cine is identified by a four-dimensional NIfTI header whose time axis
+equals `Info.cfg` `NbFrame`. This avoids assuming a particular archive or
+filename layout. The run stops instead of emitting reportable results when any
+of these occur:
 
 - a validation patient, `Info.cfg`, 4D cine, endpoint image, or label is missing;
 - the NIfTI time dimension differs from `NbFrame`;

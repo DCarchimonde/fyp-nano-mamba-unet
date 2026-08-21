@@ -23,7 +23,19 @@ except ImportError:
 
 
 class CineDiscoveryTests(unittest.TestCase):
-    def test_nested_legacy_layout_discovers_endpoints_and_largest_cine(self) -> None:
+    class FakeNifti:
+        def __init__(self, shape: tuple[int, ...]) -> None:
+            self.shape = shape
+
+    class FakeNibabel:
+        def __init__(self, shapes: dict[str, tuple[int, ...]]) -> None:
+            self.shapes = shapes
+
+        def load(self, path: str) -> "CineDiscoveryTests.FakeNifti":
+            shape = self.shapes.get(path, (192, 192, 10))
+            return CineDiscoveryTests.FakeNifti(shape)
+
+    def test_nested_legacy_layout_discovers_endpoints_by_header_not_size(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             patient = Path(directory) / "patient001"
             patient.mkdir()
@@ -37,16 +49,48 @@ class CineDiscoveryTests(unittest.TestCase):
 
             cine_dir = patient / "patient001_4d.nii"
             cine_dir.mkdir()
-            (cine_dir / "small.nii").write_bytes(b"123")
-            (cine_dir / "actual_cine.nii").write_bytes(b"123456789")
+            misleading_large = cine_dir / "large_3d.nii"
+            actual_cine = cine_dir / "small_4d_payload.nii"
+            misleading_large.write_bytes(b"123456789")
+            actual_cine.write_bytes(b"123")
+            nib = self.FakeNibabel(
+                {
+                    str(misleading_large): (192, 192, 10),
+                    str(actual_cine): (192, 192, 10, 30),
+                }
+            )
 
             endpoints = CINE.discover_endpoint_pairs(patient)
             self.assertEqual(sorted(endpoints), [1, 12])
             self.assertEqual(endpoints[1]["image"].name, "image_1.nii")
             self.assertEqual(endpoints[12]["label"].name, "label_12.nii")
             self.assertEqual(
-                CINE.discover_cine_nifti(patient).name, "actual_cine.nii"
+                CINE.discover_cine_nifti(patient, 30, nib).name,
+                "small_4d_payload.nii",
             )
+
+    def test_recursive_header_discovery_does_not_require_4d_filename(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            patient = Path(directory) / "patient002"
+            nested = patient / "converted_cine.nii" / "payload"
+            nested.mkdir(parents=True)
+            cine = nested / "series_without_nifti_suffix.bin"
+            cine.write_bytes(b"nifti")
+            nib = self.FakeNibabel({str(cine): (232, 256, 12, 28)})
+            self.assertEqual(CINE.discover_cine_nifti(patient, 28, nib), cine)
+
+    def test_header_discovery_reports_observed_shapes_when_cine_is_absent(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            patient = Path(directory) / "patient003"
+            patient.mkdir()
+            endpoint = patient / "patient003_frame01.nii"
+            endpoint.write_bytes(b"endpoint")
+            nib = self.FakeNibabel({str(endpoint): (192, 192, 10)})
+            with self.assertRaisesRegex(
+                FileNotFoundError,
+                r"shape=\(192, 192, 10\)",
+            ):
+                CINE.discover_cine_nifti(patient, 25, nib)
 
     def test_standard_nifti_suffix_mapping(self) -> None:
         self.assertEqual(
