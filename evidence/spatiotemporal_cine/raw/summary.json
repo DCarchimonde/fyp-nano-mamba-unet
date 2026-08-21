@@ -1,0 +1,212 @@
+{
+  "analysis_name": "full-cine segmentation-derived spatio-temporal motion and function analysis",
+  "endpoint_input_max_normalized_mae": 0.0,
+  "frames": 550,
+  "geometry_audit": {
+    "patients_with_any_endpoint_affine_mismatch": [
+      "patient002",
+      "patient042",
+      "patient049",
+      "patient066",
+      "patient071",
+      "patient073"
+    ],
+    "physical_metric_policy": "header voxel sizes with orthonormal affine directions when valid; distances and volumes are origin/orientation invariant"
+  },
+  "historical_endpoint_max_abs_dice_difference": 0.00016910548567161676,
+  "methods": {
+    "framewise": {
+      "annotated_ef_mae_percentage_points": 3.5138103741291444,
+      "annotated_ef_pearson_r": 0.9808779800048231,
+      "curve_ef_mae_percentage_points": 3.304858327528148,
+      "ed_phase_exact_fraction": 0.5,
+      "ed_phase_mae_frames": 0.9,
+      "ed_phase_within_one_fraction": 0.8,
+      "es_phase_exact_fraction": 0.55,
+      "es_phase_mae_frames": 0.7,
+      "es_phase_within_one_fraction": 0.85,
+      "mean_ed_resized_dice": 0.8671331120329693,
+      "mean_endpoint_resized_dice": 0.8477948463841756,
+      "mean_es_resized_dice": 0.8284565807353819,
+      "mean_myo_radius_ed_minus_es_mm": 4.250352505698961,
+      "mean_normalized_second_difference": 0.03252134553475157,
+      "median_peak_lv_centroid_displacement_mm": 6.361284426157535,
+      "patient_bootstrap_95_ci": {
+        "annotated_ef_abs_error_pp": {
+          "confidence": 0.95,
+          "lower": 2.626972161340689,
+          "mean": 3.5138103741291444,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 4.4667334834080155
+        },
+        "ed_phase_error_frames": {
+          "confidence": 0.95,
+          "lower": 0.4,
+          "mean": 0.9,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 1.5
+        },
+        "endpoint_resized_dice": {
+          "confidence": 0.95,
+          "lower": 0.8196096050476203,
+          "mean": 0.8477948463841756,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 0.8693075781237987
+        },
+        "es_phase_error_frames": {
+          "confidence": 0.95,
+          "lower": 0.3,
+          "mean": 0.7,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 1.15
+        }
+      },
+      "patients": 20
+    },
+    "temporal_fusion": {
+      "annotated_ef_mae_percentage_points": 3.3285038377392953,
+      "annotated_ef_pearson_r": 0.980317844904065,
+      "curve_ef_mae_percentage_points": 3.2308369889831328,
+      "ed_phase_exact_fraction": 0.55,
+      "ed_phase_mae_frames": 0.85,
+      "ed_phase_within_one_fraction": 0.8,
+      "es_phase_exact_fraction": 0.55,
+      "es_phase_mae_frames": 0.7,
+      "es_phase_within_one_fraction": 0.85,
+      "mean_ed_resized_dice": 0.8664900054386762,
+      "mean_endpoint_resized_dice": 0.847938913037994,
+      "mean_es_resized_dice": 0.8293878206373119,
+      "mean_myo_radius_ed_minus_es_mm": 4.153133373031701,
+      "mean_normalized_second_difference": 0.031391994539325924,
+      "median_peak_lv_centroid_displacement_mm": 6.251948336813243,
+      "patient_bootstrap_95_ci": {
+        "annotated_ef_abs_error_pp": {
+          "confidence": 0.95,
+          "lower": 2.4573144889500114,
+          "mean": 3.3285038377392953,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 4.2692336911731275
+        },
+        "ed_phase_error_frames": {
+          "confidence": 0.95,
+          "lower": 0.35,
+          "mean": 0.85,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 1.45
+        },
+        "endpoint_resized_dice": {
+          "confidence": 0.95,
+          "lower": 0.819519072338591,
+          "mean": 0.847938913037994,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 0.8695043560056801
+        },
+        "es_phase_error_frames": {
+          "confidence": 0.95,
+          "lower": 0.3,
+          "mean": 0.7,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 1.15
+        }
+      },
+      "patients": 20
+    },
+    "temporal_fusion_minus_framewise": {
+      "annotated_ef_mae_percentage_points": -0.18530653638984917,
+      "curve_smoothness": -0.0011293509954256459,
+      "endpoint_resized_dice": 0.00014406665381838657,
+      "paired_patient_bootstrap_95_ci": {
+        "annotated_ef_abs_error_pp": {
+          "confidence": 0.95,
+          "lower": -0.46782671844374646,
+          "mean": -0.18530653638984845,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 0.09085098912224485
+        },
+        "curve_smoothness": {
+          "confidence": 0.95,
+          "lower": -0.0019496773557506517,
+          "mean": -0.0011293509954256498,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": -0.0005108769331576696
+        },
+        "endpoint_resized_dice": {
+          "confidence": 0.95,
+          "lower": -0.0006349884051517824,
+          "mean": 0.00014406665381851423,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 0.000819259818983381
+        }
+      }
+    }
+  },
+  "model": "NanoMambaUNet",
+  "pathology_groups_descriptive": {
+    "DCM": {
+      "annotated_ef_mae_percentage_points": 2.206771570706829,
+      "endpoint_resized_mean_dice": 0.8516854916059537,
+      "patients": 4
+    },
+    "HCM": {
+      "annotated_ef_mae_percentage_points": 3.247506147078454,
+      "endpoint_resized_mean_dice": 0.8662481078845906,
+      "patients": 1
+    },
+    "MINF": {
+      "annotated_ef_mae_percentage_points": 4.926056451542863,
+      "endpoint_resized_mean_dice": 0.8242033169695462,
+      "patients": 7
+    },
+    "NOR": {
+      "annotated_ef_mae_percentage_points": 2.393062191900217,
+      "endpoint_resized_mean_dice": 0.8755958085900258,
+      "patients": 6
+    },
+    "RV": {
+      "annotated_ef_mae_percentage_points": 2.8273580063393986,
+      "endpoint_resized_mean_dice": 0.8313950580622476,
+      "patients": 2
+    }
+  },
+  "patients": 20,
+  "runtime_seconds": 90.40592389996164,
+  "schema_version": 1,
+  "scientific_boundaries": [
+    "Intermediate cine frames have no manual segmentation labels in ACDC training data.",
+    "ED/ES endpoint masks and Info.cfg phase indices provide the available temporal validation.",
+    "Raw ACDC endpoint and 4D cine affines may differ despite identical endpoint voxel arrays; grid registration is proven by shape, voxel spacing, and ED/ES image content, while physical magnitudes use cine header zooms.",
+    "The analysis is not optical flow, dense registration, local strain, or external clinical validation.",
+    "The validation cohort was also used historically for checkpoint selection."
+  ],
+  "spatial_backbone_temporal_scope": "The checkpoint-compatible backbone is spatial 3D. Temporal information is introduced only by fixed adjacent-frame probability fusion and full-cycle analysis.",
+  "status": "complete_validation_analysis",
+  "temporal_probability_fusion_weights": {
+    "boundary": "circular",
+    "current": 0.5,
+    "next": 0.25,
+    "previous": 0.25
+  },
+  "validation_scope": "audited held-out validation patients; not an independent test set"
+}

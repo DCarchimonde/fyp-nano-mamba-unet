@@ -1,0 +1,3702 @@
+[
+  {
+    "cine_bytes": 17559867,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.3671875,
+        1.3671875,
+        10.0
+      ],
+      "raw_affine_scales_match_header_zooms": true,
+      "sform_code": 0,
+      "spatial_zooms_mm": [
+        1.3671875,
+        1.3671875,
+        10.0
+      ],
+      "voxel_volume_ml": 0.0186920166015625
+    },
+    "cine_relative_path": "patient002/patient002_4d.nii.gz",
+    "cine_sha256": "b074ae28371ad30c21805e93a2c15eaa9c1fe92ae6c08789ef36b49ab8e76446",
+    "cine_shape": [
+      232,
+      256,
+      10,
+      30
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            232,
+            256,
+            10
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            232,
+            256,
+            10
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            232,
+            256,
+            10
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            232,
+            256,
+            10
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            232,
+            256,
+            10
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            232,
+            256,
+            10
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "005f1c4453114f32bc51de2f49b86382eceb3f0ad4892a65299c9da9ac23394e",
+      "ES": "c338f93929cf95f15bf74107d37e9a8455c1e1aca630e43d54210a697c7df63b"
+    },
+    "group": "DCM",
+    "historical_endpoint_max_abs_dice_difference": 8.295424638538051e-05,
+    "info_cfg_sha256": "7f3c7ded09ae6a7245c720b1cdcb43d9131d20c294fc0e7049bc24436f996854",
+    "patient_id": "patient002",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 12,
+    "voxel_volume_ml": 0.0186920166015625,
+    "zooms": [
+      1.3671875,
+      1.3671875,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 59638112,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "raw_affine_scales_match_header_zooms": false,
+      "sform_code": 2,
+      "spatial_zooms_mm": [
+        1.5625,
+        1.5625,
+        10.0
+      ],
+      "voxel_volume_ml": 0.0244140625
+    },
+    "cine_relative_path": "patient010/patient010_4d.nii/CMD_17.nii",
+    "cine_sha256": "7eb2362719652d907145af4b11f30d50feeb201ddbcaa853f81b73c95a900884",
+    "cine_shape": [
+      208,
+      256,
+      10,
+      28
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            208,
+            256,
+            10
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            208,
+            256,
+            10
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            208,
+            256,
+            10
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            208,
+            256,
+            10
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            208,
+            256,
+            10
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            208,
+            256,
+            10
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "bc8eefd60c8a2913afa650d024a3a67dec915eb606ea21a1f9278a826feec2b2",
+      "ES": "427c9b73bb7dff19c577fd15379eff81b2707e9c845cfa779e3030435811d661"
+    },
+    "group": "DCM",
+    "historical_endpoint_max_abs_dice_difference": 5.209399531436176e-05,
+    "info_cfg_sha256": "6163905e07b930b7dedbbc2a145793e851f05f0700fdbb11407959ddf70e124f",
+    "patient_id": "patient010",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 13,
+    "voxel_volume_ml": 0.0244140625,
+    "zooms": [
+      1.5625,
+      1.5625,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 29860192,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "raw_affine_scales_match_header_zooms": false,
+      "sform_code": 2,
+      "spatial_zooms_mm": [
+        1.4843800067901611,
+        1.4843800067901611,
+        10.0
+      ],
+      "voxel_volume_ml": 0.022033840045583588
+    },
+    "cine_relative_path": "patient011/patient011_4d.nii/CMD_22.nii",
+    "cine_sha256": "6664ab45067777d903db03974b488647163eb5a417a9a79ea0fe88cf35748d3c",
+    "cine_shape": [
+      216,
+      256,
+      9,
+      15
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.4843800067901611,
+            1.4843800067901611,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.4843800067901611,
+            1.4843800067901611,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.4843800067901611,
+            1.4843800067901611,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.4843800067901611,
+            1.4843800067901611,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.4843800067901611,
+            1.4843800067901611,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.4843800067901611,
+            1.4843800067901611,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.4843800067901611,
+            1.4843800067901611,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.4843800067901611,
+            1.4843800067901611,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.4843800067901611,
+            1.4843800067901611,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.4843800067901611,
+            1.4843800067901611,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.4843800067901611,
+            1.4843800067901611,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.4843800067901611,
+            1.4843800067901611,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "26f37d4e2098256d8440a9daf5ad6906f698736f5ffcce27170c010c934071c7",
+      "ES": "009f50019e2806cd4aa0c56144e3ce73956671a77fd3e3868aa9ade1068167a7"
+    },
+    "group": "DCM",
+    "historical_endpoint_max_abs_dice_difference": 4.689264525326031e-05,
+    "info_cfg_sha256": "f3f879e6d54ede198347240f875c55aedc90b02538aeb08bd8822e1358cbdbc5",
+    "patient_id": "patient011",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 8,
+    "voxel_volume_ml": 0.022033840045583588,
+    "zooms": [
+      1.4843800067901611,
+      1.4843800067901611,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 58982752,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "raw_affine_scales_match_header_zooms": false,
+      "sform_code": 2,
+      "spatial_zooms_mm": [
+        1.4453099966049194,
+        1.4453099966049194,
+        10.0
+      ],
+      "voxel_volume_ml": 0.02088920986286112
+    },
+    "cine_relative_path": "patient016/patient016_4d.nii/CMD_28.nii",
+    "cine_sha256": "1e8969689ce901dac712ec05971c367a8496df722bc452595b8ffd53317e796d",
+    "cine_shape": [
+      192,
+      256,
+      10,
+      30
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.4453099966049194,
+            1.4453099966049194,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.4453099966049194,
+            1.4453099966049194,
+            10.0
+          ],
+          "spatial_shape": [
+            192,
+            256,
+            10
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.4453099966049194,
+            1.4453099966049194,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.4453099966049194,
+            1.4453099966049194,
+            10.0
+          ],
+          "spatial_shape": [
+            192,
+            256,
+            10
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.4453099966049194,
+            1.4453099966049194,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.4453099966049194,
+            1.4453099966049194,
+            10.0
+          ],
+          "spatial_shape": [
+            192,
+            256,
+            10
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.4453099966049194,
+            1.4453099966049194,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.4453099966049194,
+            1.4453099966049194,
+            10.0
+          ],
+          "spatial_shape": [
+            192,
+            256,
+            10
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.4453099966049194,
+            1.4453099966049194,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.4453099966049194,
+            1.4453099966049194,
+            10.0
+          ],
+          "spatial_shape": [
+            192,
+            256,
+            10
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.4453099966049194,
+            1.4453099966049194,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.4453099966049194,
+            1.4453099966049194,
+            10.0
+          ],
+          "spatial_shape": [
+            192,
+            256,
+            10
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "db1c44e254994331109ac09df435f6258162ba191f3b2c461604a9a534e43acc",
+      "ES": "db50b1a5438140c1f9e19ad60f8d43ee9562ab7cdcc41526853e4d95cd5d6471"
+    },
+    "group": "DCM",
+    "historical_endpoint_max_abs_dice_difference": 7.174963493761233e-05,
+    "info_cfg_sha256": "ca0c441baef1dfcf5fe6d2504030c8a5cd65e05a87e7ad13bade5a6cf1d10171",
+    "patient_id": "patient016",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 12,
+    "voxel_volume_ml": 0.02088920986286112,
+    "zooms": [
+      1.4453099966049194,
+      1.4453099966049194,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 81396064,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "raw_affine_scales_match_header_zooms": false,
+      "sform_code": 2,
+      "spatial_zooms_mm": [
+        0.8333330154418945,
+        0.8333330154418945,
+        10.0
+      ],
+      "voxel_volume_ml": 0.006944439146254808
+    },
+    "cine_relative_path": "patient038/patient038_4d.nii/HCM_24_r.nii",
+    "cine_sha256": "69614d2e9302829443f907e96e73e0b1c0f59754ca12ec7a68de187f08eb4eb7",
+    "cine_shape": [
+      276,
+      384,
+      8,
+      24
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            0.8333330154418945,
+            0.8333330154418945,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            0.8333330154418945,
+            0.8333330154418945,
+            10.0
+          ],
+          "spatial_shape": [
+            276,
+            384,
+            8
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            0.8333330154418945,
+            0.8333330154418945,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            0.8333330154418945,
+            0.8333330154418945,
+            10.0
+          ],
+          "spatial_shape": [
+            276,
+            384,
+            8
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            0.8333330154418945,
+            0.8333330154418945,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            0.8333330154418945,
+            0.8333330154418945,
+            10.0
+          ],
+          "spatial_shape": [
+            276,
+            384,
+            8
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            0.8333330154418945,
+            0.8333330154418945,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            0.8333330154418945,
+            0.8333330154418945,
+            10.0
+          ],
+          "spatial_shape": [
+            276,
+            384,
+            8
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            0.8333330154418945,
+            0.8333330154418945,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            0.8333330154418945,
+            0.8333330154418945,
+            10.0
+          ],
+          "spatial_shape": [
+            276,
+            384,
+            8
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            0.8333330154418945,
+            0.8333330154418945,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            0.8333330154418945,
+            0.8333330154418945,
+            10.0
+          ],
+          "spatial_shape": [
+            276,
+            384,
+            8
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "ea1b2520ee8ec2bb9e173f5460f934a22d770cfa7f34af4e1cec81879032aec2",
+      "ES": "e01edb8d6a3477062dcd8345c21be701189da4628c1e818d712ca6a3f6d5c270"
+    },
+    "group": "HCM",
+    "historical_endpoint_max_abs_dice_difference": 4.750073991710568e-05,
+    "info_cfg_sha256": "18a6a36539c6b68725e2ed84f57b2eb13b4fb1f79192c98e0a806049bf23f43f",
+    "patient_id": "patient038",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 11,
+    "voxel_volume_ml": 0.006944439146254808,
+    "zooms": [
+      0.8333330154418945,
+      0.8333330154418945,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 18791701,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.7578125,
+        1.7578125,
+        10.0
+      ],
+      "raw_affine_scales_match_header_zooms": true,
+      "sform_code": 0,
+      "spatial_zooms_mm": [
+        1.7578125,
+        1.7578125,
+        10.0
+      ],
+      "voxel_volume_ml": 0.0308990478515625
+    },
+    "cine_relative_path": "patient042/patient042_4d.nii.gz",
+    "cine_sha256": "b47ab2c97d8035fe6fdf55d39542cc0a19537a30cd8f13af393e6703b58c353c",
+    "cine_shape": [
+      232,
+      256,
+      9,
+      35
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.7578125,
+            1.7578125,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.7578125,
+            1.7578125,
+            10.0
+          ],
+          "spatial_shape": [
+            232,
+            256,
+            9
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.7578125,
+            1.7578125,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.7578125,
+            1.7578125,
+            10.0
+          ],
+          "spatial_shape": [
+            232,
+            256,
+            9
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.7578125,
+            1.7578125,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.7578125,
+            1.7578125,
+            10.0
+          ],
+          "spatial_shape": [
+            232,
+            256,
+            9
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.7578125,
+            1.7578125,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.7578125,
+            1.7578125,
+            10.0
+          ],
+          "spatial_shape": [
+            232,
+            256,
+            9
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.7578125,
+            1.7578125,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.7578125,
+            1.7578125,
+            10.0
+          ],
+          "spatial_shape": [
+            232,
+            256,
+            9
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.7578125,
+            1.7578125,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.7578125,
+            1.7578125,
+            10.0
+          ],
+          "spatial_shape": [
+            232,
+            256,
+            9
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "4701d0a241c2435916c3e9d8f38b47d05ca871d08fc6d50f0ff5e424349bdf56",
+      "ES": "7897e53561e50e48123bcfcaf29e5e70bc3138d893c60cd7ba2fe9487a1f8e38"
+    },
+    "group": "MINF",
+    "historical_endpoint_max_abs_dice_difference": 3.9468076174165034e-05,
+    "info_cfg_sha256": "4d71f00d0116c7f2d274db556fce0262c42e0b1c9b0bacc9f98c87c89ae37c34",
+    "patient_id": "patient042",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 16,
+    "voxel_volume_ml": 0.0308990478515625,
+    "zooms": [
+      1.7578125,
+      1.7578125,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 24321376,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "raw_affine_scales_match_header_zooms": false,
+      "sform_code": 2,
+      "spatial_zooms_mm": [
+        1.9196399450302124,
+        1.9196399450302124,
+        6.5
+      ],
+      "voxel_volume_ml": 0.02395261387061138
+    },
+    "cine_relative_path": "patient043/patient043_4d.nii/MINF_10_r.nii",
+    "cine_sha256": "7d7d8ce7ef82da3713146da9940b677b42d5d106a2e9855110ab5c3a6974f686",
+    "cine_shape": [
+      174,
+      224,
+      12,
+      13
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.9196399450302124,
+            1.9196399450302124,
+            6.5
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.9196399450302124,
+            1.9196399450302124,
+            6.5
+          ],
+          "spatial_shape": [
+            174,
+            224,
+            12
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.9196399450302124,
+            1.9196399450302124,
+            6.5
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.9196399450302124,
+            1.9196399450302124,
+            6.5
+          ],
+          "spatial_shape": [
+            174,
+            224,
+            12
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.9196399450302124,
+            1.9196399450302124,
+            6.5
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.9196399450302124,
+            1.9196399450302124,
+            6.5
+          ],
+          "spatial_shape": [
+            174,
+            224,
+            12
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.9196399450302124,
+            1.9196399450302124,
+            6.5
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.9196399450302124,
+            1.9196399450302124,
+            6.5
+          ],
+          "spatial_shape": [
+            174,
+            224,
+            12
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.9196399450302124,
+            1.9196399450302124,
+            6.5
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.9196399450302124,
+            1.9196399450302124,
+            6.5
+          ],
+          "spatial_shape": [
+            174,
+            224,
+            12
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.9196399450302124,
+            1.9196399450302124,
+            6.5
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.9196399450302124,
+            1.9196399450302124,
+            6.5
+          ],
+          "spatial_shape": [
+            174,
+            224,
+            12
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "48961737bf27d38a1bab05b8b561a3caf16d57da1fca9af54c37f6ec08221706",
+      "ES": "0d010d187b0f91c151665e7fcd841a4376729557ee15819afcb188e38d4c316f"
+    },
+    "group": "MINF",
+    "historical_endpoint_max_abs_dice_difference": 4.222508689566418e-05,
+    "info_cfg_sha256": "18710a0173cc2969581a2f696247209ee8e93884defa9c6d1c0f47a07078b5db",
+    "patient_id": "patient043",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 7,
+    "voxel_volume_ml": 0.02395261387061138,
+    "zooms": [
+      1.9196399450302124,
+      1.9196399450302124,
+      6.5,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 59720032,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "raw_affine_scales_match_header_zooms": false,
+      "sform_code": 2,
+      "spatial_zooms_mm": [
+        1.5625,
+        1.5625,
+        10.0
+      ],
+      "voxel_volume_ml": 0.0244140625
+    },
+    "cine_relative_path": "patient046/patient046_4d.nii/IDM_22.nii",
+    "cine_sha256": "4a314786be0497ab26a17c6b267f68b9e573717d09b665f3234a145abd08a196",
+    "cine_shape": [
+      256,
+      216,
+      9,
+      30
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            216,
+            9
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            216,
+            9
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            216,
+            9
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            216,
+            9
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            216,
+            9
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            216,
+            9
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "3d3382dfd1c4e1b4c6e7f88c8c720f26e2cf2b07dc1574d07de2afed73c42a50",
+      "ES": "9666d1cec9a59c5dd82df6d6049cd3afe368a1842f8c49aaca486c111eeb21a0"
+    },
+    "group": "MINF",
+    "historical_endpoint_max_abs_dice_difference": 0.00011322306525674009,
+    "info_cfg_sha256": "939a808db190c92da0c97d198172cb48a3d159a6182f3879ad4653f84dc5be8b",
+    "patient_id": "patient046",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 10,
+    "voxel_volume_ml": 0.0244140625,
+    "zooms": [
+      1.5625,
+      1.5625,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 14130645,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.3671875,
+        1.3671875,
+        10.0
+      ],
+      "raw_affine_scales_match_header_zooms": true,
+      "sform_code": 0,
+      "spatial_zooms_mm": [
+        1.3671875,
+        1.3671875,
+        10.0
+      ],
+      "voxel_volume_ml": 0.0186920166015625
+    },
+    "cine_relative_path": "patient049/patient049_4d.nii.gz",
+    "cine_sha256": "492ae35c12644e7437ad191c5b0a9a9f80ac13b9120d031cdba4bda53d430fcc",
+    "cine_shape": [
+      256,
+      216,
+      7,
+      35
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            216,
+            7
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            216,
+            7
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            216,
+            7
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            216,
+            7
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            216,
+            7
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            216,
+            7
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "97639107fc402e695f6429d6f2c616c1afcd3a41f554c317c433aade5dff9eec",
+      "ES": "6822802407d053bbf4fead2922d4cbc1ecd328f2cc526a7a902344158d63fc01"
+    },
+    "group": "MINF",
+    "historical_endpoint_max_abs_dice_difference": 0.00012486177637427431,
+    "info_cfg_sha256": "ee5feb538011ffcd62745d2be41542aab6fd4053f1723699c3b2cf8e9111ca78",
+    "patient_id": "patient049",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 11,
+    "voxel_volume_ml": 0.0186920166015625,
+    "zooms": [
+      1.3671875,
+      1.3671875,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 68813152,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "raw_affine_scales_match_header_zooms": false,
+      "sform_code": 2,
+      "spatial_zooms_mm": [
+        1.6406199932098389,
+        1.6406199932098389,
+        10.0
+      ],
+      "voxel_volume_ml": 0.026916339621198517
+    },
+    "cine_relative_path": "patient051/patient051_4d.nii/IDM_34.nii",
+    "cine_sha256": "78424248aa059ea9336f3d9f982794f48a84419cb2ddc2569dd415cdef33ea9c",
+    "cine_shape": [
+      224,
+      256,
+      10,
+      30
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.6406199932098389,
+            1.6406199932098389,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.6406199932098389,
+            1.6406199932098389,
+            10.0
+          ],
+          "spatial_shape": [
+            224,
+            256,
+            10
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.6406199932098389,
+            1.6406199932098389,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.6406199932098389,
+            1.6406199932098389,
+            10.0
+          ],
+          "spatial_shape": [
+            224,
+            256,
+            10
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.6406199932098389,
+            1.6406199932098389,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.6406199932098389,
+            1.6406199932098389,
+            10.0
+          ],
+          "spatial_shape": [
+            224,
+            256,
+            10
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.6406199932098389,
+            1.6406199932098389,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.6406199932098389,
+            1.6406199932098389,
+            10.0
+          ],
+          "spatial_shape": [
+            224,
+            256,
+            10
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.6406199932098389,
+            1.6406199932098389,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.6406199932098389,
+            1.6406199932098389,
+            10.0
+          ],
+          "spatial_shape": [
+            224,
+            256,
+            10
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.6406199932098389,
+            1.6406199932098389,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.6406199932098389,
+            1.6406199932098389,
+            10.0
+          ],
+          "spatial_shape": [
+            224,
+            256,
+            10
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "03670c1027964d7848b69350651c0e27e27f72291a40b01e926dbf559d586c9d",
+      "ES": "259f2cfcbf77799c317f5fcc3cf1a1acbb8ca90948d6a80c66b29ca395f6f9fd"
+    },
+    "group": "MINF",
+    "historical_endpoint_max_abs_dice_difference": 6.469766058203597e-05,
+    "info_cfg_sha256": "4006fa3fc73062e871fc551fddac90dc028dd1ea55cb3a1ef85b55e7c3ec123a",
+    "patient_id": "patient051",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 11,
+    "voxel_volume_ml": 0.026916339621198517,
+    "zooms": [
+      1.6406199932098389,
+      1.6406199932098389,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 59720032,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "raw_affine_scales_match_header_zooms": false,
+      "sform_code": 2,
+      "spatial_zooms_mm": [
+        1.3671900033950806,
+        1.3671900033950806,
+        10.0
+      ],
+      "voxel_volume_ml": 0.018692085053834403
+    },
+    "cine_relative_path": "patient056/patient056_4d.nii/MINF_37.nii",
+    "cine_sha256": "a5733abffce81c0f9e90b9bf8afebed1d28ebf588180f58a3470d1fb395327a7",
+    "cine_shape": [
+      216,
+      256,
+      9,
+      30
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "3ef0958a93453254d0698a8e6329ee4e8afba0e8324e9959d80b1977462e414e",
+      "ES": "c66efe6648b89b337480a66e10de6bf17a5651901bedf7f188534ea1d6822b4a"
+    },
+    "group": "MINF",
+    "historical_endpoint_max_abs_dice_difference": 4.304290151724288e-05,
+    "info_cfg_sha256": "a1f8ed969da02394257a94355021009ecf76eb5182a2bccb7e036d2120c76424",
+    "patient_id": "patient056",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 12,
+    "voxel_volume_ml": 0.018692085053834403,
+    "zooms": [
+      1.3671900033950806,
+      1.3671900033950806,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 175309152,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "raw_affine_scales_match_header_zooms": false,
+      "sform_code": 2,
+      "spatial_zooms_mm": [
+        0.703125,
+        0.703125,
+        10.0
+      ],
+      "voxel_volume_ml": 0.00494384765625
+    },
+    "cine_relative_path": "patient057/patient057_4d.nii",
+    "cine_sha256": "162a508524ad73d1b5d3bd82b8146373ebeb5c2ddf09320110f0f43e476fc972",
+    "cine_shape": [
+      428,
+      512,
+      8,
+      25
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            0.703125,
+            0.703125,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            0.703125,
+            0.703125,
+            10.0
+          ],
+          "spatial_shape": [
+            428,
+            512,
+            8
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            0.703125,
+            0.703125,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            0.703125,
+            0.703125,
+            10.0
+          ],
+          "spatial_shape": [
+            428,
+            512,
+            8
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            0.703125,
+            0.703125,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            0.703125,
+            0.703125,
+            10.0
+          ],
+          "spatial_shape": [
+            428,
+            512,
+            8
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            0.703125,
+            0.703125,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            0.703125,
+            0.703125,
+            10.0
+          ],
+          "spatial_shape": [
+            428,
+            512,
+            8
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            0.703125,
+            0.703125,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            0.703125,
+            0.703125,
+            10.0
+          ],
+          "spatial_shape": [
+            428,
+            512,
+            8
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            0.703125,
+            0.703125,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            0.703125,
+            0.703125,
+            10.0
+          ],
+          "spatial_shape": [
+            428,
+            512,
+            8
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "066da52171e94f28f4c42a124e67c0f888d383e773e843d39479e34b6f9cf67c",
+      "ES": "df6100045a977c1d74a58db849e182e5982442c468578df25ccdfb272bd8d9dc"
+    },
+    "group": "MINF",
+    "historical_endpoint_max_abs_dice_difference": 4.2479103705805876e-05,
+    "info_cfg_sha256": "8d9618a4b56644cd849c95f7701a94db09f76c3b4719c27744a7cfc3c5dc2ff5",
+    "patient_id": "patient057",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 9,
+    "voxel_volume_ml": 0.00494384765625,
+    "zooms": [
+      0.703125,
+      0.703125,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 16715374,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.3671875,
+        1.3671875,
+        10.0
+      ],
+      "raw_affine_scales_match_header_zooms": true,
+      "sform_code": 0,
+      "spatial_zooms_mm": [
+        1.3671875,
+        1.3671875,
+        10.0
+      ],
+      "voxel_volume_ml": 0.0186920166015625
+    },
+    "cine_relative_path": "patient066/patient066_4d.nii.gz",
+    "cine_sha256": "f00752148ebc8bf449600c80021cca8c2db90ed2413a932e5eabe9180ebd87a0",
+    "cine_shape": [
+      240,
+      256,
+      9,
+      30
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            240,
+            256,
+            9
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            240,
+            256,
+            9
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            240,
+            256,
+            9
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            240,
+            256,
+            9
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            240,
+            256,
+            9
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671875,
+            1.3671875,
+            10.0
+          ],
+          "spatial_shape": [
+            240,
+            256,
+            9
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "761e85d9f8110da122360caf89ca6f1ecf451a0a2c19671dddc1493e877bfb4c",
+      "ES": "64a465e0b19f49004266e9c11f90aea3f0c7af669f08bd6089de4e972b2db2b0"
+    },
+    "group": "NOR",
+    "historical_endpoint_max_abs_dice_difference": 9.217852253029513e-05,
+    "info_cfg_sha256": "a3524fda9c34073a9cd12c195013de76f583b3148d64d34ac6544015da3b58fe",
+    "patient_id": "patient066",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 11,
+    "voxel_volume_ml": 0.0186920166015625,
+    "zooms": [
+      1.3671875,
+      1.3671875,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 11945021,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.5625,
+        1.5625,
+        10.0
+      ],
+      "raw_affine_scales_match_header_zooms": true,
+      "sform_code": 0,
+      "spatial_zooms_mm": [
+        1.5625,
+        1.5625,
+        10.0
+      ],
+      "voxel_volume_ml": 0.0244140625
+    },
+    "cine_relative_path": "patient071/patient071_4d.nii.gz",
+    "cine_sha256": "2ef02fe147b81746cd50a29df91e7e798e8087963898ec93d56e1f35ae848d43",
+    "cine_shape": [
+      192,
+      256,
+      10,
+      30
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            192,
+            256,
+            10
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            192,
+            256,
+            10
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            192,
+            256,
+            10
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            192,
+            256,
+            10
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            192,
+            256,
+            10
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            192,
+            256,
+            10
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "08b7ad27eb2113f3d87761667cd7d5e63a20cdfe4f2a3cd774e57503840273ff",
+      "ES": "a8dcbf800e644029a82f0d43dadbc9b3f35bb18ffc7896314f87cd9a00938d60"
+    },
+    "group": "NOR",
+    "historical_endpoint_max_abs_dice_difference": 3.542163058034564e-05,
+    "info_cfg_sha256": "9411f3f21f36a6228ac1786b261700afc2950dae8c6f531698826652313501b5",
+    "patient_id": "patient071",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 9,
+    "voxel_volume_ml": 0.0244140625,
+    "zooms": [
+      1.5625,
+      1.5625,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 16865597,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.640625,
+        1.640625,
+        10.0
+      ],
+      "raw_affine_scales_match_header_zooms": true,
+      "sform_code": 0,
+      "spatial_zooms_mm": [
+        1.640625,
+        1.640625,
+        10.0
+      ],
+      "voxel_volume_ml": 0.02691650390625
+    },
+    "cine_relative_path": "patient073/patient073_4d.nii.gz",
+    "cine_sha256": "7dc09cdfacba9f26e93cc3c82e42bb15ef50266c9947b9013e6731e802658832",
+    "cine_shape": [
+      208,
+      256,
+      7,
+      35
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.640625,
+            1.640625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.640625,
+            1.640625,
+            10.0
+          ],
+          "spatial_shape": [
+            208,
+            256,
+            7
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.640625,
+            1.640625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.640625,
+            1.640625,
+            10.0
+          ],
+          "spatial_shape": [
+            208,
+            256,
+            7
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.640625,
+            1.640625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.640625,
+            1.640625,
+            10.0
+          ],
+          "spatial_shape": [
+            208,
+            256,
+            7
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.640625,
+            1.640625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.640625,
+            1.640625,
+            10.0
+          ],
+          "spatial_shape": [
+            208,
+            256,
+            7
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": false,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.640625,
+            1.640625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 0,
+          "reference_zooms_mm": [
+            1.640625,
+            1.640625,
+            10.0
+          ],
+          "spatial_shape": [
+            208,
+            256,
+            7
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.640625,
+            1.640625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.640625,
+            1.640625,
+            10.0
+          ],
+          "spatial_shape": [
+            208,
+            256,
+            7
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "6b0d661fc7d06af452bd570b2c057cda22afb8f88b7c927dd411d1c69892ae5b",
+      "ES": "5dccc075c29bf1b3904505ecdeb98183476422e40c652d646248fee968f65b26"
+    },
+    "group": "NOR",
+    "historical_endpoint_max_abs_dice_difference": 0.00012334957934478918,
+    "info_cfg_sha256": "097c5685901e397765a979b7ac784c5bb10f2066e34aea96a020cd69cb68fe37",
+    "patient_id": "patient073",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 10,
+    "voxel_volume_ml": 0.02691650390625,
+    "zooms": [
+      1.640625,
+      1.640625,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 62914912,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "raw_affine_scales_match_header_zooms": false,
+      "sform_code": 2,
+      "spatial_zooms_mm": [
+        1.5625,
+        1.5625,
+        10.0
+      ],
+      "voxel_volume_ml": 0.0244140625
+    },
+    "cine_relative_path": "patient074/patient074_4d.nii/NOR_33.nii",
+    "cine_sha256": "69487c77380cf665520ffbe6ce3abc0eba5a121dc2270e564079be765c296a52",
+    "cine_shape": [
+      256,
+      256,
+      8,
+      30
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            256,
+            8
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            256,
+            8
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            256,
+            8
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            256,
+            8
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            256,
+            8
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            10.0
+          ],
+          "spatial_shape": [
+            256,
+            256,
+            8
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "1576a7071997aab834071c11cd66e4e4d85b436950d2444e34669613189a66b5",
+      "ES": "307ac358d80558901a862f08425ce3c2ff36209630df22b43e633556f6d26961"
+    },
+    "group": "NOR",
+    "historical_endpoint_max_abs_dice_difference": 0.00011461672622503638,
+    "info_cfg_sha256": "8009bacb827604923f87b74a3abc9076b700e456fe98b65a918e2e66091e15f2",
+    "patient_id": "patient074",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 12,
+    "voxel_volume_ml": 0.0244140625,
+    "zooms": [
+      1.5625,
+      1.5625,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 43827552,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "raw_affine_scales_match_header_zooms": false,
+      "sform_code": 2,
+      "spatial_zooms_mm": [
+        1.40625,
+        1.40625,
+        10.0
+      ],
+      "voxel_volume_ml": 0.019775390625
+    },
+    "cine_relative_path": "patient077/patient077_4d.nii/NOR_34.nii",
+    "cine_sha256": "cf916871be3822429ac1a9ae17d723c94664b93c9951fdedba933a4be7193384",
+    "cine_shape": [
+      214,
+      256,
+      8,
+      25
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.40625,
+            1.40625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.40625,
+            1.40625,
+            10.0
+          ],
+          "spatial_shape": [
+            214,
+            256,
+            8
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.40625,
+            1.40625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.40625,
+            1.40625,
+            10.0
+          ],
+          "spatial_shape": [
+            214,
+            256,
+            8
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.40625,
+            1.40625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.40625,
+            1.40625,
+            10.0
+          ],
+          "spatial_shape": [
+            214,
+            256,
+            8
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.40625,
+            1.40625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.40625,
+            1.40625,
+            10.0
+          ],
+          "spatial_shape": [
+            214,
+            256,
+            8
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.40625,
+            1.40625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.40625,
+            1.40625,
+            10.0
+          ],
+          "spatial_shape": [
+            214,
+            256,
+            8
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.40625,
+            1.40625,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.40625,
+            1.40625,
+            10.0
+          ],
+          "spatial_shape": [
+            214,
+            256,
+            8
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "be58855b5074d0aac627f113e61fdc3bb913463e34a75613ed242f80bf5ffc2a",
+      "ES": "ab9f055e6f0e46ec37a1b6941f1839a40ff18f594054084575a0e9416fc6902a"
+    },
+    "group": "NOR",
+    "historical_endpoint_max_abs_dice_difference": 0.00016910548567161676,
+    "info_cfg_sha256": "c63423c768301ac77b054a8adcadb145e941debbea400c9e0e851bc1aab7e494",
+    "patient_id": "patient077",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 9,
+    "voxel_volume_ml": 0.019775390625,
+    "zooms": [
+      1.40625,
+      1.40625,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 59720032,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "raw_affine_scales_match_header_zooms": false,
+      "sform_code": 2,
+      "spatial_zooms_mm": [
+        1.3671900033950806,
+        1.3671900033950806,
+        10.0
+      ],
+      "voxel_volume_ml": 0.018692085053834403
+    },
+    "cine_relative_path": "patient079/patient079_4d.nii",
+    "cine_sha256": "a346bb2625688b79efdd70f583f74ad4da6302473a8e0bd2c832cb8e4caa7052",
+    "cine_shape": [
+      216,
+      256,
+      9,
+      30
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.3671900033950806,
+            1.3671900033950806,
+            10.0
+          ],
+          "spatial_shape": [
+            216,
+            256,
+            9
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "13cc17eb3db39573b460e7045585560c5f66b70511da54eba890eab50e32defa",
+      "ES": "7f6483a301178c3078a47e49f9cca70216d65d5e42f152d0b5e1b1bbda720deb"
+    },
+    "group": "NOR",
+    "historical_endpoint_max_abs_dice_difference": 7.506687896163822e-05,
+    "info_cfg_sha256": "9637b4ee60795a0a5d3af3799bc4994c486247cbc75f8a269a3c665a9db5900d",
+    "patient_id": "patient079",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 11,
+    "voxel_volume_ml": 0.018692085053834403,
+    "zooms": [
+      1.3671900033950806,
+      1.3671900033950806,
+      10.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 32573152,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "raw_affine_scales_match_header_zooms": false,
+      "sform_code": 2,
+      "spatial_zooms_mm": [
+        1.6826900243759155,
+        1.6826900243759155,
+        5.0
+      ],
+      "voxel_volume_ml": 0.014157228590671096
+    },
+    "cine_relative_path": "patient092/patient092_4d.nii/RV_36.nii",
+    "cine_sha256": "8d8576b7c6feb7f409a3f5d8d64f5c26c354b06c4e8432dc300c08989d5ecaac",
+    "cine_shape": [
+      174,
+      208,
+      15,
+      15
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.6826900243759155,
+            1.6826900243759155,
+            5.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.6826900243759155,
+            1.6826900243759155,
+            5.0
+          ],
+          "spatial_shape": [
+            174,
+            208,
+            15
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.6826900243759155,
+            1.6826900243759155,
+            5.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.6826900243759155,
+            1.6826900243759155,
+            5.0
+          ],
+          "spatial_shape": [
+            174,
+            208,
+            15
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.6826900243759155,
+            1.6826900243759155,
+            5.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.6826900243759155,
+            1.6826900243759155,
+            5.0
+          ],
+          "spatial_shape": [
+            174,
+            208,
+            15
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.6826900243759155,
+            1.6826900243759155,
+            5.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.6826900243759155,
+            1.6826900243759155,
+            5.0
+          ],
+          "spatial_shape": [
+            174,
+            208,
+            15
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.6826900243759155,
+            1.6826900243759155,
+            5.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.6826900243759155,
+            1.6826900243759155,
+            5.0
+          ],
+          "spatial_shape": [
+            174,
+            208,
+            15
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.6826900243759155,
+            1.6826900243759155,
+            5.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.6826900243759155,
+            1.6826900243759155,
+            5.0
+          ],
+          "spatial_shape": [
+            174,
+            208,
+            15
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "0058616779c767ec65b8242ce50e7f2dd8b0e7787dfcbf33bff7bbeae4567e12",
+      "ES": "b7b59398a5e0fd734f6b848f5aee17b69e218c33eddf40d77e19687b1d58c038"
+    },
+    "group": "RV",
+    "historical_endpoint_max_abs_dice_difference": 5.4459091910485924e-05,
+    "info_cfg_sha256": "51baaf4a622e8983e2f19dd22e0617aaa58e9ad860b5d8021016a177ca9c4107",
+    "patient_id": "patient092",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 6,
+    "voxel_volume_ml": 0.014157228590671096,
+    "zooms": [
+      1.6826900243759155,
+      1.6826900243759155,
+      5.0,
+      1.0
+    ]
+  },
+  {
+    "cine_bytes": 48384352,
+    "cine_physical_geometry": {
+      "policy": "header_zooms_with_orthonormal_affine_directions",
+      "qform_code": 0,
+      "raw_affine_axis_scales": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "raw_affine_scales_match_header_zooms": false,
+      "sform_code": 2,
+      "spatial_zooms_mm": [
+        1.5625,
+        1.5625,
+        7.0
+      ],
+      "voxel_volume_ml": 0.01708984375
+    },
+    "cine_relative_path": "patient093/patient093_4d.nii/RV_37_v1.nii",
+    "cine_sha256": "a55037ab2a500511ef809204a12408c2fa74391965a24f4076d88b2ac7ab8559",
+    "cine_shape": [
+      180,
+      224,
+      10,
+      30
+    ],
+    "endpoint_grid_audit": {
+      "ED": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            7.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            7.0
+          ],
+          "spatial_shape": [
+            180,
+            224,
+            10
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            7.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            7.0
+          ],
+          "spatial_shape": [
+            180,
+            224,
+            10
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            7.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            7.0
+          ],
+          "spatial_shape": [
+            180,
+            224,
+            10
+          ]
+        }
+      },
+      "ES": {
+        "image_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            7.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            7.0
+          ],
+          "spatial_shape": [
+            180,
+            224,
+            10
+          ]
+        },
+        "label_vs_cine": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            7.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            7.0
+          ],
+          "spatial_shape": [
+            180,
+            224,
+            10
+          ]
+        },
+        "label_vs_endpoint_image": {
+          "affine_matches": true,
+          "candidate_qform_code": 0,
+          "candidate_sform_code": 2,
+          "candidate_zooms_mm": [
+            1.5625,
+            1.5625,
+            7.0
+          ],
+          "reference_qform_code": 0,
+          "reference_sform_code": 2,
+          "reference_zooms_mm": [
+            1.5625,
+            1.5625,
+            7.0
+          ],
+          "spatial_shape": [
+            180,
+            224,
+            10
+          ]
+        }
+      }
+    },
+    "endpoint_input_mae_ed": 0.0,
+    "endpoint_input_mae_es": 0.0,
+    "endpoint_label_sha256": {
+      "ED": "39b6ba0ba4aa6b287d6daa383ff8c2cd21b34f67750bf35df32e009c3ba84b16",
+      "ES": "3af6df25b3acd416262b8c53edb1d9266de0396365a6b9f9c95487f31bd503bd"
+    },
+    "group": "RV",
+    "historical_endpoint_max_abs_dice_difference": 3.827653633581285e-05,
+    "info_cfg_sha256": "6ca1fd32c8f4a1959a797c30477b05933f28f4020870bf61b336a96b6a08f3c4",
+    "patient_id": "patient093",
+    "reference_ed_frame": 1,
+    "reference_es_frame": 14,
+    "voxel_volume_ml": 0.01708984375,
+    "zooms": [
+      1.5625,
+      1.5625,
+      7.0,
+      1.0
+    ]
+  }
+]

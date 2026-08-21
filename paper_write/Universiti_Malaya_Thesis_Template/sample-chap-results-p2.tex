@@ -133,7 +133,67 @@ The learning curves also show why validation-based checkpoint selection was nece
 
 The per-case tables identify a shared difficult case. \texttt{patient049\_frame11} is the lowest-mean-Dice case for Nano-Mamba, 3D U-Net, SegResNet16, No-Mamba, and Half-Mamba. Nano-Mamba obtains 57.86\% mean DSC on this case, driven mainly by low RV Dice of 26.04\%. Attention U-Net's worst case is \texttt{patient042\_frame16}, at 16.38\% mean DSC. Because no pathology label or visual overlay is used in this analysis, these numerical failures should not be assigned an anatomical cause without inspecting the corresponding validation images.
 
-No qualitative prediction panel is included in the final thesis. Any future panel should be generated from a validation patient and the selected Nano-Mamba checkpoint, and should clearly state that it illustrates one case rather than proving general performance.
+\section{Full-Cine Spatio-Temporal Results}
+\subsection{Coverage and endpoint consistency}
+The separate full-cine experiment successfully processed all 20 validation patients and all 550 recorded cardiac phases. This produced 1,100 per-frame rows because each frame was evaluated by both frame-wise inference and fixed temporal probability fusion, together with 40 patient-level rows. Before inference, every complete-cine ED/ES frame reproduced its corresponding standalone endpoint image with maximum normalized mean absolute error of zero. Frame-wise endpoint Dice also reproduced the historical Nano-Mamba case table with a maximum absolute difference of 0.000169. These checks establish that the cine analysis used the intended validation patients, endpoint phases, checkpoint, image contents, and class convention.
+
+\subsection{Endpoint segmentation, EF, and curve smoothness}
+Table \ref{tab:full_cine_paired} summarizes the main full-cine comparison. The resized-grid endpoint Dice is reported to connect the analysis to the historical experiment. Native-grid Dice is lower because categorical masks are resized back to the original spatial shape before comparison; this exposes the effect of the non-native training grid rather than hiding it.
+
+\begin{table}[hbt!]
+\caption{Full-cine results for independent frame-wise inference and fixed temporal probability fusion. Paired intervals use 10,000 patient-level bootstrap replicates.}
+\label{tab:full_cine_paired}
+\centering
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l | r r | r | c}
+\hline
+\textbf{Metric} & \textbf{Frame-wise} & \textbf{Temporal fusion} & \textbf{Fusion minus frame-wise} & \textbf{95\% paired CI}\\
+\hline
+Endpoint Dice, resized grid (\%) & 84.779 & 84.794 & +0.014 pp & [-0.063, +0.082] pp \\
+Endpoint Dice, native grid (\%) & 77.919 & 77.923 & +0.005 pp & not estimated \\
+Annotated-phase EF MAE (pp) & 3.514 & 3.329 & -0.185 pp & [-0.468, +0.091] pp \\
+Normalized LV-curve second difference & 0.03252 & 0.03139 & -0.001129 & [-0.001950, -0.000511] \\
+\hline
+\end{tabular}
+}
+\end{table}
+
+Temporal fusion increased resized-grid endpoint Dice for 13 of 20 patients and decreased it for seven. Its paired Dice interval includes zero, so the observed increase of 0.014 percentage points is not a resolved accuracy improvement. EF absolute error decreased for 11 patients and increased for nine; this paired interval also includes zero. In contrast, the normalized LV-curve second difference decreased for 19 of 20 patients, and its paired interval is entirely below zero. The supported conclusion is therefore narrow but positive: fixed adjacent-frame fusion made the segmentation-derived LV trajectories consistently smoother on this cohort without establishing a clear endpoint-Dice or EF advantage.
+
+Figure \ref{fig:population_lv_curve} shows the population-normalized LV trajectory. Time is normalized only for the group visualization; patient-level phases and metrics use the original frame indices. Both methods show the expected global pattern of a larger LV volume around ED and a smaller volume around ES, while temporal fusion reduces small frame-to-frame fluctuations.
+
+\begin{figure}[hbt!]
+    \centering
+    \includegraphics[width=0.92\textwidth]{spatiotemporal/population_lv_motion_curve.png}
+    \caption{Population LV-volume trajectory across the normalized cardiac cycle for 20 validation patients. Shading represents between-patient variability. Temporal fusion is fixed post-hoc probability averaging, not a learned temporal network.}
+    \label{fig:population_lv_curve}
+\end{figure}
+
+At the manually annotated ED and ES phases, the frame-wise EF mean absolute error was 3.514 percentage points with Pearson correlation $r=0.9809$ against mask-derived reference EF. Temporal fusion obtained 3.329 percentage points and $r=0.9803$. Figure \ref{fig:ef_validation} shows these patient-level values; the correlation indicates strong linear agreement within this internal cohort but does not constitute independent clinical validation.
+
+\begin{figure}[hbt!]
+    \centering
+    \includegraphics[width=0.76\textwidth]{spatiotemporal/ejection_fraction_validation.png}
+    \caption{Predicted versus manual-mask-derived EF at the annotated ED and ES phases. Each point is one validation patient. The same cohort was used historically for checkpoint selection, so this is internal validation rather than an independent test.}
+    \label{fig:ef_validation}
+\end{figure}
+
+\subsection{Phase timing and global motion surrogates}
+For frame-wise inference, ED was detected exactly for 50\% of patients and within one frame for 80\%; ES was exact for 55\% and within one frame for 85\%. Temporal fusion changed the ED prediction for one patient, giving 55\% exact while retaining 80\% within one frame. ES detection was unchanged. The temporal-fusion median peak LV-centroid displacement from annotated ED was 6.252~mm, with an observed range of 2.152--13.593~mm. Its mean myocardial radial-distance ED-minus-ES change was 4.153~mm. These are global mask-derived surrogates: they summarize position and radial extent, not tissue correspondence or strain.
+
+Patient016 was the main phase-detection outlier for temporal fusion, with ED and ES errors of five and three frames respectively. Its predicted LV curve contains a higher late-cycle maximum than the reference ED region. This failure is retained rather than removed, because it demonstrates that temporal smoothing cannot guarantee correct phase selection when the underlying spatial predictions create a competing volume peak.
+
+\subsection{Qualitative and subgroup observations}
+Figure \ref{fig:patient002_overlay} provides a traceable qualitative example from validation patient002 using the selected epoch-121 Nano-Mamba checkpoint. It compares manual and predicted endpoint masks on the native image grid. The panel illustrates the executed output but is not used as population-level performance evidence.
+
+\begin{figure}[hbt!]
+    \centering
+    \includegraphics[width=0.82\textwidth]{spatiotemporal/patient002_endpoint_overlay.png}
+    \caption{Native-grid ED/ES overlay for validation patient002. Rows show ED and ES; columns show frame-wise and temporal-fusion predictions. Green dashed contours are the manual reference and orange contours are the prediction. This is a single traceable example rather than proof of general performance.}
+    \label{fig:patient002_overlay}
+\end{figure}
+
+The diagnostic composition was MINF $n=7$, NOR $n=6$, DCM $n=4$, RV abnormality $n=2$, and HCM $n=1$. Temporal-fusion resized endpoint Dice ranged from 82.42\% for MINF to 87.56\% for NOR, while EF MAE ranged from 2.21 percentage points for DCM to 4.93 for MINF. These values are reported only as descriptive case summaries because the subgroups are small and highly imbalanced; no pathology-level significance or generalization claim is made.
 
 \clearpage
 
@@ -169,9 +229,11 @@ LV segmentation was the easiest class across the main models, while MYO segmenta
 The class-specific findings support the need for reporting RV, MYO, and LV separately. If only mean Dice were reported, the relatively strong LV score could hide weaker MYO performance. Since cardiac measurements such as myocardial mass depend on MYO segmentation, MYO accuracy cannot be treated as a secondary detail. A future version of the project should therefore include additional metrics such as Hausdorff Distance or Average Surface Distance to better evaluate boundary quality.
 
 \section{Relevance to Cardiac Motion Analysis}
-The thesis title includes cardiac motion analysis, but the implemented experiment is segmentation-based. The model does not estimate a dense displacement field, optical flow, temporal deformation map, or temporal consistency. Instead, it segments labelled ED and ES 3D volumes as separate cases. In the input tensor, $D$ denotes anatomical slice depth rather than time. The resulting masks could support later computation of phase-specific volumes, but this experiment does not calculate ejection fraction or other motion-related clinical indices.
+The completed project now contains a real full-cine analysis, but its two stages must not be conflated. The trained Nano-Mamba backbone remains a spatial 3D segmentation network: in its input tensor, $D$ denotes anatomical slice depth rather than time, and ED/ES cases were independent during training. Temporal information enters only after inference through a fixed weighted average of adjacent probability maps. The full-cine stage then derives volumes, ED/ES timing, EF, LV-centroid displacement, and myocardial radial-distance change from the resulting mask sequence.
 
-This limitation does not invalidate the project, but it narrows the claim. The correct interpretation is that Nano-Mamba U-Net contributes to segmentation as a prerequisite for cardiac functional analysis. A stronger future version would process complete 4D cine-MRI sequences and evaluate temporal consistency directly.
+This is a segmentation-derived spatio-temporal framework because it processes every cardiac phase and evaluates how global anatomical quantities vary across the cycle. It is not dense cardiac motion tracking because no optical flow, deformable registration, voxel correspondence, material trajectory, or regional strain field is estimated. The distinction gives a precise answer to the thesis title: complete temporal trajectories and functional indices were produced, but learned temporal representation and tissue-level motion remain future extensions.
+
+The temporal-fusion result also prevents an overly simple claim. Smoother trajectories do not automatically mean more accurate anatomy. Endpoint Dice and EF differences were unresolved, while the smoothness difference was consistent. Fixed fusion is therefore best interpreted as a low-cost temporal regularizer for global trajectories, not as evidence that the model learned cardiac dynamics.
 
 \section{Limitations}
 Several limitations must be acknowledged.
@@ -181,16 +243,17 @@ Several limitations must be acknowledged.
     \item \textbf{Single split, seed, and post-hoc uncertainty:} Only seed 42 and one 80/20 patient split were reported. The available per-case CSVs support patient-level bootstrap intervals and paired differences, but these were computed after the experiment and use the same validation patients involved in checkpoint selection. They do not replace multi-seed training or an independent test cohort.
     \item \textbf{Mamba-inspired implementation:} The implemented bottleneck is inspired by Mamba-style sequence modeling but is not a full reproduction of the original hardware-aware selective scan implementation. This distinction is important because the thesis must not attribute the full original Mamba mechanism to the implemented model.
     \item \textbf{Legacy projection parameters:} The historical gate projection produces $2d_{state}+1$ channels but uses only the first. The reported parameter count includes the unused outputs. They were retained to preserve checkpoint compatibility, but a redesigned block would need retraining.
-    \item \textbf{No explicit temporal modeling:} The implemented task segments ED and ES 3D MRI volumes independently. It performs neither dense motion tracking nor sequence-level consistency analysis, and the depth dimension is not time.
+    \item \textbf{Spatial backbone and fixed temporal processing:} The trained model segments each 3D frame independently; depth is anatomical slices, not time. The complete-cine extension uses fixed adjacent-frame probability fusion and global mask trajectories. It is not a learned temporal Mamba block, optical flow, dense registration, tissue correspondence, or regional strain analysis.
     \item \textbf{Non-matched training and ablations:} Memory constraints required batch size 1 for Attention U-Net and SegResNet16 and batch size 2 for the other models. Optimizer updates per epoch and normalization choices therefore differ across model families. The No-Mamba ablation also has more parameters and a structurally different bottleneck. These factors limit causal attribution of performance differences to one architectural mechanism.
-    \item \textbf{Array-size preprocessing and no augmentation:} The pipeline resizes arrays to $256\times256\times16$ but does not explicitly canonicalize orientation, preserve a common physical voxel spacing, crop around the heart, or inverse-resample predictions to native geometry. No training-time data augmentation is used. Dice is therefore measured on a deterministic resized grid, and geometric robustness is not tested.
+    \item \textbf{Array-size preprocessing and no augmentation:} Training resizes arrays to $256\times256\times16$ without explicit orientation canonicalization, common physical-spacing resampling, cardiac cropping, or augmentation. The historical Dice comparison is therefore measured on a deterministic resized grid. The cine extension restores categorical masks to the native array shape for physical measurements, where endpoint mean Dice is approximately 77.92\%, materially lower than the approximately 84.79\% resized-grid value.
     \item \textbf{Metric convention:} An empty prediction and empty reference for one class are assigned Dice 1 in the executed metric. None of the 720 audited foreground class scores equals 1, establishing that this branch did not affect the reported case table; the convention could still matter in future datasets.
-    \item \textbf{No phase- or pathology-stratified analysis:} Although ACDC contains ED/ES phase information and pathology labels, the final experiment pools the two cases per validation patient and reports aggregate performance. It does not establish whether performance differs systematically between ED and ES or among diagnostic groups.
+    \item \textbf{Incomplete temporal ground truth and small subgroups:} ACDC provides manual masks only at ED and ES, so the 510 intermediate-frame masks have no direct overlap ground truth. Diagnostic summaries contain only one to seven patients per group and are descriptive; they cannot establish pathology-specific performance.
     \item \textbf{Limited external validation:} The model was not evaluated on a separate multi-center external dataset. Generalization to other scanners and institutions remains future work.
-    \item \textbf{Limited metrics and qualitative evidence:} The main reported metric is Dice; no Hausdorff Distance, Average Surface Distance, calibration metric, or blinded qualitative review is available. FPS remains a hardware- and implementation-specific engineering indicator rather than a universal benchmark.
+    \item \textbf{Limited spatial metrics and qualitative evidence:} No Hausdorff Distance, Average Surface Distance, probability-calibration metric, regional strain validation, or blinded qualitative review is available. The single patient002 overlay illustrates the validated inference path but does not establish population performance. FPS remains a hardware- and implementation-specific engineering indicator rather than a universal benchmark.
+    \item \textbf{Metadata inconsistency in six recovered cines:} Six public ACDC 4D files have affine metadata that differs from their standalone endpoint container. Shape, header voxel sizes, endpoint pixel content, and endpoint image-label alignment passed the identity gates, and physical metrics use header voxel sizes; nevertheless, a harmonized official archive would be preferable for external reproduction.
 \end{enumerate}
 
-These limitations define the thesis boundary. The case rows and training logs are internally consistent with the numerical table and post-hoc intervals, but they do not remove the design limitations above. Clinical deployment, temporal motion analysis, and external generalization remain outside scope.
+These limitations define the thesis boundary. The case rows, training logs, 550-frame table, patient metrics, figures, hashes, and independent recomputation are internally consistent, but they do not remove the design limitations above. Clinical deployment, learned temporal modeling, dense tissue motion, and external generalization remain outside scope.
 
 \section{Summary of Findings}
-The final validation results reposition Nano-Mamba U-Net as a lightweight, parameter-efficient segmentation model. It outperformed the 3D U-Net baseline in mean DSC and used fewer parameters than all evaluated alternatives. Nevertheless, SegResNet16 achieved the highest absolute Dice score, and the No-Mamba ablation slightly exceeded Nano-Mamba in mean DSC. These findings support a balanced conclusion: the proposed model is competitive and efficient, but not definitively superior in accuracy.
+The final validation results position Nano-Mamba U-Net as a lightweight, parameter-efficient segmentation model. It outperformed the 3D U-Net baseline in mean DSC and used fewer parameters than all evaluated alternatives, while SegResNet16 and the No-Mamba ablation achieved higher Dice. The added full-cine stage completed segmentation-derived temporal and functional analysis across all 550 frames. Fixed fusion produced a resolved improvement only in global curve smoothness, not in endpoint Dice or EF error. The balanced conclusion is therefore that the project delivers a compact spatial model and an auditable full-cine analysis, without proving the model is the most accurate or that it performs dense cardiac motion tracking.

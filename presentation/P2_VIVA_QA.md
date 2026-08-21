@@ -1,255 +1,289 @@
 # P2 Viva Questions and Defensible Answers
 
-Give the direct answer first. Add the second paragraph only when the examiner
-asks for detail. Every answer below is aligned with the executed pipeline and
-the final thesis.
+Give the direct answer first. Add the detail only when the examiner follows up. These answers match the executed code, audited evidence, final thesis, and presentation.
 
-## Scope and the title
+## Scope, title, and completion
 
-### 1. Your title says “Spatio-Temporal Framework.” Did you model time?
+### 1. Your title says “Spatio-Temporal Framework.” Did you actually complete a spatio-temporal analysis?
 
-No. The completed experiment is four-class 3D cardiac MRI segmentation. ED and
-ES volumes are processed independently, and tensor depth contains anatomical
-slices rather than cardiac time. True temporal motion analysis is future work.
+Yes, within a precise segmentation-derived scope. I processed every cardiac phase for all 20 validation patients—550 3D frames—and derived time-indexed masks, chamber-volume curves, ED/ES timing, EF, LV-centroid displacement, and myocardial radial change. The result bundle passed an independent numerical and provenance audit.
 
-### 2. Why is cardiac motion analysis in the title?
+The trained Nano-Mamba backbone itself is spatial, not temporal. Temporal context enters afterward through a fixed adjacent-frame probability fusion. I do not claim learned temporal Mamba, optical flow, dense tissue tracking, or strain.
 
-ED and ES segmentation is a prerequisite for later phase-specific volumes,
-ejection fraction, and motion analysis, which motivated the registered title.
-This experiment does not estimate displacement, optical flow, temporal
-consistency, registration, ejection fraction, or any full-cine motion output.
+### 2. What are the two stages of the framework?
 
-### 3. What exactly is one sample and one prediction?
+Stage A is supervised spatial 3D segmentation using independently labelled ED and ES volumes. Stage B freezes the selected checkpoint, applies it to every phase of each 4D cine, optionally fuses adjacent softmax probabilities, restores masks to native array shape, and derives temporal function and global motion summaries.
 
-One sample is one labelled 3D ED or ES volume from one patient. The model
-outputs one four-class voxel map: background, right-ventricular cavity,
-myocardium, and left-ventricular cavity.
+Keeping the stages separate is essential: the second stage analyses time, but the first-stage network was not trained across time.
 
-### 4. Did you compare ED against ES performance?
+### 3. Is tensor depth a time dimension?
 
-No phase-stratified result is reported. Each validation patient contributes one
-ED and one ES case, but the final table pools all 40 cases. Therefore I cannot
-claim that the model is better at one phase.
+No. In the model input `B x 1 x 256 x 256 x 16`, the last dimension contains anatomical slices. ED and ES were independent training cases. Cardiac time is the fourth axis of the original complete cine and is iterated phase by phase only in the full-cine analysis.
 
-## Image processing: exact executed path
+### 4. Why is “cardiac motion analysis” still a defensible phrase?
 
-### 5. How did you process each MRI image?
+Because the completed pipeline produces full-cycle global anatomical trajectories, including LV-centroid displacement and myocardial radial change, as well as functional indices. These are segmentation-derived motion surrogates across time.
 
-The exact order was: load the paired NIfTI image and label; add a channel axis;
-resize both to 256 by 256 by 16; scale the image intensity to 0--1; and convert
-both arrays to PyTorch tensors. This is implemented by `LoadImaged`,
-`EnsureChannelFirstd`, `Resized`, `ScaleIntensityd`, and `ToTensord`.
+I qualify them as global, not dense. There is no voxel correspondence, material trajectory, deformation field, optical flow, registration, or regional strain.
 
-### 6. Why are image and label resized differently?
+### 5. What exactly is completed, and what remains future work?
 
-The MRI image is continuous, so trilinear interpolation estimates intermediate
-intensities smoothly. The label is categorical, so nearest-neighbour
-interpolation is used to avoid creating invalid fractional class labels.
+Completed: a compact spatial segmenter; 20-patient, 550-frame full-cine inference; fixed temporal probability fusion; native-grid masks; volume, phase, EF, centroid, radius, smoothness, endpoint validation, figures, and independent recomputation.
 
-### 7. What does intensity scaling do?
+Future: learned temporal representation, independent external testing, multiple training seeds, matched ablations, dense registration/correspondence, regional strain, and manual validation of intermediate phases.
 
-For each loaded single-channel volume, the minimum intensity is mapped to 0 and
-the maximum to 1. It is volume-wise min--max scaling. It is not z-score,
-histogram matching, dataset-wide normalization, or scanner harmonization.
+### 6. What is the one-sentence contribution?
 
-### 8. Did you use data augmentation?
+The project delivers a compact 1.456-million-parameter spatial 3D segmentation model with 84.78% held-out validation Dice, plus an audited full-cine analysis whose clearest temporal result is smoother global LV-volume curves in 19 of 20 patients.
 
-No. There was no random crop, rotation, flip, elastic deformation, or intensity
-augmentation. The train and validation datasets used the same deterministic
-transform; only training case order was shuffled. This limits robustness and is
-reported as a limitation.
+### 7. Did Nano-Mamba learn cardiac dynamics?
 
-### 9. Did you standardize orientation or voxel spacing?
+No. Its bottleneck mixes spatial tokens inside one 3D volume. The cardiac-cycle dependency is a fixed post-hoc operation over neighbouring phase probabilities, with no learned temporal parameter.
 
-No. The pipeline has no `Orientationd` or `Spacingd`. It resizes array dimensions
-directly to a common shape, so it is a fixed-grid comparison rather than a
-native physical-space evaluation. This may distort geometry.
+### 8. Can this be called 4D segmentation?
 
-### 10. Did you crop the heart or restore predictions to native resolution?
+Operationally, the output is a segmentation sequence over the complete 4D cine. Architecturally, it is repeated 3D spatial inference plus fixed temporal regularization, not a jointly trained 4D neural network. I state both facts to avoid ambiguity.
 
-No. There is no heart crop and no inverse resampling. Prediction and reference
-labels are compared on the common 256 by 256 by 16 resized grid.
+## Dataset and exact image processing
 
-### 11. What is the model input tensor shape?
+### 9. Which data were used for the full-cine analysis?
 
-After batching, it is `B x 1 x 256 x 256 x 16`. The one is the MRI channel. The
-last dimension is the stack of anatomical slices, not time.
+The same 20 patients from the fixed seed-42 validation split of the ACDC training cohort. Their complete cines contain 550 phases in total. This is internal validation, not the hidden ACDC test set.
 
-### 12. How is the final mask produced?
+### 10. How did you find the correct 4D cine file?
 
-The network outputs four logits per voxel with shape
-`B x 4 x 256 x 256 x 16`. `argmax` selects the class with the largest logit.
-There is no threshold, connected-component filtering, hole filling, or other
-mask post-processing.
+The code recursively inspects candidate NIfTI files and requires a four-dimensional shape `(X,Y,Z,T)` with `T` equal to `NbFrame` in that patient's `Info.cfg`. It does not infer identity from file name or file size alone.
 
-## Architecture and novelty
+### 11. How is one 4D cine processed?
 
-### 13. Where does the sequence module operate?
+The `(X,Y,Z,T)` array is traversed at each phase `t`. Each `(X,Y,Z)` phase is handled as one 3D input: add channel and batch axes, resize to `256 x 256 x 16`, min--max normalize, run the frozen checkpoint, and retain the four-class softmax probability map.
 
-After three pooling operations, Nano-Mamba has a feature tensor of
-`B x 128 x 32 x 32 x 2`. The spatial grid is flattened to 2,048 tokens with
-128 channels, processed, and reshaped back before decoding.
+### 12. Why resize every phase to `256 x 256 x 16`?
 
-### 14. Is the bottleneck a full Mamba implementation?
+That is the geometry used to train the checkpoint, so inference must be checkpoint-compatible. It provides a fixed tensor size under the available GPU memory. The limitation is that array-size resizing is not equivalent to common physical-spacing resampling and can distort geometry.
 
-No. It is Mamba-inspired: an input projection, depthwise one-dimensional
-convolution, scalar sigmoid gate, output projection, and residual connection.
-It does not implement selective scan or the original hardware-aware state-space
-algorithm.
+### 13. Which interpolation methods were used?
 
-### 15. Why use the term Mamba-inspired?
+Continuous MRI intensities use trilinear interpolation. Categorical labels and predicted masks use nearest-neighbour interpolation so class identifiers remain integers and are not blended.
 
-The inspiration is lightweight gated processing of a serialized feature
-sequence at the bottleneck. The final thesis qualifies the term everywhere and
-does not claim algorithmic equivalence to Mamba.
+### 14. How was intensity normalization performed?
 
-### 16. Why place it at the bottleneck?
+Each 3D phase was independently min--max scaled to `[0,1]` after resizing, using its finite minimum and maximum. It is not z-score normalization, histogram matching, dataset-wide standardization, or scanner harmonization.
 
-The bottleneck has only 2,048 tokens rather than 65,536 full-resolution voxels,
-so sequence processing is cheaper. The trade-off is that fine boundary detail
-may already be compressed; skip connections help but cannot guarantee recovery.
+### 15. Did you use augmentation, cropping, or mask cleanup?
 
-### 17. What is the defensible novelty?
+No. There was no random augmentation, heart crop, connected-component filtering, hole filling, threshold tuning, or morphological cleanup. This keeps the execution transparent but limits robustness.
 
-The contribution is the implementation and evaluation of a compact spatial
-sequence gate inside a 3D U-Net, together with an accuracy--efficiency
-comparison. It is not a new state-space algorithm and not a true temporal
-framework.
+### 16. Did you standardize orientation or physical spacing?
 
-## Training and evaluation
+The historical training pipeline did not use explicit `Orientationd` or `Spacingd`; it resized array dimensions directly. The full-cine stage restores the categorical output to the native array shape and uses NIfTI header voxel sizes for physical volume and distance calculations. This does not retroactively make the training geometry native-space.
 
-### 18. How was patient leakage prevented?
+### 17. Why report both resized-grid and native-grid Dice?
 
-The split was created at patient level with seed 42: 80 patients for training
-and 20 for validation. Both labelled phases from one patient stay on the same
-side, giving 160 training cases and 40 validation cases with no patient overlap.
+Resized-grid Dice reproduces the historical experiment and tests the model on its computational grid. Native-grid Dice evaluates the restored categorical mask against the original-shape endpoint mask. The latter is lower—about 77.92% versus 84.79%—which exposes the cost of the non-native geometry rather than hiding it.
 
-### 19. Is the reported validation set an independent test set?
+### 18. How is the final mask created?
 
-No. The same 20-patient validation cohort was checked every epoch to select the
-best checkpoint and then used for the final descriptive table. I report
-held-out validation performance, not independent or official ACDC test
-performance.
+For frame-wise inference, I apply `argmax` across the four probabilities at each voxel. For temporal fusion, I first combine adjacent probability maps, then apply the same `argmax`. The resulting categorical mask is restored to native shape with nearest-neighbour interpolation.
 
-### 20. What loss and optimizer were used?
+## Temporal probability fusion
 
-The loss was MONAI Dice plus cross entropy with one-hot labels and softmax. The
-optimizer was AdamW with learning rate `1e-4` and weight decay `1e-5` for 150
-epochs. There was no scheduler or early stopping.
+### 19. What is the temporal fusion equation?
 
-### 21. Does training Dice use the same classes as reported Dice?
+`P_t_fused = 0.25 P_(t-1) + 0.50 P_t + 0.25 P_(t+1)`.
 
-Not exactly. The default Dice term in the executed Dice-CE loss includes the
-background channel. The reported metric excludes background and averages RV,
-MYO, and LV. The objectives are related, but their class averaging is not
-identical.
+The weights are fixed, sum to one, and give the current phase twice the weight of either neighbour. There is no trained temporal parameter.
 
-### 22. How was reported Dice computed?
+### 20. Why fuse probabilities instead of hard masks?
 
-For every case, `argmax` predictions were compared with integer labels for RV,
-MYO, and LV. Class Dice was averaged over the 40 cases, then the three class
-means were averaged. Because every patient has two cases, the aggregate gives
-equal case weight and equal total weight per patient.
+Softmax probabilities retain class uncertainty and allow a weighted continuous combination before the irreversible `argmax`. Hard-mask voting would discard that information and make the current-frame weighting less direct.
 
-### 23. What happens when a class is absent in prediction and reference?
+### 21. What happens at the first and last phase?
 
-The executed metric returns Dice 1 for that class. None of the 720 recorded
-foreground class scores equals exactly 1, so that special branch did not affect
-the final table.
+Indices wrap circularly: the previous phase of frame 1 is the final frame, and the next phase of the final frame is frame 1. This models the cine as a periodic cardiac cycle and avoids an artificial boundary.
 
-### 24. Were all models trained under a perfectly controlled protocol?
+### 22. Why use these exact weights?
 
-No. They shared the split, preprocessing, epoch budget, AdamW settings,
-checkpoint rule, and metric. However, batch sizes were 1 or 2, optimizer steps
-per epoch therefore differed, model families used different normalization and
-regularization, and the ablations were not parameter matched. This is a
-comparison of executed systems, not a pure causal test of one module.
+They form a simple, pre-specified symmetric low-pass baseline: half current evidence and half divided equally between immediate neighbours. I did not tune them on the reported outcomes, and I do not claim they are optimal.
 
-### 25. Did the models overfit?
+### 23. Is fixed fusion a temporal model?
 
-Training loss continued to fall while validation performance peaked earlier.
-The best-to-final validation drop was small for Nano-Mamba at 0.29 percentage
-points, but 3.05 points for Attention U-Net. This is why the best validation
-checkpoint was used, while also showing that the validation cohort is not an
-independent final test.
+It is a temporal regularization operation, but not a learned temporal neural model. It uses neighbouring phases and therefore introduces temporal context; it has no hidden state, attention over time, learned kernel, selective scan, or sequence training.
 
-## Results and failure analysis
+### 24. Why also smooth the scalar LV-volume curve with a three-frame mean?
 
-### 26. Which model achieved the highest Dice?
+The two operations serve different levels. Probability fusion modifies segmentation before mask creation. The circular three-frame mean is applied afterward to each method's scalar LV-volume curve only for stable phase and smoothness analysis. Both methods use the same scalar-curve rule, so the comparison remains consistent.
 
-SegResNet16 achieved the highest validation mean Dice at 86.70%. Nano-Mamba
-achieved 84.78%, so it is not the most accurate model in this experiment.
+## Physical volumes, phase, and ejection fraction
 
-### 27. What is Nano-Mamba's main advantage over 3D U-Net?
+### 25. How was chamber volume calculated?
 
-Nano-Mamba improved mean Dice by 3.945 percentage points and used 69.714% fewer
-reported parameters: 1.456 million versus 4.809 million.
+For each native-grid mask, I count voxels in each anatomical class. A voxel represents `sx * sy * sz / 1000` millilitres, where the header spacings are in millimetres. Class volume is voxel count multiplied by voxel volume.
 
-### 28. Why did No-Mamba outperform Nano-Mamba?
+### 26. How were predicted ED and ES selected?
 
-The experiment cannot identify one cause. No-Mamba scored 0.862 percentage
-points higher but had 57.076% more parameters and a structurally different
-convolutional bottleneck. A capacity-matched, multi-seed ablation would be
-needed for a causal conclusion.
+I first apply a circular three-frame average to the predicted LV-volume curve. Predicted ED is the global maximum and predicted ES is the global minimum of that smoothed curve. Phase error is the shortest circular frame distance to the `Info.cfg` reference.
 
-### 29. Which class was hardest?
+### 27. How were EDV, ESV, stroke volume, and EF calculated?
 
-MYO had the lowest aggregate class Dice among the stronger models. A plausible
-reason is its thin boundary-sensitive structure, but the study did not report
-surface distances or a blinded error review, so this explanation remains an
-interpretation rather than a tested mechanism.
+EDV and ESV are the smoothed LV volumes at predicted ED and ES. `SV = EDV - ESV`, and `EF = 100 * (EDV - ESV) / EDV`.
 
-### 30. What was Nano-Mamba's worst validation case?
+### 28. What is the difference between annotated-phase EF and curve-derived EF?
 
-`patient049_frame11` had 57.86% mean Dice, including only 26.04% RV Dice. It was
-also the worst case for four other model families, suggesting a shared difficult
-case rather than a Nano-only failure. I do not assign a pathology or geometric
-cause without inspecting that patient's metadata and image overlay.
+Annotated-phase EF uses the manual reference ED/ES indices. Reference EF comes from manual masks, and predicted EF comes from model masks at those same phases; this isolates endpoint segmentation error. Curve-derived EF uses predicted maximum and minimum phases, so it also contains phase-selection error.
 
-### 31. Are the reported differences statistically significant?
+### 29. How well did EF agree with the manual-mask reference?
 
-No significance claim is made. Post-hoc paired patient-bootstrap intervals are
-descriptive and use the same patients involved in checkpoint selection. They
-do not replace multiple training seeds or an independent test cohort.
+For temporal fusion, annotated-phase EF MAE was 3.329 percentage points and Pearson `r = 0.9803`. Frame-wise inference gave 3.514 points and `r = 0.9809`. These are strong internal endpoint agreements, not external clinical validation.
 
-### 32. Why is the smallest model not the fastest?
+### 30. How accurate was phase detection?
 
-Parameter count and runtime measure different things. Kernel efficiency,
-memory movement, framework implementation, and operator launch overhead also
-matter. In this benchmark, 3D U-Net was fastest; Nano-Mamba was smallest.
+Temporal fusion detected ED exactly in 55% of patients and within one frame in 80%. ES was exact in 55% and within one frame in 85%. Frame-wise ED exact was 50%, while its within-one and both ES results were the same.
 
-## Limitations and conclusion
+### 31. Why is a high EF correlation not enough by itself?
 
-### 33. What are the most important experimental limitations?
+Correlation measures linear association, not absolute agreement or calibration. That is why I also report MAE in percentage points and the patient scatter. The same validation cohort selected the checkpoint, so external generalization is still unknown.
 
-There is one patient split and seed, no independent test set, no augmentation,
-no orientation or spacing standardization, no native-space evaluation, no
-phase- or pathology-stratified analysis, no matched-capacity ablation, and no
-surface-distance metric. The model also does not perform temporal analysis.
+## Global motion and temporal consistency
 
-### 34. What would you improve first?
+### 32. How was LV-centroid displacement computed?
 
-First, use train/validation/test separation or nested cross-validation and run
-multiple seeds. Then add spacing- and orientation-aware preprocessing,
-augmentation, matched-capacity ablations, surface metrics, pathology and ED/ES
-subgroup analysis, and validation-case qualitative overlays. True 4D temporal
-modeling is a separate architectural extension.
+For every native-grid phase mask, I compute the three-dimensional LV-cavity centroid in millimetre coordinates. I then measure Euclidean displacement from the centroid at the annotated reference ED and report the maximum over the cycle. The temporal-fusion median was 6.252 mm.
 
-### 35. What is the one-sentence conclusion?
+### 33. How was myocardial radial change computed?
 
-Nano-Mamba U-Net is a compact Mamba-inspired 3D segmentation model that
-achieves competitive held-out validation Dice with the smallest reported
-parameter count among the evaluated configurations, while SegResNet16 remains
-the accuracy leader and the current experiment does not prove a causal benefit
-from the sequence gate.
+For each phase, I calculate the mean Euclidean distance from myocardial voxel centres to the LV-cavity centroid. I report the annotated ED radius minus the annotated ES radius. Temporal fusion produced a cohort mean of 4.153 mm.
+
+### 34. Are centroid displacement and radial change dense cardiac motion?
+
+No. They are global segmentation-derived geometric surrogates. Because there is no registration or voxel correspondence, they cannot identify local tissue trajectories, regional deformation, or strain.
+
+### 35. How was curve smoothness measured?
+
+I calculate the mean absolute circular second difference of the smoothed LV-volume curve and divide by its peak-to-peak amplitude. Smaller values mean less frame-to-frame curvature in the global trajectory.
+
+Smoothness is not anatomical accuracy. A wrong but slowly varying contour can be smooth, so endpoint Dice and manual-mask validation remain separate.
+
+### 36. What was the strongest temporal result?
+
+Fusion reduced mean smoothness by `0.001129`; the paired 95% bootstrap interval was `[-0.001950, -0.000511]`, entirely below zero, and 19 of 20 patients had smoother LV curves.
+
+### 37. Did fusion improve Dice or EF?
+
+Not conclusively. Resized endpoint Dice changed by only `+0.0144` percentage points with CI `[-0.0635, +0.0819]`. EF absolute error changed by `-0.1853` points with CI `[-0.4678, +0.0909]`. Both intervals include zero.
+
+The correct claim is smoother global trajectories, not resolved Dice or EF improvement.
+
+## Validation, failure analysis, and data limitations
+
+### 38. How do you know all expected frames were processed?
+
+The run metadata records 20 of 20 selected patients and 550 of 550 expected phases. The frame table contains exactly 1,100 unique method-patient-frame rows and the patient table exactly 40 method-patient rows. The independent audit rejects missing, duplicate, non-finite, or inconsistent rows.
+
+### 39. How did you verify the 4D cines correspond to the historical endpoint data?
+
+At the annotated ED and ES indices, the full-cine image content was compared with the standalone endpoint image after the executed normalization. The maximum normalized mean absolute error was zero. Frame-wise resized endpoint Dice also reproduced the historical Nano-Mamba case table within `0.000169`.
+
+### 40. Do all 550 phases have manual masks?
+
+No. ACDC provides manual masks only at ED and ES. Therefore overlap accuracy is validated at 40 labelled endpoints; the remaining 510 phases support complete trajectory analysis but not direct Dice validation.
+
+### 41. What is the main phase-detection failure?
+
+Patient016 is the main temporal-fusion outlier: ED error is five frames and ES error three. Its predicted LV curve contains a competing late-cycle maximum. I retained this case to show that smoothing cannot guarantee correct phase selection when spatial predictions create the wrong peak.
+
+### 42. What is the largest EF error?
+
+Patient057 has the largest temporal-fusion annotated-phase EF absolute error, approximately 8.12 percentage points. Reporting it prevents the high overall correlation from concealing a clinically relevant individual error.
+
+### 43. What was the issue with six recovered cine files?
+
+Their official 4D cine affine metadata differs from the standalone endpoint containers. The pipeline did not overwrite or ignore that fact. It required matching array shape, header voxel sizes, endpoint pixel content, and endpoint image-label alignment; all passed.
+
+Volumes use header voxel sizes. Global distances use a metric transform built from those spacings and reliable orthonormal direction information when available. I therefore do not use the mismatched raw affine as evidence of tissue correspondence.
+
+### 44. Did you perform pathology subgroup analysis?
+
+Only descriptive summaries. The validation composition is MINF 7, NOR 6, DCM 4, RV abnormality 2, and HCM 1. These groups are too small and imbalanced for a defensible significance or generalization claim.
+
+### 45. What does the patient002 overlay prove?
+
+It proves that one validation patient was processed with the correct selected checkpoint and shows the native-grid ED/ES output for both methods against manual contours. It is a traceable qualitative example, not population-level evidence.
+
+### 46. How were uncertainty intervals calculated?
+
+Paired patient-level percentile bootstrap with 10,000 replicates and seed 20260821. Each replicate resamples 20 patients with replacement and recomputes the mean fusion-minus-frame-wise difference. These are descriptive internal-validation intervals, not pre-registered hypothesis tests.
+
+## Spatial architecture, training, and six-model comparison
+
+### 47. Where does the Mamba-inspired block operate?
+
+After three pooling stages, the feature tensor is `B x 128 x 32 x 32 x 2`. The spatial grid is flattened to 2,048 tokens with 128 channels, mixed, reshaped, and sent through the decoder.
+
+### 48. Is this a full Mamba implementation?
+
+No. It is a Mamba-inspired gated spatial sequence block with input projection, depthwise 1D mixing, a sigmoid gate, output projection, residual addition, and normalization. It does not implement the reference selective scan or hardware-aware Mamba algorithm.
+
+### 49. How was patient leakage prevented?
+
+The seed-42 split was generated at patient level: 80 training patients and 20 validation patients. Both ED and ES cases from one person stay in the same partition, yielding 160 training and 40 validation cases without patient overlap.
+
+### 50. Is the validation cohort an independent test set?
+
+No. It was evaluated every epoch and used to select the best checkpoint, then reused for the descriptive results and full-cine analysis. I report held-out validation performance, not independent or official ACDC test performance.
+
+### 51. What loss and optimizer were used?
+
+MONAI Dice plus cross entropy, with one-hot labels and softmax, optimized by AdamW at learning rate `1e-4` and weight decay `1e-5` for 150 epochs. There was no scheduler or early stopping.
+
+### 52. How was reported segmentation Dice computed?
+
+After `argmax`, RV, MYO, and LV Dice were computed per case on the resized grid. Each class was averaged over 40 validation cases, and the three class means were averaged for the final mean. Background was excluded from reporting.
+
+### 53. Was the architecture comparison perfectly controlled?
+
+No. The models shared split, preprocessing, epoch budget, main optimizer settings, checkpoint rule, and evaluation metric, but batch size, optimizer updates per epoch, normalization, capacity, and regularization differed. The ablations were not parameter matched.
+
+### 54. Which model was most accurate?
+
+SegResNet16 at 86.70% validation mean Dice. No-Mamba reached 85.64%; Nano-Mamba reached 84.78%. Nano-Mamba is therefore not the accuracy winner.
+
+### 55. Why can you not claim the sequence gate improves accuracy?
+
+No-Mamba scored 0.862 percentage points higher than Nano-Mamba. It also had 57.076% more reported parameters and structural confounds, so the result neither supports a gate advantage nor cleanly proves the gate is harmful. A parameter-matched, multi-seed ablation is needed.
+
+### 56. What is Nano-Mamba's defensible advantage?
+
+Its compact accuracy-efficiency operating point: 84.78% validation Dice with 1.456 million reported parameters. Versus UNet3D it gains 3.945 percentage points while using 69.714% fewer parameters.
+
+### 57. Why is the smallest model not necessarily the fastest?
+
+Runtime depends on kernels, memory movement, tensor layout, launch overhead, and implementation—not only parameter count. The measured FPS is hardware-specific engineering evidence, not a universal property.
+
+## Final limitations and conclusion
+
+### 58. What are the three most important limitations?
+
+First, one split and seed with no independent test. Second, intermediate cine phases lack manual masks, so smoother curves do not prove every contour is correct. Third, temporal processing is fixed and global; there is no learned temporal representation or dense tissue-motion validation.
+
+Other limits include non-native training geometry, no augmentation, non-matched ablations, small pathology subgroups, and no external clinical cohort.
+
+### 59. What would you improve first?
+
+Create a true train/validation/test or cross-validation design and run multiple seeds. Then use orientation- and spacing-aware preprocessing with augmentation and surface metrics. For temporal science, train a learned cine model and validate it against dense registration, correspondence, or strain references rather than only global mask trajectories.
+
+### 60. What is your final conclusion?
+
+Nano-Mamba U-Net is a compact spatial 3D segmenter rather than the most accurate model. The completed full-cine extension produces audited functional and global motion trajectories for all 550 phases. Fixed temporal fusion consistently smooths LV curves, but it does not establish a Dice or EF improvement and does not constitute dense cardiac motion tracking.
 
 ## Evidence pointers
 
-- Executed pipeline: `src/21_rigorous_experiment_pipeline.py`
-- Bottleneck implementation: `src/nano_mamba_core.py`
-- Result table: `evidence/rigorous_patient_split/summary_metrics.csv`
-- Patient split: `evidence/rigorous_patient_split/patient_split_seed42.json`
-- Case metrics and curves: `evidence/rigorous_patient_split/per_case_*.csv` and
-  `training_log_*.csv`
-- Thesis methodology and results: `sample-chap-methodology.tex` and
-  `sample-chap-results-p2.tex`
+- Spatial experiment: `src/21_rigorous_experiment_pipeline.py`
+- Spatial bottleneck: `src/nano_mamba_core.py`
+- Full-cine execution: `src/23_spatiotemporal_cine_analysis.py`
+- Function/motion formulas: `src/cardiac_motion_metrics.py`
+- Independent recomputation: `src/25_spatiotemporal_result_audit.py`
+- Spatial evidence: `evidence/rigorous_patient_split/`
+- Full-cine raw evidence: `evidence/spatiotemporal_cine/raw/`
+- Full-cine audit: `evidence/spatiotemporal_cine/INDEPENDENT_AUDIT.json`
+- Exact method/results boundary: `SPATIOTEMPORAL_ANALYSIS.md` and `SCIENTIFIC_BOUNDARIES.md`

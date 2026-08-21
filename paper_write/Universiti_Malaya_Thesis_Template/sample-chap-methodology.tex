@@ -6,10 +6,10 @@
 \chapter{RESEARCH DESIGN AND METHODOLOGY}
 \label{chap:methodology}
 
-This chapter describes the research design used to implement and evaluate the proposed Nano-Mamba U-Net. The methodology is written to make the experiment reproducible: it specifies the dataset boundary, data discovery procedure, patient-level split, preprocessing pipeline, model architecture, loss function, checkpoint selection, evaluation metrics, and computational profiling. The chapter also distinguishes clearly between methods adopted from prior work and components implemented in this project.
+This chapter describes the research design used to implement and evaluate the proposed Nano-Mamba U-Net and the subsequent full-cine analysis. The methodology is written to make both stages reproducible: it specifies the dataset boundary, data discovery procedure, patient-level split, preprocessing pipeline, model architecture, loss function, checkpoint selection, evaluation metrics, computational profiling, full-cine inference, temporal probability fusion, and segmentation-derived cardiac measurements. The chapter also distinguishes clearly between methods adopted from prior work and components implemented in this project.
 
 \section{Overall Research Workflow}
-The study follows an experimental computing workflow. First, the ACDC cardiac MRI data are discovered and paired with corresponding segmentation labels. Second, patients are separated into training and validation groups using a deterministic patient-level split. Third, all models use the same preprocessing, patient split, epoch budget, optimizer family, and validation procedure, while memory-constrained batch sizes differ by model as reported below. Finally, the best checkpoint for each model is selected by validation mean Dice and evaluated descriptively on the same held-out validation patients.
+The study follows a two-stage experimental computing workflow. First, the ACDC cardiac MRI data are discovered and paired with corresponding segmentation labels. Patients are separated into training and validation groups using a deterministic patient-level split. Six spatial segmentation configurations then use the same preprocessing, patient split, epoch budget, optimizer family, and validation procedure, while memory-constrained batch sizes differ by model as reported below. The best checkpoint for each model is selected by validation mean Dice and evaluated descriptively on the same held-out validation patients. Second, the selected Nano-Mamba checkpoint is frozen and applied to every frame of the complete cine sequences for the 20 validation patients. Frame-wise probabilities and fixed temporal fusion are converted to native-grid masks and used to derive cardiac-cycle trajectories and functional measurements. No network is retrained in the second stage.
 
 \begin{figure}[hbt!]
 \centering
@@ -65,7 +65,7 @@ All models use the same deterministic preprocessing pipeline implemented with MO
 \end{enumerate}
 No random crop, rotation, elastic deformation, intensity augmentation, or other data augmentation is applied. Training and validation use the same deterministic geometric and intensity transforms; only the training data loader shuffles case order. Applying the same preprocessing to all models is necessary because otherwise observed performance differences could be caused by data handling rather than architecture.
 
-The executed transform resizes array dimensions directly; it does not explicitly canonicalize image orientation or resample every case to a common physical voxel spacing before resizing. It also does not crop around the heart or restore predictions to native image geometry. Therefore, training and Dice evaluation occur on the common resized array grid. The reported experiment is a fixed-array-shape comparison rather than a native-space or spacing-preserving geometric evaluation. This preprocessing is documented rather than changed retrospectively, because changing it would require retraining every model and would produce a different experiment.
+The executed transform resizes array dimensions directly; it does not explicitly canonicalize image orientation or resample every case to a common physical voxel spacing before resizing. It also does not crop around the heart. Therefore, the historical six-model training and Dice comparison occur on the common resized array grid and constitute a fixed-array-shape comparison rather than a native-space geometric evaluation. In the later full-cine analysis, predicted class masks are additionally restored to each original spatial array shape with nearest-neighbour interpolation before physical volumes and distances are calculated from NIfTI header voxel sizes. This later inverse resizing enables native-grid measurements but does not retrospectively change the training experiment.
 
 \begin{figure}[hbt!]
 \centering
@@ -235,8 +235,56 @@ For post-hoc uncertainty description, the two ED/ES case values are first averag
 
 The study also reports parameter count and inference speed. The reported parameter count sums every tensor returned by \texttt{model.parameters()}, including the unused legacy outputs of the gate projection described above. Inference speed uses a random batch-one tensor of shape $1\times1\times256\times256\times16$, five warm-up passes, and 30 timed passes with CUDA synchronization. These computational metrics are engineering measurements from one implementation and environment; parameter count is not treated as a direct proxy for speed.
 
+\section{Full-Cine Spatio-Temporal Analysis}
+\subsection{Cohort, cine discovery, and identity checks}
+The full-cine stage uses the same 20 validation patients as the historical segmentation experiment. Their complete ACDC cine volumes contain 550 cardiac frames in total. For each patient, \texttt{Info.cfg} provides the number of frames, the annotated ED frame, the annotated ES frame, and the diagnostic group. Cine discovery is based on the NIfTI header shape $(X,Y,Z,T)$ and requires $T$ to match \texttt{NbFrame}; it does not depend on a fragile file name or file-size assumption.
+
+Before inference, the standalone ED and ES images used by the historical experiment are compared with the corresponding complete-cine frames after the executed intensity normalization. The maximum normalized mean absolute error across the final cohort is zero. Six complete cine files restored from a pinned public ACDC mirror contain raw affine metadata that differs from the standalone endpoint container, although spatial shape, header voxel sizes, and endpoint pixel arrays match, and each endpoint image affine matches its manual label. The pipeline records this discrepancy rather than silently overwriting it. Volumes and distances use the NIfTI header voxel sizes, which agree between the cine and endpoint data.
+
+\subsection{Frame inference and temporal fusion}
+For each cardiac phase $t$, the 3D frame $I_t\in\mathbb{R}^{X\times Y\times Z}$ follows the checkpoint-compatible preprocessing path: channel-first conversion, trilinear resizing to $256\times256\times16$, per-frame min--max intensity scaling, and batch-one inference. Softmax converts the four output logits into class probabilities $P_t$. Frame-wise inference uses $P_t$ directly. The pre-specified temporal alternative uses fixed circular adjacent-frame probability fusion:
+\begin{equation}
+    \widetilde{P}_t=0.25P_{t-1}+0.50P_t+0.25P_{t+1},
+\end{equation}
+where phase indices wrap at the end of the cardiac cycle. The weight of the current frame is twice that of either neighbour, and the weights sum to one. This operation has no learned parameter and is applied only after the spatial network has generated all frame probabilities. For either method, voxel labels are obtained by channel-wise \texttt{argmax}; the categorical mask is then resized back to $(X,Y,Z)$ using nearest-neighbour interpolation. No thresholding, connected-component filtering, hole filling, registration, or deformation estimation is performed.
+
+\subsection{Physical volumes, phase timing, and function}
+Let $(s_x,s_y,s_z)$ be the spatial voxel sizes in millimetres from the cine header. One voxel represents
+\begin{equation}
+    v_{voxel}=\frac{s_xs_ys_z}{1000}\;\mathrm{mL}.
+\end{equation}
+If $N_{k,t}$ is the number of voxels assigned to class $k$ at phase $t$, its physical volume is $V_{k,t}=N_{k,t}v_{voxel}$. The complete LV sequence $V_{LV,t}$ forms a segmentation-derived volume trajectory. To reduce one-frame phase jitter only for phase detection, a circular three-frame mean is used:
+\begin{equation}
+    \widehat{V}_{LV,t}=\frac{V_{LV,t-1}+V_{LV,t}+V_{LV,t+1}}{3}.
+\end{equation}
+Predicted ED is the maximum of $\widehat{V}_{LV,t}$ and predicted ES is its minimum. Phase error is the shortest circular distance in frames to the \texttt{Info.cfg} reference. End-diastolic volume, end-systolic volume, stroke volume, and ejection fraction are then
+\begin{equation}
+    EDV=\widehat{V}_{LV,t_{ED}},\quad ESV=\widehat{V}_{LV,t_{ES}},\quad SV=EDV-ESV,
+\end{equation}
+\begin{equation}
+    EF=100\frac{EDV-ESV}{EDV}.
+\end{equation}
+For endpoint validation, a reference EF is also calculated directly from the manual ED and ES LV masks, and a prediction EF is calculated from the predicted masks at those same annotated phases. This isolates segmentation-derived functional error from phase-selection error.
+
+\subsection{Global motion surrogates and temporal consistency}
+For each frame, the LV-mask centroid is converted into millimetre coordinates using a metric transform constructed from the header voxel sizes. The peak global LV-centroid displacement is
+\begin{equation}
+    d_{peak}=\max_t\left\lVert\mathbf{c}_{LV,t}-\mathbf{c}_{LV,ED}\right\rVert_2.
+\end{equation}
+The mean radial distance of myocardial voxels from the LV centroid is also computed at every frame. The reported ED-minus-ES radial-distance change is a global contraction surrogate. Neither quantity is a dense displacement field, regional strain estimate, or material-point tracker because successive masks do not establish voxel correspondence.
+
+Temporal curve smoothness is quantified by the mean absolute circular second difference normalized by the smoothed LV-curve amplitude:
+\begin{equation}
+    S=\frac{1}{T\,[\max(\widehat V)-\min(\widehat V)]}
+    \sum_{t=1}^{T}\left|\widehat V_{t+1}-2\widehat V_t+\widehat V_{t-1}\right|.
+\end{equation}
+A smaller value means less frame-to-frame curvature in the global volume trajectory; it does not by itself prove anatomical correctness.
+
+\subsection{Validation and uncertainty}
+Manual segmentation masks are available only at ED and ES. Both resized-grid endpoint Dice, which connects to the historical experiment, and native-grid endpoint Dice after nearest-neighbour mask restoration are reported. EF error is reported in percentage points, and ED/ES phase detection is reported as exact-frame and within-one-frame accuracy. Patient-level means and paired temporal-fusion-minus-frame-wise differences use 10,000 bootstrap replicates with seed 20260821. The analysis also reports diagnostic-group summaries, but their group sizes range from one to seven patients and are therefore descriptive only. Every frame row, patient row, figure, source hash, checkpoint hash, and aggregate value is preserved in the result bundle and independently recomputed by a second audit script.
+
 \section{Hardware and Reproducibility}
-The experiment used PyTorch \cite{paszke2019pytorch} and MONAI on a single NVIDIA RTX 4060 GPU with 8GB VRAM. The random seed is fixed to 42 for Python, NumPy, and PyTorch, and CuDNN deterministic settings are enabled. All six result rows are accompanied by 40-case metric tables and 150-epoch training logs; their class averages and selected best epochs reproduce the aggregate result table. The patient split, preprocessing code, model definitions, and evaluation code are retained in the project repository. Deterministic settings improve repeatability within a fixed software and hardware stack, but they do not guarantee bitwise identity across library versions or devices.
+The experiment used PyTorch \cite{paszke2019pytorch} and MONAI on a single NVIDIA RTX 4060 GPU with 8GB VRAM. The random seed is fixed to 42 for Python, NumPy, and PyTorch, and CuDNN deterministic settings are enabled. All six result rows are accompanied by 40-case metric tables and 150-epoch training logs; their class averages and selected best epochs reproduce the aggregate result table. The full-cine run used Python 3.10.20, PyTorch 2.7.1 with CUDA 11.8, MONAI 1.5.2, the epoch-121 Nano-Mamba checkpoint, and batch size one. The patient split, preprocessing code, model definitions, evaluation code, full-cine result rows, figures, and hashes are retained in the project repository. Deterministic settings and sealed artifacts improve repeatability within a fixed software and hardware stack, but they do not guarantee bitwise identity across library versions or devices.
 
 \section{Methodological Summary}
-The methodology supports a cautious comparison under one patient-level split and one deterministic preprocessing pipeline. It does not provide an independent test set, matched batch sizes, matched-capacity ablations, multi-seed training, augmentation, native-space evaluation, or phase- and pathology-stratified analysis. The model is not evaluated using training-set performance and is not claimed to be a full implementation of the original Mamba selective scan. The experiment therefore addresses whether this particular compact Mamba-inspired bottleneck occupies a competitive accuracy-efficiency region, not whether it is universally superior.
+The methodology supports a cautious six-model comparison and a separate full-cine analysis under one patient-level split. It does not provide an independent test set, matched batch sizes, matched-capacity ablations, multi-seed training, augmentation, intermediate-frame manual labels, or external clinical validation. Historical six-model Dice remains a resized-grid measure; the full-cine stage additionally reports native-grid endpoint Dice and physical measurements. The backbone is not a full implementation of the original Mamba selective scan, and fixed probability fusion is not learned temporal modeling. The study therefore addresses both the compact accuracy--efficiency trade-off and a bounded segmentation-derived cardiac-cycle analysis, not universal architectural superiority or dense motion tracking.

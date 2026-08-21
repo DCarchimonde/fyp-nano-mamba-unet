@@ -1,0 +1,415 @@
+{
+  "artifact_integrity": {
+    "png_dimensions": {
+      "figures/ejection_fraction_validation.png": [
+        1134,
+        989
+      ],
+      "figures/patient002_endpoint_overlay.png": [
+        1233,
+        1341
+      ],
+      "figures/patient002_lv_curve.png": [
+        1494,
+        846
+      ],
+      "figures/patient010_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient011_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient016_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient038_lv_curve.png": [
+        1492,
+        846
+      ],
+      "figures/patient042_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient043_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient046_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient049_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient051_lv_curve.png": [
+        1494,
+        846
+      ],
+      "figures/patient056_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient057_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient066_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient071_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient073_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient074_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient077_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient079_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient092_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/patient093_lv_curve.png": [
+        1493,
+        846
+      ],
+      "figures/population_lv_motion_curve.png": [
+        1493,
+        846
+      ]
+    },
+    "png_figures": 23,
+    "tracked_files": 29
+  },
+  "bundle_status": "complete_validation_analysis",
+  "derived_results": {
+    "methods": {
+      "framewise": {
+        "annotated_ef_abs_error_pp": {
+          "confidence": 0.95,
+          "lower": 2.626972161340689,
+          "mean": 3.5138103741291444,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 4.4667334834080155
+        },
+        "annotated_ef_pearson_r": 0.9808779800048231,
+        "curve_smoothness": {
+          "confidence": 0.95,
+          "lower": 0.024992515175502175,
+          "mean": 0.03252134553475157,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 0.041231034470854695
+        },
+        "ed_phase_exact_fraction": 0.5,
+        "ed_phase_within_one_fraction": 0.8,
+        "endpoint_native_dice": {
+          "confidence": 0.95,
+          "lower": 0.7511976104278865,
+          "mean": 0.7791873948842918,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 0.8082813139206255
+        },
+        "endpoint_resized_dice": {
+          "confidence": 0.95,
+          "lower": 0.8196096050476203,
+          "mean": 0.8477948463841756,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 0.8693075781237987
+        },
+        "es_phase_exact_fraction": 0.55,
+        "es_phase_within_one_fraction": 0.85,
+        "myo_radius_ed_minus_es_mm": {
+          "confidence": 0.95,
+          "lower": 3.4846749572234748,
+          "mean": 4.250352505698961,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 5.001508831562643
+        },
+        "peak_lv_centroid_displacement_mm": {
+          "maximum": 13.747175980409631,
+          "mean": 6.240159764839209,
+          "median": 6.361284426157535,
+          "minimum": 2.2899536944411065,
+          "q1": 4.038634274258242,
+          "q3": 7.177534198940213
+        }
+      },
+      "temporal_fusion": {
+        "annotated_ef_abs_error_pp": {
+          "confidence": 0.95,
+          "lower": 2.4573144889500114,
+          "mean": 3.3285038377392953,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 4.2692336911731275
+        },
+        "annotated_ef_pearson_r": 0.980317844904065,
+        "curve_smoothness": {
+          "confidence": 0.95,
+          "lower": 0.024125224999261483,
+          "mean": 0.031391994539325924,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 0.04005741654713628
+        },
+        "ed_phase_exact_fraction": 0.55,
+        "ed_phase_within_one_fraction": 0.8,
+        "endpoint_native_dice": {
+          "confidence": 0.95,
+          "lower": 0.7510916624608308,
+          "mean": 0.7792334786141412,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 0.8083062137995494
+        },
+        "endpoint_resized_dice": {
+          "confidence": 0.95,
+          "lower": 0.8195190723385909,
+          "mean": 0.847938913037994,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 0.8695043560056801
+        },
+        "es_phase_exact_fraction": 0.55,
+        "es_phase_within_one_fraction": 0.85,
+        "myo_radius_ed_minus_es_mm": {
+          "confidence": 0.95,
+          "lower": 3.384496124161751,
+          "mean": 4.153133373031701,
+          "n": 20,
+          "replicates": 10000,
+          "seed": 20260821,
+          "upper": 4.9091588031622955
+        },
+        "peak_lv_centroid_displacement_mm": {
+          "maximum": 13.5925556027991,
+          "mean": 6.107816306707064,
+          "median": 6.251948336813243,
+          "minimum": 2.1518998031753815,
+          "q1": 3.8579409806346776,
+          "q3": 7.026049801392297
+        }
+      }
+    },
+    "outliers": {
+      "largest_ef_absolute_error": [
+        {
+          "error_percentage_points": 8.119462943466083,
+          "patient_id": "patient057"
+        },
+        {
+          "error_percentage_points": 6.820110299853667,
+          "patient_id": "patient071"
+        },
+        {
+          "error_percentage_points": 5.679217989274804,
+          "patient_id": "patient042"
+        },
+        {
+          "error_percentage_points": 5.016975945327104,
+          "patient_id": "patient043"
+        },
+        {
+          "error_percentage_points": 5.012107824159479,
+          "patient_id": "patient093"
+        }
+      ],
+      "largest_total_phase_error": [
+        {
+          "ed_error_frames": 5,
+          "es_error_frames": 3,
+          "patient_id": "patient016",
+          "total_error_frames": 8
+        },
+        {
+          "ed_error_frames": 1,
+          "es_error_frames": 3,
+          "patient_id": "patient042",
+          "total_error_frames": 4
+        },
+        {
+          "ed_error_frames": 1,
+          "es_error_frames": 2,
+          "patient_id": "patient011",
+          "total_error_frames": 3
+        },
+        {
+          "ed_error_frames": 3,
+          "es_error_frames": 0,
+          "patient_id": "patient056",
+          "total_error_frames": 3
+        },
+        {
+          "ed_error_frames": 1,
+          "es_error_frames": 1,
+          "patient_id": "patient046",
+          "total_error_frames": 2
+        }
+      ],
+      "lowest_endpoint_resized_dice": [
+        {
+          "dice": 0.6373990097924964,
+          "patient_id": "patient049"
+        },
+        {
+          "dice": 0.8060219370300072,
+          "patient_id": "patient093"
+        },
+        {
+          "dice": 0.8064802205671339,
+          "patient_id": "patient073"
+        },
+        {
+          "dice": 0.8156403100096357,
+          "patient_id": "patient016"
+        },
+        {
+          "dice": 0.8452111443943846,
+          "patient_id": "patient046"
+        }
+      ]
+    },
+    "paired_temporal_fusion_minus_framewise": {
+      "annotated_ef_abs_error_pp": {
+        "confidence": 0.95,
+        "interval_excludes_zero": false,
+        "lower": -0.4678267184437465,
+        "mean": -0.18530653638984845,
+        "n": 20,
+        "patients_negative": 11,
+        "patients_positive": 9,
+        "patients_zero": 0,
+        "replicates": 10000,
+        "seed": 20260821,
+        "upper": 0.09085098912224485
+      },
+      "curve_smoothness": {
+        "confidence": 0.95,
+        "interval_excludes_zero": true,
+        "lower": -0.001949677355750652,
+        "mean": -0.0011293509954256498,
+        "n": 20,
+        "patients_negative": 19,
+        "patients_positive": 1,
+        "patients_zero": 0,
+        "replicates": 10000,
+        "seed": 20260821,
+        "upper": -0.0005108769331576696
+      },
+      "endpoint_resized_dice": {
+        "confidence": 0.95,
+        "interval_excludes_zero": false,
+        "lower": -0.0006349884051517825,
+        "mean": 0.00014406665381851423,
+        "n": 20,
+        "patients_negative": 7,
+        "patients_positive": 13,
+        "patients_zero": 0,
+        "replicates": 10000,
+        "seed": 20260821,
+        "upper": 0.000819259818983381
+      }
+    }
+  },
+  "input_and_geometry": {
+    "affine_mismatch_patients": [
+      "patient002",
+      "patient042",
+      "patient049",
+      "patient066",
+      "patient071",
+      "patient073"
+    ],
+    "cine_frames": 550,
+    "maximum_endpoint_normalized_mae": 0.0,
+    "maximum_historical_dice_reproduction_error": 0.00016910548567161676,
+    "pathology_group_counts": {
+      "DCM": 4,
+      "HCM": 1,
+      "MINF": 7,
+      "NOR": 6,
+      "RV": 2
+    },
+    "patients": 20
+  },
+  "pathology_groups_descriptive_only": {
+    "DCM": {
+      "annotated_ef_mae_percentage_points": 2.206771570706829,
+      "endpoint_resized_mean_dice": 0.8516854916059537,
+      "patients": 4
+    },
+    "HCM": {
+      "annotated_ef_mae_percentage_points": 3.247506147078454,
+      "endpoint_resized_mean_dice": 0.8662481078845906,
+      "patients": 1
+    },
+    "MINF": {
+      "annotated_ef_mae_percentage_points": 4.926056451542863,
+      "endpoint_resized_mean_dice": 0.8242033169695462,
+      "patients": 7
+    },
+    "NOR": {
+      "annotated_ef_mae_percentage_points": 2.393062191900217,
+      "endpoint_resized_mean_dice": 0.8755958085900258,
+      "patients": 6
+    },
+    "RV": {
+      "annotated_ef_mae_percentage_points": 2.8273580063393986,
+      "endpoint_resized_mean_dice": 0.8313950580622476,
+      "patients": 2
+    }
+  },
+  "result_commit": "dace079c0a3d4025aff36d159b0c732947516393",
+  "result_directory": "evidence/spatiotemporal_cine/raw",
+  "schema_version": 1,
+  "scientific_interpretation": [
+    "All 20 validation patients and all 550 cine frames passed structural and arithmetic checks.",
+    "The full-cine experiment is post-hoc temporal probability fusion over a spatial 3D checkpoint, not a learned temporal Mamba model.",
+    "The paired endpoint-Dice interval contains zero; no resolved accuracy improvement should be claimed for temporal fusion.",
+    "The paired EF-MAE interval contains zero; the observed reduction is descriptive rather than conclusive.",
+    "The paired curve-smoothness interval excludes zero and favors temporal fusion, but the metric is a segmentation-derived global trajectory measure.",
+    "Intermediate cine frames have no manual masks; motion surrogates are not optical flow, dense deformation, regional strain, or external clinical validation.",
+    "The same validation cohort was historically used for checkpoint selection, so this is not an independent test estimate."
+  ],
+  "source_lineage": {
+    "checked": true,
+    "independent_historical_endpoint_max_abs_dice_difference": 0.00016910548567161676,
+    "line_ending_match_modes": {
+      "cine_analysis": "raw",
+      "metrics": "raw",
+      "nano_mamba_core": "crlf",
+      "rigorous_pipeline": "crlf"
+    }
+  },
+  "status": "independent_audit_pass"
+}

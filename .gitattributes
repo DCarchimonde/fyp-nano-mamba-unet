@@ -36,3 +36,7 @@ evidence/rigorous_patient_split/run_transcript.txt -text
 evidence/rigorous_patient_split/RECOVERED_CLOSURE_SHA256SUMS.txt -text
 evidence/rigorous_patient_split/recovered_collector_audit_report.json -text
 evidence/rigorous_patient_split/posthoc_dataset_manifest.json -text
+
+# Preserve the supplied full-cine result bundle byte-for-byte so its embedded
+# artifact manifest remains valid after a fresh clone on every platform.
+evidence/spatiotemporal_cine/raw/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol

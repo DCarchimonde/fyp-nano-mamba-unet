@@ -33,16 +33,48 @@ viva answers.
   while it lies below zero versus No-Mamba and SegResNet16.
 - Six available 150-epoch logs and six checkpoint metadata/hash records agree
   with every selected epoch and mean Dice in the summary table.
+- A separate, completed full-cine run processed every one of the 550 phases from
+  the same 20 validation patients using the selected epoch-121 Nano-Mamba
+  checkpoint. This run did not retrain or alter the historical six-model result.
+- Complete-cine endpoint images match the historical standalone ED/ES inputs
+  after the executed normalization (maximum normalized MAE 0), and reproduced
+  endpoint Dice differs from the historical case table by at most 0.0001692.
+- The cine workflow restores predicted masks to the original array shape and
+  derives LV/RV/MYO volume curves, ED/ES timing, EDV, ESV, stroke volume, EF,
+  LV-centroid displacement, and a global MYO radial-distance surrogate.
+- Fixed circular probability fusion uses
+  `0.25 P(t-1) + 0.50 P(t) + 0.25 P(t+1)`; it is deterministic and contains no
+  learned temporal parameter.
+- Frame-wise and temporal-fusion resized endpoint Dice are 84.779% and 84.794%.
+  Their paired difference is +0.014 percentage points with a 95% bootstrap
+  interval of [-0.063, +0.082] percentage points, which includes zero.
+- Frame-wise and temporal-fusion annotated-phase EF MAE are 3.514 and 3.329
+  percentage points. The paired change is -0.185 points with interval
+  [-0.468, +0.091], which includes zero.
+- Temporal fusion reduced normalized LV-curve second difference by 0.001129;
+  the paired interval [-0.001950, -0.000511] excludes zero, and 19/20 patient
+  trajectories were smoother.
+- The full-cine raw artifacts, all 1,100 frame rows, all 40 patient rows, 23
+  figures, source/checkpoint hashes, and aggregate arithmetic pass a separate
+  independent audit implementation.
 
 ## Claims that must not be made
 
-- No temporal tracking, temporal registration, displacement, optical flow,
-  ejection fraction, or true 4D cine sequence was implemented or evaluated.
 - Depth must never be described as cardiac time.
-- No data augmentation, orientation standardization, spacing standardization,
-  native-resolution inverse transform, or mask post-processing was executed.
-  Dice is measured on the resized grid.
-- No ED-versus-ES or pathology-stratified result was reported.
+- The trained Nano-Mamba checkpoint must not be described as a learned temporal
+  Mamba model. It processes each 3D cardiac phase independently; only the
+  separate fixed probability fusion uses neighbouring phases.
+- The project must not be described as optical flow, deformable registration,
+  dense displacement, voxel correspondence, local myocardial strain, or a
+  clinically validated motion-tracking system.
+- Historical six-model Dice is measured on the resized grid. The full-cine
+  workflow does perform nearest-neighbour native-shape mask restoration and
+  reports the lower native-grid endpoint Dice; it does not retroactively make
+  the training comparison spacing-preserving or orientation-canonicalized.
+- Intermediate cine frames do not have manual masks. Smooth trajectories alone
+  must not be presented as proof of anatomically correct intermediate masks.
+- Diagnostic-group values are descriptive only because group sizes are 1--7;
+  no pathology-specific significance or generalization is established.
 - Nano-Mamba U-Net is not the best model by Dice in this experiment.
 - The ablation does not causally prove that Mamba-inspired gating improves or
   harms accuracy because capacity, normalization, and batch-size confounds
@@ -59,8 +91,11 @@ viva answers.
 
 ## Fixed-title viva defence
 
-The registered title remains unchanged. In the completed experiment,
-“spatio-temporal” describes the wider cardiac-motion motivation and intended
-research trajectory, not an achieved temporal model. The evaluated network is
-spatial 3D segmentation with independently processed ED/ES volumes. True 4D
-temporal modelling is stated as future work.
+The registered title remains unchanged. The completed framework has two stages:
+the trained network is spatial 3D segmentation with independently processed
+phases, while a separate post-hoc workflow applies that checkpoint to every
+frame of each validation cine and derives complete-cycle global function and
+motion trajectories. Thus, a full-cine segmentation-derived spatio-temporal
+analysis was achieved. What remains future work is learned temporal modeling,
+dense tissue correspondence, regional strain, and independent clinical
+validation.

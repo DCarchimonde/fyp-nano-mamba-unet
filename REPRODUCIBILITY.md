@@ -6,10 +6,11 @@ those checks from GPU/data-dependent inference or training.
 ## Full-cine spatio-temporal completion
 
 The historical ED/ES experiment remains unchanged. The separate full-cine
-analysis and its one-command Windows runner are documented in
-[`SPATIOTEMPORAL_ANALYSIS.md`](SPATIOTEMPORAL_ANALYSIS.md). Do not copy its
-metrics into the thesis until a complete 20-patient real-data bundle has been
-generated and audited.
+analysis completed for all 20 validation patients and 550 frames. Its raw
+artifacts, figures, and independent recomputation are under
+`evidence/spatiotemporal_cine/`; the method, exact results, and one-command
+Windows runner are documented in
+[`SPATIOTEMPORAL_ANALYSIS.md`](SPATIOTEMPORAL_ANALYSIS.md).
 
 ## 1. Data-free verification
 
@@ -18,6 +19,10 @@ From the repository root:
 ```bash
 python src/22_p2_evidence_audit.py \
   --output evidence/rigorous_patient_split/evidence_audit_report.json
+python src/25_spatiotemporal_result_audit.py \
+  --result-dir evidence/spatiotemporal_cine/raw \
+  --repo-root . \
+  --output evidence/spatiotemporal_cine/INDEPENDENT_AUDIT.json
 python -m unittest discover -s tests -v
 python -m py_compile \
   src/16_thesis_visualization.py \
@@ -25,16 +30,17 @@ python -m py_compile \
   src/22_p2_evidence_audit.py \
   src/23_spatiotemporal_cine_analysis.py \
   src/24_restore_missing_acdc_cine.py \
+  src/25_spatiotemporal_result_audit.py \
   src/cardiac_motion_metrics.py \
   src/nano_mamba_core.py
 ```
 
-Expected result: the aggregate-consistency audit passes; thirty-eight data-free
-audit, visualization, recovery, and cine-analysis tests pass; four
-PyTorch-dependent tests pass
-when PyTorch is installed and otherwise skip explicitly. This verifies the
-split, result arithmetic, case tables, curves, figure inputs, and core model
-behavior used by the thesis.
+Expected result: both scientific-consistency audits pass. The unit suite checks
+the split, result arithmetic, case tables, curves, full-cine bundle, source
+lineage, figure inputs, recovery guards, motion metrics, and core model
+behavior used by the thesis. PyTorch-dependent tests pass when PyTorch is
+installed and otherwise skip explicitly; the exact test count is reported in
+the final artifact manifest.
 
 The repository enforces LF for audited text through `.gitattributes`. The
 lineage validator also canonicalizes CRLF to LF for current source files, so a
@@ -85,17 +91,19 @@ Clean-build acceptance criteria:
 - no undefined citations or references;
 - no overfull boxes;
 - title exactly matches the registered title; and
-- all 73 pages visually inspected after rendering.
+- all 86 pages visually inspected after rendering.
 
 ## 4. Scientific scope of reproduction
 
 The retained case tables and epoch logs reproduce the main table,
 checkpoint-selection epochs, training curves, empty-class-rule impact,
-patient-level intervals, and paired differences. This supports the internal
-six-model comparison. It does not supply an independent test cohort, multiple
-training seeds, matched-capacity ablations, native-space evaluation, or true
-temporal modeling; those are scientific limitations rather than file-recovery
-tasks.
+patient-level intervals, and paired differences. The sealed full-cine evidence
+adds all 550 phases, native-grid endpoint masks, global volume/motion
+trajectories, EF and phase checks, diagnostic-group descriptions, and the
+paired fixed-fusion comparison. This supports the internal six-model and
+full-cine analyses. It does not supply an independent test cohort, multiple
+training seeds, matched-capacity ablations, learned temporal modeling, dense
+motion, regional strain, or external validation.
 
 To audit the current 200-case dataset without training:
 
@@ -118,4 +126,7 @@ SegResNet16 has the highest validation mean Dice. The No-Mamba ablation also
 exceeds Nano-Mamba U-Net. Nano-Mamba U-Net's defensible contribution is its
 compact accuracy--efficiency trade-off: 84.78% validation mean Dice with 1.456M
 reported parameters, not best-in-class Dice and not proof that its gated module
-causes an accuracy improvement.
+causes an accuracy improvement. The separate cine result supports complete
+segmentation-derived cardiac-cycle trajectories and smoother global LV curves
+from fixed temporal fusion. It does not support a resolved endpoint-Dice or EF
+advantage, learned temporal Mamba behavior, or dense tissue tracking.

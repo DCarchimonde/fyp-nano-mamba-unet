@@ -1,4 +1,12 @@
-# Full-Cine Spatio-Temporal Completion Workflow
+# Full-Cine Spatio-Temporal Analysis
+
+## Completion status
+
+The real-data run completed on 2026-08-22 from Git commit
+`dace079c0a3d4025aff36d159b0c732947516393`. It processed all 20 validation
+patients and all 550 cine frames on an NVIDIA RTX 4060 Laptop GPU. The sealed
+raw results and an independent recomputation are committed under
+`evidence/spatiotemporal_cine/`.
 
 ## Why this experiment is needed
 
@@ -75,8 +83,39 @@ D:\AI_FYP\experiment_outputs\spatiotemporal_cine_YYYYMMDD_HHMMSS\
 D:\AI_FYP\experiment_outputs\spatiotemporal_cine_YYYYMMDD_HHMMSS.zip
 ```
 
-Upload the ZIP for final scientific audit and integration into the thesis and
-defence deck.
+The successful ZIP `spatiotemporal_cine_20260822_011130.zip` was independently
+audited and integrated into the thesis and defence material. Its SHA-256 is
+`6d9a153a0414972a07157ff3783d0740c8311dc4dbebe4daf134538e18bc1ab1`.
+
+## Audited results
+
+| Quantity | Frame-wise | Temporal fusion |
+|---|---:|---:|
+| Resized-grid endpoint mean Dice | 84.779% | 84.794% |
+| Native-grid endpoint mean Dice | 77.919% | 77.923% |
+| Annotated-phase EF MAE | 3.514 pp | 3.329 pp |
+| Annotated-phase EF correlation | 0.9809 | 0.9803 |
+| ED exact / within one frame | 50% / 80% | 55% / 80% |
+| ES exact / within one frame | 55% / 85% | 55% / 85% |
+| Normalized LV-curve second difference | 0.03252 | 0.03139 |
+| Median peak LV-centroid displacement | 6.361 mm | 6.252 mm |
+| Mean MYO radial ED-minus-ES change | 4.250 mm | 4.153 mm |
+
+The paired temporal-fusion-minus-frame-wise endpoint-Dice interval is
+[-0.063, +0.082] percentage points and the EF-error interval is
+[-0.468, +0.091] percentage points; both include zero. The curve-smoothness
+change is -0.001129 with interval [-0.001950, -0.000511], and 19/20 curves are
+smoother. Therefore, claim smoother global trajectories, not a resolved Dice or
+EF improvement.
+
+Re-run the independent result audit with:
+
+```powershell
+python src\25_spatiotemporal_result_audit.py `
+  --result-dir evidence\spatiotemporal_cine\raw `
+  --repo-root . `
+  --output evidence\spatiotemporal_cine\INDEPENDENT_AUDIT.json
+```
 
 ## Fail-closed checks
 
@@ -105,9 +144,8 @@ voxel grid, image payload, or label alignment.
 
 ## Exact scientific boundary
 
-After a successful real-data run, the thesis can claim a full-cine,
-segmentation-derived spatio-temporal motion/function framework. It must still
-state that:
+The completed thesis can claim a full-cine, segmentation-derived
+spatio-temporal motion/function framework. It must still state that:
 
 - the checkpoint-compatible Nano-Mamba backbone is a spatial 3D network;
 - temporal context is introduced by fixed adjacent-frame probability fusion,

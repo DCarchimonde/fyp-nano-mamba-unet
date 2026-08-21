@@ -38,7 +38,34 @@ Avoid claiming that NanoMambaUNet is the best-performing model by Dice. Also avo
 The six per-case tables and six 150-epoch logs reproduce the aggregate values
 and selected checkpoint epochs. Post-hoc patient-bootstrap intervals and paired
 differences remain descriptive because the validation patients were also used
-for checkpoint selection and only one split/seed was trained. The central
-scientific gaps are independent testing, multi-seed training, matched-capacity
-ablations, native-space preprocessing, subgroup analysis, boundary metrics,
-and true temporal modeling--not reconstruction of historical shell logs.
+for checkpoint selection and only one split/seed was trained.
+
+## Full-cine extension
+
+The selected epoch-121 Nano-Mamba checkpoint was subsequently applied to all
+550 phases from the same 20 validation patients. Independent frame-wise
+inference was compared with fixed circular adjacent-frame softmax fusion
+(`0.25 / 0.50 / 0.25`). Both paths restore categorical masks to the native
+array shape before computing physical volumes from NIfTI header spacings.
+
+| Full-cine metric | Frame-wise | Fixed fusion |
+|---|---:|---:|
+| Resized endpoint Dice | 84.779% | 84.794% |
+| Native endpoint Dice | 77.919% | 77.923% |
+| Annotated-phase EF MAE | 3.514 pp | 3.329 pp |
+| EF Pearson correlation | 0.9809 | 0.9803 |
+| ED exact / within one phase | 50% / 80% | 55% / 80% |
+| ES exact / within one phase | 55% / 85% | 55% / 85% |
+| Normalized LV-curve second difference | 0.032521 | 0.031392 |
+
+The fixed fusion made the LV-volume curve smoother in 19/20 patients; the
+paired smoothness interval was entirely below zero. Its Dice and EF-error
+intervals crossed zero, so no endpoint-accuracy or EF-improvement claim is
+made. The completed motion outputs are global segmentation-derived LV-centroid
+and myocardial-radial trajectories, not optical flow, dense correspondence, or
+strain.
+
+The central remaining scientific gaps are independent testing, multi-seed
+training, matched-capacity ablations, geometry-aware training, intermediate
+manual cine labels, boundary metrics, learned temporal modeling, and dense
+motion/strain validation--not reconstruction of historical shell logs.

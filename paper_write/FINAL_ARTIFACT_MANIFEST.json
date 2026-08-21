@@ -1,43 +1,53 @@
 {
-  "schema_version": 4,
-  "audit_date": "2026-08-21",
+  "schema_version": 5,
+  "audit_date": "2026-08-22",
   "branch": "p2-final-audit-2026-08-20",
   "registered_title": "Nano-Mamba U-Net: A Spatio-Temporal Framework for Cardiac Motion Analysis",
   "scientific_scope": {
-    "executed_task": "Four-class 3D cardiac MRI segmentation of independently processed ED and ES volumes",
-    "input_tensor": "B x 1 x 256 x 256 x 16",
+    "stage_a": "Four-class spatial 3D cardiac MRI segmentation trained on independently labelled ED and ES volumes.",
+    "stage_b": "The frozen spatial checkpoint is applied to every phase of each validation cine, with independent frame-wise inference and a fixed adjacent-frame probability-fusion baseline. Native-grid masks support volume, phase, EF, smoothness, LV-centroid, and myocardial-radial trajectories.",
+    "input_tensor": "B x 1 x 256 x 256 x 16; the last axis is anatomical slice depth, not cardiac time",
     "bottleneck_tensor": "B x 128 x 32 x 32 x 2",
     "serialized_sequence": "B x 2048 x 128; 2048 = 32 x 32 x 2 spatial tokens",
-    "output_tensor": "B x 4 x 256 x 256 x 16 followed by argmax over the class axis",
-    "temporal_boundary": "The depth axis is anatomical slice depth. ED and ES are not jointly modelled; no tracking, registration, displacement, optical flow, temporal consistency, ejection fraction, or true 4D motion output was evaluated.",
-    "mamba_boundary": "The bottleneck is a Mamba-inspired gated spatial sequence module, not a full selective-scan Mamba implementation.",
-    "supported_claim": "Nano-Mamba provides a compact accuracy-efficiency trade-off. It is not the highest-Dice model and the executed ablations do not establish a causal gate advantage.",
+    "output_tensor": "B x 4 x 256 x 256 x 16 softmax/logit grid followed by class-axis argmax",
+    "temporal_operation": "Circular fixed fusion: 0.25 P(t-1) + 0.50 P(t) + 0.25 P(t+1), applied before argmax",
+    "motion_boundary": "Completed outputs are segmentation-derived global trajectories and functional indices. No learned temporal Mamba, registration, optical flow, dense deformation, tissue correspondence, regional strain, or external clinical validation is claimed.",
+    "mamba_boundary": "The bottleneck is a Mamba-inspired gated spatial sequence module, not the reference selective-scan Mamba implementation.",
+    "supported_claim": "Nano-Mamba provides a compact spatial accuracy-efficiency trade-off; the full-cine extension produces complete global trajectories, and fixed probability fusion makes the LV-volume curve smoother without establishing a resolved Dice or EF gain.",
     "boundary_file": "SCIENTIFIC_BOUNDARIES.md",
-    "boundary_file_sha256": "38f7f7e4efc117af5ab7d81343449a6ac8a5569268de8787a7dee2d25fff3da6"
+    "boundary_file_sha256": "3dabda0d2e7733a9d2aab5f1c199eaefefbe46558a236076946046fbb628bfd0",
+    "cine_protocol": "SPATIOTEMPORAL_ANALYSIS.md",
+    "cine_protocol_sha256": "65e51bb0c8aed62696dfa6c344d16a7dc8fb4afbdffb06cc138eed3349ba66ca"
   },
   "image_processing": {
-    "executed_order": [
-      "LoadImaged loads paired NIfTI image and integer label volumes",
-      "EnsureChannelFirstd maps H x W x D to 1 x H x W x D",
-      "Resized maps image and label to 256 x 256 x 16",
-      "ScaleIntensityd performs per-volume linear 0-1 MRI intensity scaling",
-      "ToTensord converts both arrays to tensors"
+    "stage_a_order": [
+      "Load paired NIfTI image and integer-label volumes",
+      "Add a channel axis",
+      "Resize image and label to 256 x 256 x 16",
+      "Use trilinear interpolation for MRI and nearest-neighbour for labels",
+      "Apply per-volume finite min-max MRI scaling to [0,1]",
+      "Convert arrays to tensors"
     ],
-    "interpolation": {
-      "image": "trilinear",
-      "label": "nearest-neighbour"
-    },
+    "stage_b_order": [
+      "Discover a four-dimensional NIfTI whose final dimension equals NbFrame in Info.cfg",
+      "Extract one X x Y x Z cardiac phase at a time",
+      "Apply the checkpoint-compatible resize and per-phase min-max scaling",
+      "Retain four-class softmax probabilities",
+      "Use frame-wise probabilities directly or apply fixed circular adjacent-frame fusion",
+      "Apply class-axis argmax",
+      "Restore the categorical mask to the original array shape with nearest-neighbour interpolation",
+      "Use NIfTI header spacings for physical volume and distance calculations"
+    ],
     "not_executed": [
-      "data augmentation",
-      "orientation canonicalization",
-      "physical voxel-spacing normalization",
-      "heart or foreground cropping",
-      "inverse resampling to native geometry",
-      "connected-component or other mask post-processing"
+      "training-time data augmentation",
+      "explicit orientation canonicalization or common-spacing resampling",
+      "heart/foreground cropping",
+      "connected-component or morphological mask cleanup",
+      "registration, optical flow, dense deformation, tissue correspondence, or strain"
     ],
-    "evaluation_grid": "All reported Dice values are measured on the resized 256 x 256 x 16 grid."
+    "evaluation_grids": "Historical endpoint Dice is measured on the resized 256 x 256 x 16 grid. The cine analysis additionally reports endpoint Dice after nearest-neighbour restoration to native array shape and derives scalar physical metrics from native header spacings."
   },
-  "experiment_design": {
+  "stage_a_experiment": {
     "dataset": "ACDC labelled training cohort",
     "patients": 100,
     "cases": 200,
@@ -52,21 +62,21 @@
     "models": 6,
     "epochs_per_model": 150,
     "checkpoint_rule": "Maximum validation mean foreground Dice",
-    "loss": "DiceCELoss(to_onehot_y=true, softmax=true); default training loss includes background",
-    "reported_metric": "Case-level Dice for RV, MYO, and LV, followed by model-level means over the 40 validation cases",
-    "training_confounders": [
-      "batch size differs across model families (1 or 2)",
-      "normalization implementations differ",
-      "optimizer-step counts per epoch differ with batch size",
-      "No-Mamba is not parameter matched to Nano-Mamba"
-    ],
+    "loss": "DiceCELoss(to_onehot_y=true, softmax=true); the default training loss includes background",
+    "reported_metric": "Case-level Dice for RV, MYO, and LV, followed by model-level means over 40 validation cases",
     "pipeline": "src/21_rigorous_experiment_pipeline.py",
     "pipeline_sha256": "64e9266eff9df9591a37730b46740bff5ba4c00473165e867ffa262ce1ce9361",
     "model_core": "src/nano_mamba_core.py",
-    "model_core_sha256": "00a8270c109e7747a45b9ac613e3d319d380b01222149461f6364ae783803b96"
+    "model_core_sha256": "00a8270c109e7747a45b9ac613e3d319d380b01222149461f6364ae783803b96",
+    "confounders": [
+      "batch size differs across model families",
+      "normalization implementations differ",
+      "optimizer-step counts differ with batch size",
+      "No-Mamba is not parameter matched to Nano-Mamba"
+    ]
   },
-  "evidence_consistency": {
-    "default_audit_status": "scientific consistency pass",
+  "stage_a_evidence": {
+    "status": "scientific consistency pass",
     "audit_script": "src/22_p2_evidence_audit.py",
     "audit_script_sha256": "1cca674bfd649eab364fb54d68996e81f8283f6018a8acc414a51b08db7f907e",
     "audit_report": "evidence/rigorous_patient_split/evidence_audit_report.json",
@@ -75,24 +85,16 @@
     "summary_csv_sha256": "db5d2109f5195ad0ae7ea82d970dd57edaa9767f3b9a915e038a412a0e9cce5a",
     "split_json": "evidence/rigorous_patient_split/patient_split_seed42.json",
     "split_json_sha256": "e79f1c238d73389900364ea32a92d954458e17e461e1c81a2e595ba653456280",
-    "per_case_csv_files": 6,
+    "per_case_files": 6,
     "per_case_rows": 240,
-    "foreground_class_scores_checked": 720,
+    "foreground_scores_checked": 720,
     "empty_empty_exact_unity_scores": 0,
-    "training_log_csv_files": 6,
+    "training_log_files": 6,
     "training_log_rows": 900,
     "checkpoint_records": 6,
-    "checks": [
-      "patient split is disjoint and covers the reported 200 cases",
-      "every aggregate Dice value is reproduced from case rows",
-      "all best epochs are reproduced from 150-epoch curves",
-      "checkpoint metadata agrees with model names and reported epochs",
-      "non-finite and out-of-range values are rejected",
-      "source-lineage comparison is CRLF-neutral but rejects content changes"
-    ],
-    "archival_history_note": "Optional historical command/environment identity is not a P2 submission requirement and is excluded from the scientific readiness decision."
+    "archival_note": "Historical command/environment attestation is optional forensics and is excluded from the P2 scientific readiness gate."
   },
-  "main_results": {
+  "stage_a_results": {
     "validation_mean_dice_percent": {
       "SegResNet16": 86.70,
       "Ablation_NoMamba_UNet": 85.64,
@@ -109,34 +111,97 @@
     },
     "nano_patient_bootstrap_95_ci": [0.8205, 0.8690],
     "paired_nano_minus_model_percentage_points": {
-      "UNet3D": {
-        "estimate": 3.945,
-        "ci95": [2.829, 5.009]
-      },
-      "SegResNet16": {
-        "estimate": -1.918,
-        "ci95": [-3.010, -0.884]
-      },
-      "Ablation_NoMamba_UNet": {
-        "estimate": -0.862,
-        "ci95": [-1.482, -0.230]
-      },
-      "Ablation_HalfMamba_UNet": {
-        "estimate": -0.174,
-        "ci95": [-0.909, 0.551]
-      }
+      "UNet3D": {"estimate": 3.945, "ci95": [2.829, 5.009]},
+      "SegResNet16": {"estimate": -1.918, "ci95": [-3.010, -0.884]},
+      "Ablation_NoMamba_UNet": {"estimate": -0.862, "ci95": [-1.482, -0.230]},
+      "Ablation_HalfMamba_UNet": {"estimate": -0.174, "ci95": [-0.909, 0.551]}
     },
-    "curve_interpretation": "All six training losses decline while final validation Dice is below the selected maximum; the largest decline is Attention U-Net at 3.05 percentage points, consistent with late-epoch overfitting or instability in that run.",
-    "shared_difficult_case": "patient049_frame11 is the lowest-mean case for Nano-Mamba, UNet3D, SegResNet16, No-Mamba, and Half-Mamba; Nano-Mamba mean Dice is 57.86% with RV 26.04%, MYO 64.87%, and LV 82.66%."
+    "shared_difficult_case": "patient049_frame11 is the lowest-mean case for Nano-Mamba and four other model families; Nano-Mamba mean Dice is 57.86% and RV Dice is 26.04%."
+  },
+  "stage_b_full_cine": {
+    "status": "complete validation analysis; independent audit pass",
+    "inference_result_commit": "dace079c0a3d4025aff36d159b0c732947516393",
+    "source_bundle_sha256": "6d9a153a0414972a07157ff3783d0740c8311dc4dbebe4daf134538e18bc1ab1",
+    "patients": 20,
+    "cine_frames": 550,
+    "methods": 2,
+    "frame_rows": 1100,
+    "patient_rows": 40,
+    "checkpoint": "NanoMambaUNet epoch 121",
+    "analysis_script": "src/23_spatiotemporal_cine_analysis.py",
+    "analysis_script_sha256": "3bfb1000f99cfdec6d4119a9dbcc1a4a55a2c80850547e4f48f21e8e8bfc635f",
+    "motion_metrics_script": "src/cardiac_motion_metrics.py",
+    "motion_metrics_script_sha256": "e6a0385a0c68477d806798493b6f7a69a88250d87a0f311c373febb931413478",
+    "independent_audit_script": "src/25_spatiotemporal_result_audit.py",
+    "independent_audit_script_sha256": "138c0e975c2855f3ff2425898676059c31ed7c791fcd31b2c8753fffb98d3b89",
+    "independent_audit_report": "evidence/spatiotemporal_cine/INDEPENDENT_AUDIT.json",
+    "independent_audit_report_sha256": "b2c9998e3f0f6fd996bb203afcd1abe9d7f52cad2baf7cf8e1e1b48742b5ce02",
+    "raw_artifact_manifest": "evidence/spatiotemporal_cine/raw/artifact_manifest.json",
+    "raw_artifact_manifest_sha256": "81cd8a07d8ed2e185c0b9435fd94e58453689ade9843bb20c64ca3103be65fef",
+    "input_manifest_sha256": "6ef9a7864a282f429d3374d97a4d0db0ae33c9e8d8892e41466586f350a6e0af",
+    "run_provenance_sha256": "8869b5603717996a32113ccb898beb5ebc4a439fa7be649fca2514010855d3b2",
+    "summary_sha256": "06955f232ced2cf2ae158b180e97bfc1f6312298279fbc231b07f9830a5a1e1b",
+    "frame_metrics_sha256": "eabfeea8b9ba3bc3984317c4a1ae6869ff44de2318192d346268a372e3be9163",
+    "patient_metrics_sha256": "56eb35367d23c01fcd18b4ba1bb2aa11ac23978996174f4d4aa7b5275002efda",
+    "artifact_integrity": {
+      "tracked_bundle_files": 29,
+      "png_figures": 23,
+      "all_hashes_and_dimensions_verified": true
+    },
+    "framewise": {
+      "endpoint_resized_dice_percent": 84.779,
+      "endpoint_native_dice_percent": 77.919,
+      "annotated_ef_mae_percentage_points": 3.514,
+      "annotated_ef_pearson_r": 0.980878,
+      "ed_exact_percent": 50,
+      "ed_within_one_percent": 80,
+      "es_exact_percent": 55,
+      "es_within_one_percent": 85,
+      "curve_smoothness": 0.0325213,
+      "median_peak_lv_centroid_displacement_mm": 6.3613,
+      "mean_myo_radial_ed_minus_es_change_mm": 4.25035
+    },
+    "temporal_fusion": {
+      "endpoint_resized_dice_percent": 84.794,
+      "endpoint_native_dice_percent": 77.923,
+      "annotated_ef_mae_percentage_points": 3.329,
+      "annotated_ef_pearson_r": 0.980318,
+      "ed_exact_percent": 55,
+      "ed_within_one_percent": 80,
+      "es_exact_percent": 55,
+      "es_within_one_percent": 85,
+      "curve_smoothness": 0.0313920,
+      "median_peak_lv_centroid_displacement_mm": 6.25195,
+      "mean_myo_radial_ed_minus_es_change_mm": 4.15313
+    },
+    "paired_fusion_minus_framewise": {
+      "resized_endpoint_dice_change_percentage_points": 0.0144,
+      "resized_endpoint_dice_ci95_percentage_points": [-0.0635, 0.0819],
+      "patients_with_higher_dice": 13,
+      "ef_absolute_error_change_percentage_points": -0.1853,
+      "ef_absolute_error_ci95_percentage_points": [-0.4678, 0.0909],
+      "patients_with_lower_ef_error": 11,
+      "curve_smoothness_change": -0.0011294,
+      "curve_smoothness_ci95": [-0.0019497, -0.0005109],
+      "patients_with_smoother_curves": 19
+    },
+    "outliers": {
+      "phase_timing": "patient016: ED error 5 phases and ES error 3 phases under fusion",
+      "ef_absolute_error": "patient057: 8.119 percentage points under fusion"
+    },
+    "geometry_note": "Six recovered official cines have 4D/endpoint affine metadata differences. Shape, zooms, endpoint pixel identity, and endpoint image-label affine agreement pass; scalar physical metrics use header spacings and no dense world-coordinate correspondence is claimed.",
+    "pathology_groups": "Descriptive only: MINF n=7, NOR n=6, DCM n=4, RV n=2, HCM n=1"
   },
   "open_scientific_limits": [
-    "validation patients select checkpoints and supply the final table; there is no independent test cohort",
-    "only one patient split and one seed are reported",
-    "no augmentation or native-space evaluation was performed",
-    "ablations are not capacity or optimization matched",
-    "ED versus ES and pathology subgroups were not analysed",
-    "HD95, ASD, calibration, and formal blinded qualitative review were not evaluated",
-    "the architecture does not implement temporal motion modelling"
+    "the validation cohort selected the checkpoint and supplies the final spatial and cine analyses; there is no independent test cohort",
+    "only one patient split and one training seed are reported",
+    "training used direct array resize without explicit orientation/common-spacing normalization or augmentation",
+    "ablations are not capacity, batch-size, normalization, or optimization matched",
+    "intermediate cine phases have no manual masks",
+    "fixed fusion is not a learned temporal network",
+    "HD95, ASD, calibration, and blinded qualitative review were not evaluated",
+    "global centroid/radial trajectories are not dense tissue tracking or regional strain",
+    "pathology summaries are descriptive because groups are small and imbalanced"
   ],
   "thesis": {
     "entry_point": "paper_write/Universiti_Malaya_Thesis_Template/thesis.tex",
@@ -144,57 +209,61 @@
     "bibliography": "paper_write/Universiti_Malaya_Thesis_Template/myrefs.bib",
     "bibliography_sha256": "79edb4432a8efc74da2f4177c237fcf09faef68637d4b03a5347fe2ba7271ba7",
     "pdf": "paper_write/Universiti_Malaya_Thesis_Template/thesis.pdf",
-    "pdf_sha256": "5a62f38da70922077e26ba1a79e2eafeb4a5161ea80ea09855a826c62895b24c",
-    "bytes": 774872,
-    "pages": 73,
+    "pdf_sha256": "797f112b5fe4ec2f716b53578b141cc564f7f9f31d0666a53f87e534df63aec9",
+    "bytes": 1550181,
+    "pages": 86,
     "page_size": "A4 (595.276 x 841.89 pt)",
     "pdf_version": "1.5",
     "build_command": "bash scripts/build_thesis.sh",
     "build_script_sha256": "507a02c7f1e07cb72ee3ac28ce238846a1a9275991822fabd76e36c5f64e2793",
     "acceptance_checks": [
-      "build exit status 0",
-      "final LaTeX pass has no undefined citations or references",
-      "final LaTeX pass has no overfull boxes",
-      "all 73 pages rendered and visually reviewed"
+      "clean build exit status 0",
+      "no undefined citations or references",
+      "no missing figures",
+      "no overfull boxes",
+      "all 86 pages rendered and visually reviewed"
     ]
   },
   "word_count": {
     "record": "paper_write/WORD_COUNT.md",
-    "record_sha256": "aedf249d3dc5a292f0819af09261de04956b6ac0fb647570faaeb27d4319873c",
+    "record_sha256": "9d427e123ca07f9c04d7fa146c0a92003c4b4f5bae85145cfb76f53ee99904bc",
     "method": "detex over the five active body-chapter sources, then wc -w",
-    "active_body_words": 12411,
+    "active_body_words": 14968,
     "scope": "Excludes abstracts, front matter, references, and inactive legacy files."
   },
   "presentation": {
     "deck": "presentation/P2_Final_Defense_Tong_Siyuan.pptx",
-    "deck_sha256": "e02f00cbff35bb9e1f64bf3bda833038d5769ce5cf7c3c88376f57ca66cb7719",
-    "bytes": 364256,
-    "slides": 13,
+    "deck_sha256": "033f21c99f508ec2a65498d996a9a7d0c699fc78c7dc03b60b5c2f565a388188",
+    "bytes": 405311,
+    "slides": 14,
     "target_duration_minutes": 15,
+    "speaker_notes": "14/14 slides; each contains a source block",
     "viva_bank": "presentation/P2_VIVA_QA.md",
-    "viva_bank_sha256": "f4d9b6111943cda387af6234f91a73fc5070b1fcbfb5f94a9313ba5ac0f995a3",
+    "viva_questions": 60,
+    "viva_bank_sha256": "eed9021bc03f139e8f19201b22c8ea7bdbe06b3ccf03935c8dc819c96092a606",
     "method_cheatsheet": "presentation/P2_DEFENSE_METHOD_CHEATSHEET.md",
-    "method_cheatsheet_sha256": "4abdda7e52cf1f978409142821a4ad55225ce1403cb38d59f563631b24661feb",
+    "method_cheatsheet_sha256": "1d15d591c52f051242c4aaa6f978b199182cb2637897b8949a8dab7c5f75f8cb",
     "qa": [
-      "all 13 slides rendered and reviewed",
+      "all 14 slides rendered and visually reviewed",
       "layout overflow test passed",
       "template-fidelity test passed with zero issues",
-      "method, preprocessing, temporal boundary, limitations, and result interpretation are explicitly covered"
+      "no unresolved placeholder records",
+      "spatial method, exact image processing, full-cine method, functional metrics, motion boundary, failures, and limitations are explicitly covered"
     ]
   },
   "final_audit": {
     "file": "paper_write/P2_FINAL_AUDIT.md",
-    "sha256": "15f72231f09cf66df1e113f77addfc3574e9e463562a062a096e04952340b643",
-    "disposition": "Scientifically and defensively ready for P2 submission with all open design limitations stated. Stronger generalization, causal, native-space, or temporal claims require new experiments."
+    "sha256": "8ed80b0df8e082733d2ba65722aff102cfdafaa5c9b3fab40caa13ed9a9dee34",
+    "disposition": "Scientifically and defensively ready for P2 submission within the bounded spatial-segmentation plus full-cine global-function/motion scope."
   },
   "verification": {
-    "unit_tests_container": "20 run: 17 passed and 3 PyTorch architecture tests skipped because PyTorch is unavailable in the audit container",
-    "unit_tests_candidate_windows": "20 passed in the candidate's nanomamba environment",
-    "scientific_evidence_audit": "pass",
-    "pdf_visual_review": "all 73 pages reviewed",
-    "presentation_visual_review": "all 13 slides reviewed",
+    "unit_tests_container": "45 discovered: 41 passed and four PyTorch-dependent tests skipped because PyTorch is unavailable in the audit container",
+    "spatial_scientific_evidence_audit": "pass",
+    "full_cine_independent_audit": "pass",
+    "pdf_visual_review": "all 86 pages reviewed",
+    "presentation_visual_review": "all 14 slides reviewed",
     "presentation_overflow_test": "pass",
-    "presentation_template_fidelity": "pass"
+    "presentation_template_fidelity": "pass with zero issues"
   },
   "tool_versions": {
     "python": "3.12.13",
