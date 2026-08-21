@@ -4,7 +4,8 @@ param(
     [string]$DataDir = "",
     [string]$ExperimentOutput = "",
     [string]$OutputRoot = "",
-    [int]$BatchSize = 1
+    [int]$BatchSize = 1,
+    [switch]$RepairMissingCine
 )
 
 $ErrorActionPreference = "Stop"
@@ -55,6 +56,18 @@ if ($LASTEXITCODE -ne 0) {
 python -c "import torch, sys; sys.exit(0 if torch.cuda.is_available() else 2)"
 if ($LASTEXITCODE -ne 0) {
     throw "CUDA is required for the final 20-patient cine run, but it is unavailable. Activate the nanomamba environment."
+}
+
+if ($RepairMissingCine) {
+    Write-Host ""
+    Write-Host "=== Recover and verify missing ACDC full-cine files ==="
+    python "src\24_restore_missing_acdc_cine.py" `
+        --project-root $ProjectRoot `
+        --data-dir $DataDir `
+        --allow-download
+    if ($LASTEXITCODE -ne 0) {
+        throw "ACDC cine recovery failed. No inference was started."
+    }
 }
 
 Write-Host ""

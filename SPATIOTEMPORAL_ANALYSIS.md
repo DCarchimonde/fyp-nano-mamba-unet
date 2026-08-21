@@ -44,12 +44,25 @@ Activate the existing `nanomamba` environment, switch to
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\run_spatiotemporal_cine_analysis.ps1 `
-  -ProjectRoot D:\AI_FYP
+  -ProjectRoot D:\AI_FYP `
+  -RepairMissingCine
 ```
 
 The script uses CUDA, batch size 1, the existing Nano-Mamba checkpoint, the
 audited validation split, and the complete local ACDC dataset. It does not
 train any network. Progress is printed patient by patient.
+
+`-RepairMissingCine` first searches the local ACDC tree for a misplaced cine.
+For the six cines found missing during the 2026-08-21 Windows preflight, it can
+download only the required files (91.6 MiB total) from the public
+`msepulvedagodoy/acdc` mirror pinned at revision
+`067262d5b40f9c976f7139c13416ace5a3314f42`. Each download has a fixed byte
+count and SHA-256, and it is installed only after its ED and ES image content,
+affine, spatial shape, and `NbFrame` agree with the existing local patient
+files. The source and checks are written to a recovery manifest under
+`experiment_outputs`. A byte-identical fallback mirror is also pinned for
+transient repository failures. A full official ACDC archive remains an
+alternative.
 
 On success it creates a timestamped directory and ZIP under
 `D:\AI_FYP\experiment_outputs`, for example:
