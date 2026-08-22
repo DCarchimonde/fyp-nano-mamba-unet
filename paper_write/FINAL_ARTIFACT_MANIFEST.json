@@ -1,5 +1,5 @@
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "audit_date": "2026-08-22",
   "branch": "p2-final-audit-2026-08-20",
   "registered_title": "Nano-Mamba U-Net: A Spatio-Temporal Framework for Cardiac Motion Analysis",
@@ -12,10 +12,12 @@
     "output_tensor": "B x 4 x 256 x 256 x 16 softmax/logit grid followed by class-axis argmax",
     "temporal_operation": "Circular fixed fusion: 0.25 P(t-1) + 0.50 P(t) + 0.25 P(t+1), applied before argmax",
     "motion_boundary": "Completed outputs are segmentation-derived global trajectories and functional indices. No learned temporal Mamba, registration, optical flow, dense deformation, tissue correspondence, regional strain, or external clinical validation is claimed.",
-    "mamba_boundary": "The bottleneck is a Mamba-inspired gated spatial sequence module, not the reference selective-scan Mamba implementation.",
+    "mamba_boundary": "The bottleneck uses kernel-3 depthwise local mixing and a token-wise scalar gate on a fixed raster sequence. It has no recurrent state propagation, selective scan, self-attention, or direct global all-token interaction and is not the reference Mamba/VSS implementation.",
+    "ablation_definitions": "The historical No-Mamba model is a zero-Mamba convolutional-bottleneck control. The historical Half-Mamba model uses the same type of gated block at 64 rather than 128 channels; Half refers only to that block width.",
+    "lightweight_definition": "Lowest reported trainable-parameter count together with competitive recorded batch-one throughput; no claim of leadership in every accuracy, speed, or peak-memory metric.",
     "supported_claim": "Nano-Mamba provides a compact spatial accuracy-efficiency trade-off; the full-cine extension produces complete global trajectories, and fixed probability fusion makes the LV-volume curve smoother without establishing a resolved Dice or EF gain.",
     "boundary_file": "SCIENTIFIC_BOUNDARIES.md",
-    "boundary_file_sha256": "e1194004504cfc24ad7e1ba3a46b29a877b8a74c34492e527d2d338e3b19ac69",
+    "boundary_file_sha256": "a18de88d309f982a8c98c5629d3c9de25b9adea686bab2276f5d4368a82d5094",
     "cine_protocol": "SPATIOTEMPORAL_ANALYSIS.md",
     "cine_protocol_sha256": "218db035318a9a3378de8b37732bd40f9503e898d247f719fc622135924a421d"
   },
@@ -72,7 +74,7 @@
       "batch size differs across model families",
       "normalization implementations differ",
       "optimizer-step counts differ with batch size",
-      "No-Mamba is not parameter matched to Nano-Mamba"
+      "the zero-Mamba convolutional control and 64-channel gated ablation are not parameter matched to Nano-Mamba"
     ],
     "normalization_batch_contract": {
       "UNet3D": "InstanceNorm, batch size 2",
@@ -203,6 +205,16 @@
     "probability_precision_note": "AMP was disabled; logits and softmax were float32; frame-wise argmax was preserved before the probability maps were stored as float16 and converted back to float32 for fixed fusion arithmetic.",
     "native_grid_note": "Nearest-neighbour restoration uses the original X/Y/Z shape with no axis permutation. The 6.861 percentage-point frame-wise resized/native difference is not attributed solely to Z anisotropy; resampling in all axes, boundary discretization, heterogeneous native geometry, and model error can contribute.",
     "pathology_groups": "Descriptive only: MINF n=7, NOR n=6, DCM n=4, RV n=2, HCM n=1"
+    ,
+    "presentation_replot": {
+      "script": "scripts/regenerate_spatiotemporal_display_figure.py",
+      "script_sha256": "73b1adaabf4a15e34af96f27d65dadcb58cc56af9a60bb2fe7a887ddaa67b848",
+      "figure": "figures/spatiotemporal/population_lv_motion_curve.png",
+      "figure_sha256": "9a3902e0e46f777db8eb47b516e625733ded6c51d7dddc1d8409d3c9c553dfaf",
+      "provenance": "figures/spatiotemporal/population_lv_motion_curve_provenance.json",
+      "provenance_sha256": "1cce328fb2213698892379a243722fe788c0c9814ac880dd65219edad78d5f7e",
+      "scope": "Display-only two-method replot from sealed frame_metrics.csv and patient_metrics.csv; raw audited bundle unchanged."
+    }
   },
   "open_scientific_limits": [
     "the validation cohort selected the checkpoint and supplies the final spatial and cine analyses; there is no independent test cohort",
@@ -234,45 +246,50 @@
   },
   "thesis": {
     "entry_point": "paper_write/Universiti_Malaya_Thesis_Template/thesis.tex",
-    "entry_point_sha256": "c18eba1a31c585550225ad582361ab21c224e428f222c3b9829882fa2adc7cca",
-    "bibliography": "paper_write/Universiti_Malaya_Thesis_Template/myrefs.bib",
-    "bibliography_sha256": "79edb4432a8efc74da2f4177c237fcf09faef68637d4b03a5347fe2ba7271ba7",
+    "entry_point_sha256": "52c97c8b95a10a915d254e6cb4cbf24a209652b7450fb1e08ff7d7926fa7a03f",
+    "bibliography_metadata": "paper_write/Universiti_Malaya_Thesis_Template/myrefs.bib",
+    "bibliography_metadata_sha256": "061846e7976455bb171871cf9caf9f37f1e17c025cc48a50aa4b033d619865bd",
+    "active_apa_reference_list": "paper_write/Universiti_Malaya_Thesis_Template/references-apa7.tex",
+    "active_apa_reference_list_sha256": "b464f6689b62cacc4087df9e4990f3fb564d43614872345b025d692b7c15d7d5",
+    "active_references": 32,
     "pdf": "paper_write/Universiti_Malaya_Thesis_Template/thesis.pdf",
-    "pdf_sha256": "49332abbc53da3d388a81762a4a29d23b38b5fee7b66bf5fb9bb37154cc003c1",
-    "bytes": 1556014,
-    "pages": 88,
+    "pdf_sha256": "0f8325eaa3db9d58978ca6d63068116a514a70cfa020ce448f5b21d7a3fe0b5b",
+    "bytes": 1613792,
+    "pages": 94,
     "page_size": "A4 (595.276 x 841.89 pt)",
     "pdf_version": "1.5",
     "build_command": "bash scripts/build_thesis.sh",
-    "build_script_sha256": "87a72eadc065218e74f6472573fd2e37624b04027c76f5d38df0012e43c90a0d",
+    "build_script_sha256": "72edab95922e3c817fe43552830163754cf59dcf3c84f7e5f72a604ca12664f9",
     "acceptance_checks": [
       "clean build exit status 0",
       "no undefined citations or references",
       "no missing figures",
       "no overfull boxes",
       "cross-references stable after four LaTeX passes",
-      "all 88 pages rendered and visually reviewed"
+      "all 94 pages rendered and visually reviewed, including the final reference page"
     ]
   },
   "word_count": {
     "record": "paper_write/WORD_COUNT.md",
-    "record_sha256": "3d6da960bf4438119c82747cf747ec89d0a4872f9dd7c76e2579f288cb118190",
+    "record_sha256": "2d49a74a40b86073dc69279cf66464078b4b72e97de34a9972fc8f49f061bd13",
     "method": "detex over the five active body-chapter sources, then wc -w",
-    "active_body_words": 15595,
-    "scope": "Excludes abstracts, front matter, references, and inactive legacy files."
+    "active_body_words": 16262,
+    "english_abstract_words": 463,
+    "malay_abstract_words": 446,
+    "scope": "Body count excludes abstracts, front matter, references, and inactive legacy files; each abstract is below 500 words."
   },
   "presentation": {
     "deck": "presentation/P2_Final_Defense_Tong_Siyuan.pptx",
-    "deck_sha256": "033f21c99f508ec2a65498d996a9a7d0c699fc78c7dc03b60b5c2f565a388188",
-    "bytes": 405311,
+    "deck_sha256": "06b1fa6bdb4ee4732a86fcf1c7396bc25b40f8069d3bc75f9ff4e0a5de09b913",
+    "bytes": 464254,
     "slides": 14,
     "target_duration_minutes": 15,
     "speaker_notes": "14/14 slides; each contains a source block",
     "viva_bank": "presentation/P2_VIVA_QA.md",
-    "viva_questions": 65,
-    "viva_bank_sha256": "a9b389fb504ab438564db47cf9550c060576643c94d47c18a507f26e5a377a09",
+    "viva_questions": 68,
+    "viva_bank_sha256": "ccc50e759ac236f60dbfc295cbf2cd34a87644ae458fcb3f63bc8b8453db7bbd",
     "method_cheatsheet": "presentation/P2_DEFENSE_METHOD_CHEATSHEET.md",
-    "method_cheatsheet_sha256": "b21ba4095cc45e265f3f9a5fea4354ebc39bc39c7a556ee1d1549652fbf3e3af",
+    "method_cheatsheet_sha256": "d0e0351259ba6c08c6837845b234cbd36809f2c3ce73facf3cb7ba6aedd9caea",
     "qa": [
       "all 14 slides rendered and visually reviewed",
       "layout overflow test passed",
@@ -283,14 +300,14 @@
   },
   "final_audit": {
     "file": "paper_write/P2_FINAL_AUDIT.md",
-    "sha256": "593cf28271f6d00cdcca90eaa010d2ee6347faf511bd4b3703bcd1c5bc30b25d",
+    "sha256": "8ef6c37a4136e40348045dd86ecd976a63c62cab16af577fcb121b6635285706",
     "disposition": "Scientifically and defensively ready for P2 submission within the bounded spatial-segmentation plus full-cine global-function/motion scope."
   },
   "verification": {
     "unit_tests_container": "55 discovered: 48 passed and seven PyTorch/MONAI-dependent tests skipped explicitly because those packages are unavailable in the audit container",
     "spatial_scientific_evidence_audit": "pass",
     "full_cine_independent_audit": "pass",
-    "pdf_visual_review": "all 88 pages reviewed, including full-size checks of every corrected equation, normalization table, limitations, and references",
+    "pdf_visual_review": "all 94 pages reviewed, including full-size checks of abstracts, acronym list, corrected equations, normalization table, results, limitations, and final reference page",
     "presentation_visual_review": "all 14 slides reviewed",
     "presentation_overflow_test": "pass",
     "presentation_template_fidelity": "pass with zero issues"
@@ -298,7 +315,7 @@
   "tool_versions": {
     "python": "3.12.13",
     "pdftex": "3.141592653-2.6-1.40.25 (TeX Live 2023/Debian)",
-    "bibtex": "0.99d (TeX Live 2023/Debian)",
+    "makeglossaries": "4.53",
     "pdfinfo": "26.05.0",
     "node": "24.19.0",
     "artifact_tool": "2.8.43"

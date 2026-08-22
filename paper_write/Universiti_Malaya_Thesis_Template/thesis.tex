@@ -1,6 +1,6 @@
 %% thesis.tex
 %% Distributed with umalayathesis v1.5.3 (7 January 2023)
-\documentclass[english,singlespacedlisttitles,noglossaries]{umalayathesis}
+\documentclass[english,singlespacedlisttitles,custombib]{umalayathesis}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -19,6 +19,8 @@
 % xurl allows line breaks throughout long evidence and publisher URLs.
 \usepackage{xurl}
 \usepackage{float}
+\usepackage[round,authoryear]{natbib}
+\loadglsentries{myacronyms}
 
 % Useful for including code listings
 \usepackage{listings}
@@ -115,7 +117,8 @@
 \tableofcontents\clearpage
 \listoffigures\clearpage
 \listoftables\clearpage
-% \listofacronyms\clearpage
+\glsaddall[types=\acronymtype]
+\listofacronyms\clearpage
 % \listofappendices\clearpage
 }
 
@@ -128,7 +131,9 @@
 \input{sample-chap-conclusion.tex}
 
 % The submission bibliography contains only cited entries checked during the P2 audit.
-\bibliography{myrefs}
+% It is formatted explicitly so that APA-style output does not depend on whether
+% a particular TeX installation happens to include apacite.
+\input{references-apa7}
 
 % \begin{appendices}
 % \input{sample-appen-manual}

@@ -47,6 +47,14 @@
 9. 解码器输出 `B×4×256×256×16` logits；`argmax(dim=1)` 得到类别 `0/1/2/3`。
 10. RV、MYO、LV Dice 在 resized grid 上计算；40 个 validation cases 汇总为主表。
 
+### 三个自定义 bottleneck 必须分清
+
+- **Nano-Mamba（128-channel gate）**：`DoubleConv(64,128) → 128-channel Mamba-inspired block`。
+- **卷积控制组（历史名 No-Mamba）**：`DoubleConv(64,128) → DoubleConv(128,128)`；它含 **零个** Mamba 或 Mamba-inspired 操作，不是另一种 Mamba。
+- **64-channel Mamba ablation（历史名 Half-Mamba）**：`DoubleConv(64,64) → 64-channel Mamba-inspired block → DoubleConv(64,128)`；“Half”只指 gate channel width 是 128 的一半，不是半个模型。
+
+Mamba-inspired block 只在固定 raster sequence 上做 kernel-3 depthwise local mixing 和 token-wise scalar gating；没有 state recurrence、selective scan、self-attention 或 direct global all-token interaction。它比 VM-UNet、Mamba-UNet、LightM-UNet、U-Mamba、SegMamba 中的 VSS/SSM 组件简单得多。
+
 ## Stage B：完整 full-cine 分析
 
 1. 对 patient-level validation split 中的 20 人读取 `Info.cfg`：`NbFrame`、ED、ES、诊断组。
@@ -129,7 +137,8 @@ S=\frac{\operatorname{mean}_t|\widehat V_{t+1}-2\widehat V_t+\widehat V_{t-1}|}
 ### 空间分割
 
 - SegResNet16：**86.70%**，最高 validation mean Dice。
-- No-Mamba：**85.64%**，比 Nano 高 **0.862 pp**，但参数更多且结构/批大小混杂。
+- 卷积控制组（历史名 No-Mamba，零 Mamba）：**85.64%**，比 Nano 高 **0.862 pp**，但参数更多且 bottleneck 结构不同。
+- 64-channel Mamba ablation（历史名 Half-Mamba）：**84.95%**；比 Nano 高 **0.174 pp**，但 paired CI 跨 0，排序未解决。
 - Nano-Mamba：**84.78%**，**1.456M** reported parameters，最小模型。
 - UNet3D：**80.83%**，**4.809M**；Nano 相比它 **+3.945 pp**，参数少 **69.714%**。
 
@@ -195,6 +204,18 @@ reference EF 由 manual ED/ES masks 计算；predicted EF 在同一 annotated ph
 **为什么 fusion 没提高 Dice 还保留？**
 
 因为预设问题不只是 endpoint accuracy。它在 19/20 病人上降低 global curve second-difference，形成透明的 temporal regularization baseline；同时负结果被完整报告。
+
+**No-Mamba 不是也属于 Mamba 系列吗？**
+
+不是。`No-Mamba` 只是历史实验文件名，它的 bottleneck 是两段 `DoubleConv`，没有任何 gate、selective scan 或 Mamba-inspired operation。保留它是为了回答“去掉 gate 后怎样”，而不是把它当成另一种 Mamba。它比 Nano 高 0.862 pp，因此不能声称 gate 提高 Dice；但它参数多 57.1% 且结构不匹配，也不能反过来断言 gate 有害。
+
+**为什么论文不把 Peak VRAM 放在主表？**
+
+“lightweight”在本论文中由最小 trainable-parameter count 加上同一台机器上的 competitive batch-one FPS 支撑。历史训练 batch size 并不相同，Peak VRAM 还依赖 activation、kernel 和测量协议，直接排成名次容易产生不公平解释。因此不把它作为主结论是合理的，但不能声称 Nano 的 Peak VRAM 最低或在所有资源指标上领先。
+
+**和真正的 Mamba/时空工作有什么区别？**
+
+VM-UNet、Mamba-UNet、LightM-UNet、U-Mamba、SegMamba 使用明确的 VSS/SSM 组件；本项目的 block 是更简单的 local gated sequence mixing。Qin 等人的方法联合学习 segmentation/motion，Yan 等人使用 optical flow；本项目只用固定 circular probability fusion，并报告 global mask-derived trajectories，不输出 deformation field、correspondence 或 strain。
 
 **batch size 1 会不会让 BatchNorm 失效？**
 

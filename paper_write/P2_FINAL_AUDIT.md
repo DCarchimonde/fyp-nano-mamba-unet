@@ -34,7 +34,7 @@ tensor shapes, spatial-versus-temporal boundary, full-cine fusion, native-grid
 restoration, physical-volume calculation, phase detection, EF, global motion
 surrogates, validation strategy, failure cases, and limitations. The previous
 defense risk--being unable to explain temporal analysis or image processing--is
-covered directly in the thesis, 14-slide deck, speaker notes, 65-question viva
+covered directly in the thesis, 14-slide deck, speaker notes, 68-question viva
 bank, and bilingual method cheat sheet.
 
 ## Stage A: spatial segmentation experiment
@@ -71,15 +71,18 @@ bank, and bilingual method cheat sheet.
 | Model | Mean Dice | Parameters | Defensible reading |
 |---|---:|---:|---|
 | SegResNet16 | 86.70% | 4.701M | Accuracy leader |
-| No-Mamba | 85.64% | 2.288M | Higher Dice than Nano; not capacity matched |
-| Half-Mamba | 84.95% | 1.638M | Close to Nano on this split |
+| Conv. control (historical No-Mamba) | 85.64% | 2.288M | Zero Mamba operations; higher Dice than Nano; not capacity matched |
+| 64-channel Mamba ablation (historical Half-Mamba) | 84.95% | 1.638M | Close to Nano; paired ordering unresolved |
 | Nano-Mamba | 84.78% | 1.456M | Smallest; competitive accuracy--efficiency point |
 | 3D U-Net | 80.83% | 4.809M | Nano is +3.945 pp and 69.714% smaller |
 | Attention U-Net | 74.78% | 5.909M | Weakest executed configuration; not a general verdict on attention |
 
-The correct conclusion is an accuracy--efficiency trade-off. Nano-Mamba is not
-the highest-Dice model, and the unbalanced ablations do not isolate a causal
-benefit from the Mamba-inspired gate.
+The correct conclusion is a lightweight accuracy--efficiency trade-off.
+Nano-Mamba is not the highest-Dice model, and the unbalanced ablations do not
+isolate a causal benefit from the Mamba-inspired gate. The historical
+No-Mamba label denotes a purely convolutional control with zero Mamba
+operations; “Half-Mamba” denotes only a 64-channel version of the gated
+bottleneck, not half of the whole network.
 
 ## Stage B: completed full-cine analysis
 
@@ -153,7 +156,7 @@ and retained evidence. Its full evidence and disposition are recorded in
 
 | High-risk item | Final verdict |
 |---|---|
-| Set/loss/operator glyph corruption | Active formulas rewritten with portable bold/plain symbols and semantic operators; verified in the clean 88-page PDF |
+| Set/loss/operator glyph corruption | Active formulas rewritten with portable bold/plain symbols and semantic operators; verified in the clean 94-page PDF |
 | Attention equation scope | Scaled score is explicitly parenthesized inside softmax and multiplied by `V` afterward |
 | Batch size 1 with normalization | Attention U-Net used BatchNorm3d and completed 150 epochs; SegResNet16 used GroupNorm; cross-model confounding is explicit |
 | Circular fusion at first/last frame | Correct modulo indexing; both boundaries now have dedicated regression tests |
@@ -181,9 +184,9 @@ precision-independent improvements.
 | P1 | Intermediate phases have no manual masks | Contour correctness between ED/ES is not directly validated | Anatomical Dice is restricted to annotated endpoints; curve/phase metrics are labelled as surrogates |
 | P1 | Fusion is fixed post-hoc averaging over a spatial checkpoint | Cannot prove learned temporal reasoning | Exact formula disclosed; contribution called a transparent baseline |
 | P1 | Direct resize; no orientation/spacing normalization or augmentation | Geometry/robustness limitations | Resized and native endpoint Dice both reported; physical calculations use native header spacings |
-| P1 | Ablations differ in capacity, batch size, and normalization | Cannot isolate the gate's causal effect | Results framed as executed-system comparison; No-Mamba negative result retained |
+| P1 | Ablations differ in capacity and bottleneck structure | Cannot isolate the gate's causal effect | Results framed as executed-system comparison; zero-Mamba control and 64-channel ablation retained with exact definitions |
 | P1 | No external cohort, HD95/ASD, calibration, or blinded visual review | Generalization/boundary quality incomplete | Explicit limitations and future work |
-| P2 | Simplified block is not reference selective-scan Mamba | Terminology can be overstated | Called Mamba-inspired; exact operations and spatial-token scope documented |
+| P2 | Simplified block is not reference selective-scan Mamba | Terminology can be overstated | Called Mamba-inspired; kernel-3 local mixing, scalar gate, raster boundary, and lack of state recurrence/global interaction documented |
 | P2 | Pathology groups are small and imbalanced (n=1--7) | Subgroup significance invalid | Reported descriptively only; no pathology-level inference |
 
 ## Defense coverage map
@@ -204,10 +207,10 @@ precision-independent improvements.
 
 | Deliverable/check | Final status |
 |---|---|
-| Thesis | 88-page A4 PDF; clean four-pass build; all pages rendered and reviewed |
+| Thesis | 94-page A4 PDF; clean four-pass build; all pages rendered and reviewed |
 | Presentation | 14 slides; all rendered/reviewed; no overflow; template-fidelity pass |
 | Speaker notes | Present on all 14 slides; each contains a source block |
-| Viva preparation | 65 questions plus bilingual method cheat sheet |
+| Viva preparation | 68 questions plus bilingual method cheat sheet |
 | Automated tests | 55 discovered; 48 passed and seven PyTorch/MONAI-dependent tests skipped explicitly in the audit container |
 | Candidate PyTorch environment | Earlier architecture and evidence tests passed; final full suite should also be run after pull |
 | Spatial evidence audit | Scientific consistency PASS |

@@ -222,7 +222,7 @@ After three pooling stages, the feature tensor is `B x 128 x 32 x 32 x 2`. The s
 
 ### 48. Is this a full Mamba implementation?
 
-No. It is a Mamba-inspired gated spatial sequence block with input projection, depthwise 1D mixing, a sigmoid gate, output projection, residual addition, and normalization. It does not implement the reference selective scan or hardware-aware Mamba algorithm.
+No. It is a Mamba-inspired gated spatial sequence block with input projection, kernel-3 depthwise 1D mixing, a token-wise scalar sigmoid gate, output projection, residual addition, and normalization. It has no recurrent state-space propagation, selective scan, self-attention, or direct global all-token interaction. The fixed raster ordering also creates artificial adjacencies at row and slice boundaries. It therefore implements local gated sequence mixing, not the reference hardware-aware Mamba algorithm.
 
 ### 49. How was patient leakage prevented?
 
@@ -246,15 +246,15 @@ No. The models shared split, preprocessing, epoch budget, main optimizer setting
 
 ### 54. Which model was most accurate?
 
-SegResNet16 at 86.70% validation mean Dice. No-Mamba reached 85.64%; Nano-Mamba reached 84.78%. Nano-Mamba is therefore not the accuracy winner.
+SegResNet16 at 86.70% validation mean Dice. The zero-Mamba convolutional control reached 85.64%; the 64-channel Mamba ablation reached 84.95%; and Nano-Mamba reached 84.78%. Nano-Mamba is therefore not the accuracy winner.
 
 ### 55. Why can you not claim the sequence gate improves accuracy?
 
-No-Mamba scored 0.862 percentage points higher than Nano-Mamba. It also had 57.076% more reported parameters and structural confounds, so the result neither supports a gate advantage nor cleanly proves the gate is harmful. A parameter-matched, multi-seed ablation is needed.
+The historical name “No-Mamba” can be misleading: this control contains zero Mamba or Mamba-inspired operations. Its bottleneck is `DoubleConv(64,128)` followed by `DoubleConv(128,128)`, whereas Nano uses `DoubleConv(64,128)` followed by the 128-channel gated block. The convolutional control scored 0.862 percentage points higher than Nano and had 57.076% more reported parameters. Because capacity and bottleneck structure differ, this is negative evidence against claiming a Dice gain from the gate, but it does not cleanly prove that gating is harmful. A parameter-matched, multi-seed ablation is needed.
 
 ### 56. What is Nano-Mamba's defensible advantage?
 
-Its compact accuracy-efficiency operating point: 84.78% validation Dice with 1.456 million reported parameters. Versus UNet3D it gains 3.945 percentage points while using 69.714% fewer parameters.
+Its lightweight accuracy-efficiency operating point: 84.78% validation Dice with the smallest reported trainable-parameter count, 1.456 million, and competitive recorded batch-one throughput. Versus UNet3D it gains 3.945 percentage points while using 69.714% fewer parameters. This does not claim best Dice, fastest FPS, or lowest peak VRAM simultaneously.
 
 ### 57. Why is the smallest model not necessarily the fastest?
 
@@ -297,6 +297,18 @@ No evidence of that was found for the reported scalar metrics. The pipeline veri
 ### 65. Was temporal fusion performed entirely at float32 precision?
 
 No. The sealed run computed logits and softmax in float32 with AMP disabled and preserved the frame-wise argmax, then stored the probability maps as float16 on CPU. Each neighbour map was converted back to float32 for the weighted fusion. Therefore I report the executed pipeline and do not claim that its tiny Dice or EF differences are precision-independent; the supported result is the smoother global LV curve.
+
+### 66. What exactly does “Half-Mamba” mean, and what did it show?
+
+It is the historical name of the 64-channel Mamba-bottleneck ablation. Its bottleneck is `DoubleConv(64,64)`, the same type of Mamba-inspired block at 64 channels, then `DoubleConv(64,128)`. “Half” refers only to the gated block width relative to Nano's 128 channels, not half of the whole network. It obtained 84.95% Dice versus Nano's 84.78%, but the paired Nano-minus-ablation interval `[-0.91,+0.55]` percentage points crosses zero, so this small ordering is unresolved.
+
+### 67. Why do you call the model lightweight without presenting peak VRAM as a headline metric?
+
+The thesis defines lightweight operationally from the lowest trainable-parameter count plus competitive batch-one throughput on the recorded hardware. Parameter count is architecture-linked, while FPS is a disclosed hardware-specific measurement. Peak VRAM would be strongly affected by the historical batch-size-one versus batch-size-two configurations, activation shapes, kernels, and measurement protocol, so omitting it avoids an unfair headline comparison. I make no claim that Nano has the lowest peak memory or dominates every efficiency metric.
+
+### 68. How does your block differ from related Mamba segmentation work?
+
+VM-UNet, Mamba-UNet, LightM-UNet, U-Mamba, and SegMamba use explicit Visual State Space or state-space components. My block is much simpler: local kernel-3 sequence convolution and scalar gating on rasterized bottleneck tokens, with no selective scan or state recurrence. For temporal cardiac analysis, Qin et al. jointly estimated segmentation and motion and Yan et al. used optical flow; my full-cine stage instead uses a fixed circular probability filter and reports only global mask-derived trajectories. Those comparisons define the novelty and its boundary rather than implying equivalence.
 
 ## Evidence pointers
 

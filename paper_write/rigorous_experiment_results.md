@@ -20,14 +20,22 @@ These results were produced with `src/21_rigorous_experiment_pipeline.py` using 
 |---|---:|---:|---:|---:|---:|---:|
 | UNet3D | 80.83 | 78.35 | 74.57 | 89.59 | 4.81 | 88.17 |
 | NanoMambaUNet | 84.78 | 82.11 | 80.35 | 91.88 | 1.46 | 29.09 |
-| Ablation_NoMamba_UNet | 85.64 | 83.26 | 81.30 | 92.37 | 2.29 | 28.80 |
-| Ablation_HalfMamba_UNet | 84.95 | 82.41 | 80.46 | 91.99 | 1.64 | 29.04 |
+| Conv. control (historical `Ablation_NoMamba_UNet`) | 85.64 | 83.26 | 81.30 | 92.37 | 2.29 | 28.80 |
+| 64-ch Mamba ablation (historical `Ablation_HalfMamba_UNet`) | 84.95 | 82.41 | 80.46 | 91.99 | 1.64 | 29.04 |
 | AttentionUNet | 74.78 | 69.43 | 72.38 | 82.53 | 5.91 | 22.41 |
 | SegResNet16 | 86.70 | 84.30 | 82.76 | 93.03 | 4.70 | 25.50 |
 
 ## Interpretation for thesis writing
 
 The rigorous validation results show that SegResNet16 achieved the highest mean Dice score. NanoMambaUNet did not achieve the highest absolute Dice score, but it achieved a competitive mean Dice of 84.78% with 1.456M reported parameters. Compared with UNet3D, NanoMambaUNet improved mean Dice by 3.945 percentage points while using 69.714% fewer reported parameters. Compared with SegResNet16, NanoMambaUNet used 69.021% fewer reported parameters but had 1.918 percentage points lower mean Dice.
+
+The historical No-Mamba control contains zero Mamba operations: its bottleneck
+is two convolutional blocks. The historical Half-Mamba ablation uses the same
+type of Mamba-inspired block at 64 rather than 128 channels; “Half” does not
+describe half of the complete network. The control's higher Dice prevents a
+claim that the present gate improves accuracy, while its 57.1% larger parameter
+count and different bottleneck prevent a clean causal claim that the gate is
+harmful. The 64-channel ablation's paired ordering against Nano is unresolved.
 
 The safest thesis claim is therefore:
 

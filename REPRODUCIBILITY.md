@@ -73,6 +73,18 @@ This writes four PNG files and `quantitative_figure_provenance.json`. Three
 figures read the audited summary CSV; the fourth reads the six recovered
 150-epoch logs. The manifest binds every source and output to SHA-256 hashes.
 
+Regenerate the two-method population cine display figure without changing the
+sealed raw result bundle:
+
+```bash
+python scripts/regenerate_spatiotemporal_display_figure.py --repo-root .
+```
+
+The script reads only the sealed frame and patient CSVs, plots both methods and
+their paired phase-wise difference, writes the thesis and convenience copies,
+and records source/output hashes in
+`figures/spatiotemporal/population_lv_motion_curve_provenance.json`.
+
 Qualitative inference is deliberately optional and fail-closed. It requires an
 explicit rigorous checkpoint, audited split, ACDC path, validation patient, and
 frame. Training patients and patients absent from the validation split are
@@ -84,13 +96,14 @@ rejected.
 bash scripts/build_thesis.sh
 ```
 
-The script builds in a fresh temporary directory, rejects undefined
-citations/references and overfull boxes, and copies the accepted PDF to the
-canonical `thesis.pdf` path. The repository includes a minimal
-`bahasam.ldf` fallback and conditional font/bibliography fallbacks for small TeX
-Live installations. A full submission installation should include Babel
-language support, New TX fonts, Inconsolata, `apacite`, `multibib`, and
-`tracklang`, which retain the UM template's preferred formatting.
+The script builds in a fresh temporary directory, regenerates the symbols and
+abbreviations list, rejects undefined citations/references and overfull boxes,
+and copies the accepted PDF to the canonical `thesis.pdf` path. The repository
+includes a minimal `bahasam.ldf` fallback and an explicitly curated APA-style
+reference list, so bibliography appearance does not silently change when
+`apacite` is absent. A full submission installation should still include Babel
+language support, New TX fonts, Inconsolata, `multibib`, and `tracklang` for the
+UM template's preferred typography.
 
 Before producing a signed private submission copy, copy
 `submission-private.example.tex` to the ignored `submission-private.tex` and
@@ -104,7 +117,8 @@ Clean-build acceptance criteria:
 - no undefined citations or references;
 - no overfull boxes;
 - title exactly matches the registered title; and
-- all 88 pages visually inspected after rendering.
+- every page visually inspected after rendering (the exact final count is
+  recorded in `paper_write/FINAL_ARTIFACT_MANIFEST.json`).
 
 ## 4. Scientific scope of reproduction
 
@@ -135,8 +149,9 @@ P2 submission gate and is not needed for the viva.
 
 ## 5. Main result interpretation
 
-SegResNet16 has the highest validation mean Dice. The No-Mamba ablation also
-exceeds Nano-Mamba U-Net. Nano-Mamba U-Net's defensible contribution is its
+SegResNet16 has the highest validation mean Dice. The zero-Mamba
+convolutional-bottleneck control (historical label: No-Mamba) also exceeds
+Nano-Mamba U-Net. Nano-Mamba U-Net's defensible contribution is its
 compact accuracy--efficiency trade-off: 84.78% validation mean Dice with 1.456M
 reported parameters, not best-in-class Dice and not proof that its gated module
 causes an accuracy improvement. The separate cine result supports complete

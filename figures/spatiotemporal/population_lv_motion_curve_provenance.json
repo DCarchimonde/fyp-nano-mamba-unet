@@ -1,0 +1,39 @@
+{
+  "difference_panel_band": "patient 2.5th to 97.5th percentiles at each normalized phase",
+  "methods": [
+    "framewise",
+    "temporal_fusion"
+  ],
+  "normalization": "reference-ED alignment; method-specific patient maximum; periodic interpolation to 101 points",
+  "output_sha256": "9a3902e0e46f777db8eb47b516e625733ded6c51d7dddc1d8409d3c9c553dfaf",
+  "patient_ids": [
+    "patient002",
+    "patient010",
+    "patient011",
+    "patient016",
+    "patient038",
+    "patient042",
+    "patient043",
+    "patient046",
+    "patient049",
+    "patient051",
+    "patient056",
+    "patient057",
+    "patient066",
+    "patient071",
+    "patient073",
+    "patient074",
+    "patient077",
+    "patient079",
+    "patient092",
+    "patient093"
+  ],
+  "patients": 20,
+  "schema_version": 1,
+  "sources": {
+    "frame_metrics.csv": "eabfeea8b9ba3bc3984317c4a1ae6869ff44de2318192d346268a372e3be9163",
+    "patient_metrics.csv": "56eb35367d23c01fcd18b4ba1bb2aa11ac23978996174f4d4aa7b5275002efda"
+  },
+  "status": "display_figure_regenerated_from_sealed_evidence",
+  "top_panel_band": "mean plus/minus one between-patient standard deviation"
+}

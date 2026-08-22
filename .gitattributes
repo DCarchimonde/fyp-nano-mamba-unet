@@ -36,6 +36,10 @@ evidence/rigorous_patient_split/run_transcript.txt -text
 evidence/rigorous_patient_split/RECOVERED_CLOSURE_SHA256SUMS.txt -text
 evidence/rigorous_patient_split/recovered_collector_audit_report.json -text
 evidence/rigorous_patient_split/posthoc_dataset_manifest.json -text
+evidence/rigorous_patient_split/data_discovery_report.json -text
+evidence/rigorous_patient_split/patient_split_seed42.json -text
+evidence/rigorous_patient_split/summary_metrics.csv -text
+evidence/rigorous_patient_split/summary_metrics.json -text
 
 # Preserve the supplied full-cine result bundle byte-for-byte so its embedded
 # artifact manifest remains valid after a fresh clone on every platform.

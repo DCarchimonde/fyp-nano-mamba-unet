@@ -16,8 +16,11 @@ viva answers.
   is nearest-neighbour.
 - The Nano-Mamba bottleneck receives `B x 128 x 32 x 32 x 2`, flattens the
   spatial grid to 2,048 tokens, and returns it to the decoder.
-- The bottleneck is a lightweight Mamba-inspired gated sequence module. It is
-  not the original Mamba selective scan or a full state-space implementation.
+- The bottleneck is a lightweight Mamba-inspired gated sequence module. Its
+  kernel-3 depthwise convolution mixes only neighbouring positions in the
+  fixed raster sequence, followed by a token-wise scalar gate. It has no
+  recurrent state propagation, selective scan, self-attention, or direct
+  all-token interaction and is not a full state-space implementation.
 - Main values come only from the rigorous patient-split pipeline and audited
   summary CSV.
 - SegResNet16 achieved the highest validation mean Dice (86.70%).
@@ -27,12 +30,19 @@ viva answers.
   not trainable parameters.
 - Nano-Mamba U-Net exceeded UNet3D by 3.945 percentage points and used 69.714%
   fewer reported parameters.
-- The No-Mamba ablation achieved 85.64%, 0.862 percentage points above
-  Nano-Mamba, with 57.076% more reported parameters.
+- The zero-Mamba convolutional-bottleneck control (historical experiment name:
+  `Ablation_NoMamba_UNet`) contains no Mamba or Mamba-inspired operation. It
+  achieved 85.64%, 0.862 percentage points above Nano-Mamba, with 57.076% more
+  reported parameters.
+- The 64-channel Mamba-bottleneck ablation (historical experiment name:
+  `Ablation_HalfMamba_UNet`) uses the same type of Mamba-inspired block at 64
+  channels. “Half” describes that block width relative to Nano's 128 channels,
+  not half of the network. Its paired ordering against Nano is unresolved.
 - Audited per-case rows support a post-hoc paired patient-bootstrap interval
   of [+2.829, +5.009] percentage points for Nano-Mamba minus UNet3D.
-- The corresponding interval crosses zero for Nano-Mamba versus Half-Mamba,
-  while it lies below zero versus No-Mamba and SegResNet16.
+- The corresponding interval crosses zero for Nano-Mamba versus the 64-channel
+  ablation, while it lies below zero versus the zero-Mamba convolutional
+  control and SegResNet16.
 - Six available 150-epoch logs and six checkpoint metadata/hash records agree
   with every selected epoch and mean Dice in the summary table.
 - A separate, completed full-cine run processed every one of the 550 phases from
@@ -100,6 +110,12 @@ viva answers.
   performance, or external generalization. No p-values are claimed.
 - Reported FPS is not a universal architecture property; it is an
   environment-specific batch-one random-input benchmark.
+- Peak VRAM was not retained as a principal comparison metric because the
+  historical configurations used different batch sizes and model-specific
+  normalization. No claim of peak-memory superiority is made. In this thesis,
+  “lightweight” is operationally supported by the lowest trainable-parameter
+  count together with competitive recorded batch-one throughput, not by
+  leadership in every resource metric.
 - The legacy gate projection contains trainable channels without an output path;
   published parameter counts include those channels.
 - The very small fixed-fusion Dice/EF differences must not be presented as

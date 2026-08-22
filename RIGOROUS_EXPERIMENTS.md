@@ -93,6 +93,14 @@ contains all 150 finite epochs, so batch size one did not create an execution
 failure. The mixture remains a comparison confound and prevents a causal claim
 that architecture alone caused the ranking.
 
+The historical label `Ablation_NoMamba_UNet` denotes a zero-Mamba
+convolutional control: `DoubleConv(64,128)` followed by
+`DoubleConv(128,128)`. `Ablation_HalfMamba_UNet` denotes a 64-channel version
+of the Mamba-inspired bottleneck followed by expansion to 128 channels; “Half”
+refers only to that block width. These architectures are retained as executed
+evidence, but they are not parameter matched and therefore cannot establish a
+causal accuracy effect for the gate.
+
 The historical entry point sets seed 42 for Python, NumPy, PyTorch CPU, and all
 CUDA devices, enables deterministic CuDNN behavior, disables CuDNN benchmarking,
 and uses zero DataLoader workers. It did not enable PyTorch's global

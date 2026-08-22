@@ -12,7 +12,7 @@ export TEXMFVAR="$p2_texmf_var"
 export TEXMFCONFIG="$p2_texmf_config"
 export TEXMFHOME="$p2_texmf_home"
 
-for p2_command in pdflatex bibtex pdfinfo sha256sum rg; do
+for p2_command in pdflatex makeglossaries pdfinfo sha256sum rg; do
   command -v "$p2_command" >/dev/null 2>&1 || {
     echo "Required command is unavailable: $p2_command" >&2
     exit 1
@@ -29,7 +29,7 @@ pdflatex \
 
 (
   cd "$p2_build_dir"
-  BIBINPUTS="$p2_source_dir:" bibtex thesis >bibtex.log
+  makeglossaries thesis >makeglossaries.log
 )
 
 for p2_pass in 2 3 4; do

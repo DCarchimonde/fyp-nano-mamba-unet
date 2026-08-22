@@ -15,8 +15,12 @@ from Git commit `dace079c0a3d4025aff36d159b0c732947516393` on an NVIDIA RTX
   artifact hashes, source lineage, cohort coverage, segmentation arithmetic,
   physical volumes, EF, phase detection, curve smoothness, motion surrogates,
   pathology summaries, and patient-level bootstrap intervals.
-- `figures/` contains exact copies of the five figures selected for thesis and
-  defense use. The copies are convenience views; `raw/` is authoritative.
+- `figures/` contains five figures selected for thesis and defense use. Four
+  remain exact convenience copies of the sealed run. The population LV figure
+  is a presentation-only two-method replot generated from the sealed frame and
+  patient CSVs by `scripts/regenerate_spatiotemporal_display_figure.py`; its
+  source hashes and plotting contract are recorded beside the thesis copy.
+  `raw/` remains authoritative and is never rewritten by that script.
 
 Run the independent audit from the repository root:
 

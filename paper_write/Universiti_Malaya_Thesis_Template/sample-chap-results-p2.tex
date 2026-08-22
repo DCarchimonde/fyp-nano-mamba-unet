@@ -11,9 +11,9 @@ This chapter reports the empirical results obtained from the revised patient-lev
 The objective of this chapter is descriptive rather than argumentative. It reports what the experiment shows before Chapter 7 interprets the implications. This separation is important because the final results are more nuanced than a simple claim of superiority. Nano-Mamba U-Net is not the highest-Dice model in the final experiment. Its value lies in the combination of competitive segmentation performance and the smallest parameter count among the evaluated models.
 
 \section{Experimental Setting}
-All models were trained and evaluated using the same deterministic preprocessing and validation protocol. The input volumes were resized to $256 \times 256 \times 16$, intensity-scaled to $[0,1]$ per volume, and converted to PyTorch tensors using MONAI transforms \cite{cardoso2022monai}. Images used trilinear interpolation, labels used nearest-neighbour interpolation, and no data augmentation or mask post-processing was applied. The evaluated anatomical classes were the Right Ventricle (RV), Myocardium (MYO), and Left Ventricle (LV). The primary segmentation metric was the Dice Similarity Coefficient (DSC), computed on the resized grid.
+All models were trained and evaluated using the same deterministic preprocessing and validation protocol. The input volumes were resized to $256 \times 256 \times 16$, intensity-scaled to $[0,1]$ per volume, and converted to PyTorch tensors using MONAI transforms \citep{cardoso2022monai}. Images used trilinear interpolation, labels used nearest-neighbour interpolation, and no data augmentation or mask post-processing was applied. The evaluated anatomical classes were the Right Ventricle (RV), Myocardium (MYO), and Left Ventricle (LV). The primary segmentation metric was the Dice Similarity Coefficient (DSC), computed on the resized grid.
 
-The comparison included a standard 3D U-Net baseline, Attention U-Net, SegResNet16, the proposed Nano-Mamba U-Net, and two ablation variants. SegResNet16 refers to the configuration with \texttt{init\_filters=16}, which was the version successfully trained under the final patient-level validation protocol. Therefore, the parameter count reported in this chapter is 4.70M for SegResNet16, not the larger 18.80M configuration explored in earlier standalone benchmarking scripts.
+The comparison included a standard 3D U-Net baseline, Attention U-Net, SegResNet16, the proposed Nano-Mamba U-Net, a zero-Mamba convolutional-bottleneck control, and a 64-channel Mamba-bottleneck ablation. SegResNet16 refers to the configuration with \texttt{init\_filters=16}, which was the version successfully trained under the final patient-level validation protocol. Therefore, the parameter count reported in this chapter is 4.70M for SegResNet16, not the larger 18.80M configuration explored in earlier standalone benchmarking scripts.
 
 For all models, the validation mean Dice was computed as the average of the three foreground classes:
 \begin{equation}
@@ -37,8 +37,8 @@ Table \ref{tab:final_results} presents the final held-out validation performance
 Attention U-Net & 69.43 & 72.38 & 82.53 & 74.78 & [65.37, 82.44] & 5.91 & 22.41 \\
 SegResNet16 & \textbf{84.30} & \textbf{82.76} & \textbf{93.03} & \textbf{86.70} & [84.26, 88.55] & 4.70 & 25.50 \\
 \hline
-Ablation: No Mamba & 83.26 & 81.30 & 92.37 & 85.64 & [83.08, 87.64] & 2.29 & 28.80 \\
-Ablation: Half Mamba & 82.41 & 80.46 & 91.99 & 84.95 & [81.85, 87.21] & 1.64 & 29.04 \\
+Conv. control (No-Mamba) & 83.26 & 81.30 & 92.37 & 85.64 & [83.08, 87.64] & 2.29 & 28.80 \\
+64-ch Mamba ablation (Half) & 82.41 & 80.46 & 91.99 & 84.95 & [81.85, 87.21] & 1.64 & 29.04 \\
 \hline
 Nano-Mamba U-Net & 82.11 & 80.35 & 91.88 & 84.78 & [82.05, 86.90] & \textbf{1.46} & 29.09 \\
 \hline
@@ -58,6 +58,7 @@ Table \ref{tab:paired_bootstrap} reports paired patient-level differences. Posit
 \caption{Post-hoc paired patient-level Nano-Mamba mean-DSC differences.}
 \label{tab:paired_bootstrap}
 \centering
+\resizebox{\textwidth}{!}{
 \begin{tabular}{l | r | c}
 \hline
 \textbf{Reference model} & \textbf{Nano minus reference (pp)} & \textbf{95\% bootstrap CI (pp)}\\
@@ -65,10 +66,11 @@ Table \ref{tab:paired_bootstrap} reports paired patient-level differences. Posit
 3D U-Net Baseline & +3.95 & [+2.83, +5.01] \\
 Attention U-Net & +10.00 & [+3.51, +18.29] \\
 SegResNet16 & -1.92 & [-3.01, -0.88] \\
-Ablation: No Mamba & -0.86 & [-1.48, -0.23] \\
-Ablation: Half Mamba & -0.17 & [-0.91, +0.55] \\
+Conv. control (No-Mamba) & -0.86 & [-1.48, -0.23] \\
+64-ch Mamba ablation (Half) & -0.17 & [-0.91, +0.55] \\
 \hline
 \end{tabular}
+}
 \end{table}
 
 \section{Accuracy-Efficiency Visualization}
@@ -99,9 +101,9 @@ Attention U-Net achieved the lowest mean DSC among the evaluated models, at 74.7
 
 SegResNet16 achieved the highest mean DSC, with the best RV, MYO, and LV scores. This suggests that residual convolutional modeling remains very strong for this dataset. Since SegResNet16 outperformed Nano-Mamba U-Net by 1.92 percentage points, the thesis must not describe Nano-Mamba U-Net as the best model by Dice. Instead, SegResNet16 should be acknowledged as the accuracy leader in the final experiment.
 
-The No-Mamba ablation achieved 85.64\% mean DSC, which is 0.86 percentage points higher than Nano-Mamba U-Net. The paired post-hoc interval for Nano minus No-Mamba is $[-1.48,-0.23]$ percentage points. This is an important negative result because it prevents over-claiming the Mamba-inspired module. The No-Mamba design is not parameter matched and uses 2.29M parameters compared with Nano-Mamba's 1.46M, so the comparison does not isolate sequence gating as the cause of the difference. It shows only that the executed No-Mamba architecture obtained higher Dice on this selected split while Nano-Mamba retained the smaller reported parameter count.
+The convolutional-bottleneck control (No-Mamba) achieved 85.64\% mean DSC, which is 0.86 percentage points higher than Nano-Mamba U-Net. Despite its historical name, this control contains no Mamba or Mamba-inspired operation. The paired post-hoc interval for Nano minus the control is $[-1.48,-0.23]$ percentage points. This is important negative evidence against claiming that adding the present gated block increases Dice. The control is not parameter matched and uses 2.29M parameters compared with Nano-Mamba's 1.46M, so the comparison does not isolate sequence gating as the cause of the difference. It shows only that the executed convolutional-control architecture obtained higher Dice on this selected split while Nano-Mamba retained 36.3\% fewer parameters and essentially the same recorded FPS.
 
-The Half-Mamba variant achieved 84.95\% mean DSC, 0.17 percentage points above Nano-Mamba U-Net. The paired interval for Nano minus Half-Mamba is $[-0.91,+0.55]$ percentage points and crosses zero, so the available case-level evidence does not resolve this small ordering reliably. A matched-capacity, multi-seed experiment would be required to study bottleneck size more reliably.
+The 64-channel Mamba-bottleneck ablation (Half-Mamba) achieved 84.95\% mean DSC, 0.17 percentage points above Nano-Mamba U-Net. ``Half'' describes the Mamba-inspired block's channel width, not half of the entire model. The paired interval for Nano minus this ablation is $[-0.91,+0.55]$ percentage points and crosses zero, so the available case-level evidence does not resolve this small ordering reliably. A matched-capacity, multi-seed experiment would be required to study bottleneck size more reliably.
 
 \section{Class-Specific Performance}
 Across most models, LV segmentation achieved the highest Dice score, while MYO segmentation was generally more difficult. This pattern is consistent with the anatomical properties of cardiac MRI: the LV cavity is usually more clearly defined, whereas the myocardium is a thinner ring-like structure affected by papillary muscles, partial volume effects, and boundary ambiguity.
@@ -115,12 +117,12 @@ This difference is clinically plausible because the myocardium is more difficult
 \begin{figure}[hbt!]
     \centering
     \includegraphics[width=0.90\textwidth]{class_specific_dice_scores.png}
-    \caption{Class-specific held-out validation Dice scores generated directly from the audited summary CSV. Nano-Mamba U-Net improves over the evaluated 3D U-Net baseline, while SegResNet16 achieves the strongest scores.}
+    \caption{Class-specific held-out validation Dice for four representative models selected to show the basic 3D U-Net baseline, Nano-Mamba U-Net, its convolutional-bottleneck control, and the highest-Dice SegResNet16 model. The complete six-model comparison remains in Table~\ref{tab:final_results}.}
     \label{fig:dsc_bar_chart}
 \end{figure}
 
 \section{Checkpoint Selection Evidence}
-The experiment logs contain 150 contiguous epoch rows for every model. For each log, the maximum recorded validation mean DSC occurs at exactly the best epoch in the aggregate table: epochs 105, 121, 134, 149, 62, and 112 for 3D U-Net, Nano-Mamba, No-Mamba, Half-Mamba, Attention U-Net, and SegResNet16, respectively. Figure \ref{fig:training_curves} therefore shows the recorded raw validation traces rather than hand-entered points.
+The experiment logs contain 150 contiguous epoch rows for every model. For each log, the maximum recorded validation mean DSC occurs at exactly the best epoch in the aggregate table: epochs 105, 121, 134, 149, 62, and 112 for 3D U-Net, Nano-Mamba, the convolutional control (No-Mamba), the 64-channel ablation (Half-Mamba), Attention U-Net, and SegResNet16, respectively. Figure \ref{fig:training_curves} therefore shows the recorded raw validation traces rather than hand-entered points.
 
 \begin{figure}[hbt!]
     \centering
@@ -131,7 +133,7 @@ The experiment logs contain 150 contiguous epoch rows for every model. For each 
 
 The learning curves also show why validation-based checkpoint selection was necessary. By epoch 150, the validation score was 0.29 percentage points below the selected maximum for both Nano-Mamba and 3D U-Net, 0.43 points lower for SegResNet16, 0.56--0.62 points lower for the two ablations, and 3.05 points lower for Attention U-Net. Training loss nevertheless continued to decrease for all six models. The larger Attention U-Net gap is the clearest sign of late-epoch overfitting or instability in the recorded runs; it does not imply that attention mechanisms are generally inferior.
 
-The per-case tables identify a shared difficult case. \texttt{patient049\_frame11} is the lowest-mean-Dice case for Nano-Mamba, 3D U-Net, SegResNet16, No-Mamba, and Half-Mamba. Nano-Mamba obtains 57.86\% mean DSC on this case, driven mainly by low RV Dice of 26.04\%. Attention U-Net's worst case is \texttt{patient042\_frame16}, at 16.38\% mean DSC. Because no pathology label or visual overlay is used in this analysis, these numerical failures should not be assigned an anatomical cause without inspecting the corresponding validation images.
+The per-case tables identify a shared difficult case. \texttt{patient049\_frame11} is the lowest-mean-Dice case for Nano-Mamba, 3D U-Net, SegResNet16, the convolutional control, and the 64-channel ablation. Nano-Mamba obtains 57.86\% mean DSC on this case, driven mainly by low RV Dice of 26.04\%. Attention U-Net's worst case is \texttt{patient042\_frame16}, at 16.38\% mean DSC. Because no pathology label or visual overlay is used in this analysis, these numerical failures should not be assigned an anatomical cause without inspecting the corresponding validation images.
 
 \section{Full-Cine Spatio-Temporal Results}
 \subsection{Coverage and endpoint consistency}
@@ -160,12 +162,12 @@ Normalized LV-curve second difference & 0.03252 & 0.03139 & -0.001129 & [-0.0019
 
 Temporal fusion increased resized-grid endpoint Dice for 13 of 20 patients and decreased it for seven. Its paired Dice interval includes zero, so the observed increase of 0.014 percentage points is not a resolved accuracy improvement. EF absolute error decreased for 11 patients and increased for nine; this paired interval also includes zero. In contrast, the normalized LV-curve second difference decreased for 19 of 20 patients, and its paired interval is entirely below zero. The supported conclusion is therefore narrow but positive: fixed adjacent-frame fusion made the segmentation-derived LV trajectories consistently smoother on this cohort without establishing a clear endpoint-Dice or EF advantage.
 
-Figure \ref{fig:population_lv_curve} shows the population-normalized LV trajectory. Time is normalized only for the group visualization; patient-level phases and metrics use the original frame indices. Both methods show the expected global pattern of a larger LV volume around ED and a smaller volume around ES, while temporal fusion reduces small frame-to-frame fluctuations.
+Figure \ref{fig:population_lv_curve} shows both population-normalized LV trajectories and their paired pointwise difference. Time is normalized only for the group visualization; patient-level phases and metrics use the original frame indices. The two mean curves nearly overlap, which is consistent with the very small aggregate changes. The lower panel exposes the small fusion-minus-frame-wise difference without implying a resolved endpoint-Dice or EF benefit.
 
 \begin{figure}[hbt!]
     \centering
     \includegraphics[width=0.92\textwidth]{spatiotemporal/population_lv_motion_curve.png}
-    \caption{Population LV-volume trajectory across the normalized cardiac cycle for 20 validation patients. Shading represents between-patient variability. Temporal fusion is fixed post-hoc probability averaging, not a learned temporal network.}
+    \caption{Population LV-volume trajectories for frame-wise inference and fixed temporal fusion across 20 validation patients. The upper bands are mean $\pm$ one between-patient standard deviation; the lower panel shows the paired fusion-minus-frame-wise difference with pointwise patient 2.5th--97.5th percentiles. Each method is normalized by its patient-specific maximum after alignment to reference ED. Temporal fusion is fixed post-hoc probability averaging, not a learned temporal network.}
     \label{fig:population_lv_curve}
 \end{figure}
 
@@ -200,7 +202,7 @@ The diagnostic composition was MINF $n=7$, NOR $n=6$, DCM $n=4$, RV abnormality 
 % =========================================================
 % CHAPTER 7: DISCUSSION AND LIMITATION
 % =========================================================
-\chapter{DISCUSSION AND LIMITATION}
+\chapter{DISCUSSION AND LIMITATIONS}
 \label{chap:discussion}
 
 This chapter interprets the final validation results and explains the implications for the proposed Nano-Mamba U-Net. The discussion is intentionally conservative: the model is evaluated as a lightweight segmentation architecture, not as an absolute state-of-the-art solution. This distinction is necessary because the final results show a trade-off rather than a universal win.
@@ -217,9 +219,9 @@ The trade-off can be interpreted through the relationship between model size and
 This ratio should not be treated as a clinical metric, but it helps illustrate the engineering perspective. Nano-Mamba U-Net has a lower Dice than SegResNet16 but also a much lower parameter count. Therefore, its value is not that it dominates every metric, but that it occupies a favorable lightweight region of the accuracy-efficiency space.
 
 \section{Interpretation of Ablation Results}
-The ablation results require careful interpretation. The No-Mamba variant achieved 85.64\% mean DSC, slightly higher than Nano-Mamba U-Net. This indicates that the current lightweight Mamba-inspired bottleneck does not consistently improve Dice over a stronger convolutional bottleneck under the final validation split. Therefore, the Mamba-inspired module should not be presented as conclusively superior in segmentation accuracy.
+The ablation results require careful interpretation. The convolutional-bottleneck control (No-Mamba), which contains zero Mamba operations, achieved 85.64\% mean DSC, slightly higher than Nano-Mamba U-Net. This indicates that the current lightweight Mamba-inspired bottleneck does not improve Dice over that stronger convolutional bottleneck on the final validation split. Therefore, the Mamba-inspired module should not be presented as conclusively superior in segmentation accuracy.
 
-At the same time, Nano-Mamba U-Net reduced the parameter count compared with the No-Mamba variant, from 2.29M to 1.46M, while maintaining a close mean DSC. This suggests that the bottleneck is more valuable as a parameter-efficiency design than as a guaranteed accuracy-improving component. The Half-Mamba variant achieved 84.95\%, which is close to Nano-Mamba, further showing that channel allocation and bottleneck capacity affect the accuracy-efficiency balance.
+At the same time, Nano-Mamba U-Net reduced the parameter count relative to the convolutional control from 2.29M to 1.46M (36.3\%) while retaining approximately 99.0\% of its Dice and essentially the same recorded FPS (29.09 versus 28.80). This supports a lightweight accuracy--efficiency interpretation, not a guaranteed accuracy gain from the gate. The 64-channel Mamba-bottleneck ablation achieved 84.95\%; its paired interval against Nano crosses zero, so its small ordering is unresolved rather than evidence of a reliable winner.
 
 A possible explanation is that the compressed bottleneck operates on a very low-resolution representation. At this stage, the network may already have lost some fine anatomical boundary information. A sequence module can mix information across the compressed representation, but it cannot recover details that were not preserved by the encoder. This explains why the Mamba-inspired module may help compactness without guaranteeing the best Dice. Future work should investigate whether placing sequence modules at multiple resolutions would improve this balance.
 
@@ -244,7 +246,7 @@ Several limitations must be acknowledged.
     \item \textbf{Mamba-inspired implementation:} The implemented bottleneck is inspired by Mamba-style sequence modeling but is not a full reproduction of the original hardware-aware selective scan implementation. This distinction is important because the thesis must not attribute the full original Mamba mechanism to the implemented model.
     \item \textbf{Legacy projection parameters:} The historical gate projection produces $2d_{state}+1$ channels but uses only the first. The reported parameter count includes the unused outputs. They were retained to preserve checkpoint compatibility, but a redesigned block would need retraining.
     \item \textbf{Spatial backbone and fixed temporal processing:} The trained model segments each 3D frame independently; depth is anatomical slices, not time. The complete-cine extension uses fixed adjacent-frame probability fusion and global mask trajectories. It is not a learned temporal Mamba block, optical flow, dense registration, tissue correspondence, or regional strain analysis.
-    \item \textbf{Non-matched training and ablations:} Memory constraints required batch size 1 for Attention U-Net and SegResNet16 and batch size 2 for the other models. Optimizer updates per epoch and normalization choices therefore differ across model families. The No-Mamba ablation also has more parameters and a structurally different bottleneck. These factors limit causal attribution of performance differences to one architectural mechanism.
+    \item \textbf{Non-matched training and ablations:} Memory constraints required batch size 1 for Attention U-Net and SegResNet16 and batch size 2 for the other models. Optimizer updates per epoch and normalization choices therefore differ across model families. The zero-Mamba convolutional control also has more parameters and a structurally different bottleneck. These factors limit causal attribution of performance differences to one architectural mechanism.
     \item \textbf{Array-size preprocessing and no augmentation:} Training resizes arrays to $256\times256\times16$ without explicit orientation canonicalization, common physical-spacing resampling, cardiac cropping, or augmentation. The historical Dice comparison is therefore measured on a deterministic resized grid. The cine extension restores categorical masks to the native array shape for physical measurements, where endpoint mean Dice is approximately 77.92\%, materially lower than the approximately 84.79\% resized-grid value. Source review confirms the intended nearest-neighbour inverse resize with the original three-axis shape and no axis permutation. The gap should nevertheless not be attributed solely to through-plane anisotropy: it combines irreversible boundary discretization from direct array-size resizing, heterogeneous in-plane and through-plane shapes, and model error under a changed evaluation grid. A native-label round-trip audit is provided in the repository to quantify the resampling component on the submission dataset without retraining.
     \item \textbf{Temporal probability storage precision:} The full-cine run computed logits and softmax in float32 with AMP disabled, preserved the frame-wise argmax before conversion, and stored probability maps as float16 before fixed temporal fusion to reduce host-memory use. The reported fusion result therefore describes that executed mixed-storage pipeline. Because the observed Dice and EF differences are already unresolved, they are not presented as precision-independent improvements; a future sensitivity run should compare float16 and float32 probability storage directly.
     \item \textbf{Metric convention:} An empty prediction and empty reference for one class are assigned Dice 1 in the executed metric. None of the 720 audited foreground class scores equals 1, establishing that this branch did not affect the reported case table; the convention could still matter in future datasets.
@@ -257,4 +259,4 @@ Several limitations must be acknowledged.
 These limitations define the thesis boundary. The case rows, training logs, 550-frame table, patient metrics, figures, hashes, and independent recomputation are internally consistent, but they do not remove the design limitations above. Clinical deployment, learned temporal modeling, dense tissue motion, and external generalization remain outside scope.
 
 \section{Summary of Findings}
-The final validation results position Nano-Mamba U-Net as a lightweight, parameter-efficient segmentation model. It outperformed the 3D U-Net baseline in mean DSC and used fewer parameters than all evaluated alternatives, while SegResNet16 and the No-Mamba ablation achieved higher Dice. The added full-cine stage completed segmentation-derived temporal and functional analysis across all 550 frames. Fixed fusion produced a resolved improvement only in global curve smoothness, not in endpoint Dice or EF error. The balanced conclusion is therefore that the project delivers a compact spatial model and an auditable full-cine analysis, without proving the model is the most accurate or that it performs dense cardiac motion tracking.
+The final validation results position Nano-Mamba U-Net as a lightweight segmentation model with the lowest reported parameter count and competitive recorded batch-one throughput. It outperformed the 3D U-Net baseline in mean DSC and used fewer parameters than all evaluated alternatives, while SegResNet16 and the zero-Mamba convolutional control achieved higher Dice. The added full-cine stage completed segmentation-derived temporal and functional analysis across all 550 frames. Fixed fusion produced a resolved improvement only in global curve smoothness, not in endpoint Dice or EF error. The balanced conclusion is therefore that the project delivers a compact spatial model and an auditable full-cine analysis, without proving the model is the most accurate or that it performs dense cardiac motion tracking.

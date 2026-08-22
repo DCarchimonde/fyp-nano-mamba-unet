@@ -41,7 +41,7 @@ The study follows a two-stage experimental computing workflow. First, the ACDC c
 \end{figure}
 
 \section{Dataset and Data Discovery}
-The experiment uses the Automated Cardiac Diagnosis Challenge (ACDC) dataset \cite{bernard2018deep}. The task is multi-class segmentation of three anatomical structures: RV, MYO, and LV. The final discovery snapshot records 200 non-empty image-label path pairs from 100 patients. Each patient contributes labelled end-diastolic and end-systolic frames, giving two labelled 3D cases per patient.
+The experiment uses the Automated Cardiac Diagnosis Challenge (ACDC) dataset \citep{bernard2018deep}. The task is multi-class segmentation of three anatomical structures: RV, MYO, and LV. The final discovery snapshot records 200 non-empty image-label path pairs from 100 patients. Each patient contributes labelled end-diastolic and end-systolic frames, giving two labelled 3D cases per patient.
 
 A practical issue in this project is that the local dataset layout contains paths ending in \texttt{.nii} that may act as containers rather than directly readable NIfTI files. Therefore, the data discovery procedure checks whether each candidate path is a non-empty file or a directory containing a non-empty NIfTI path. Empty placeholders are skipped. It also requires exactly two labelled cases for every patient from \texttt{patient001} through \texttt{patient100}; duplicate case identifiers or incomplete patient coverage cause the pipeline to stop before splitting. This prevents a partially discovered dataset from silently entering the experiment.
 
@@ -57,7 +57,7 @@ Let $\mathbf{P}$ denote the set of all patient identifiers. The split can be exp
 This condition is the core methodological safeguard of the experiment. It ensures that the validation Dice measures performance on unseen patients rather than on additional frames from patients used during training.
 
 \section{Preprocessing Pipeline}
-All models use the same deterministic preprocessing pipeline implemented with MONAI \cite{cardoso2022monai}. The exact executed order is:
+All models use the same deterministic preprocessing pipeline implemented with MONAI \citep{cardoso2022monai}. The exact executed order is:
 \begin{enumerate}
     \item \texttt{LoadImaged} loads the paired NIfTI intensity volume and integer label volume.
     \item \texttt{EnsureChannelFirstd} changes an array shaped $H\times W\times D$ into $1\times H\times W\times D$.
@@ -100,14 +100,14 @@ For continuous MRI intensity volumes, trilinear interpolation is used during res
 \end{equation}
 Here, $V_{ijk}$ are neighbouring voxel intensities and $w_{ijk}$ are interpolation weights determined by the relative distance between the target coordinate and the neighbouring grid points. For segmentation labels, nearest-neighbour interpolation is used instead, because labels are categorical class identifiers rather than continuous intensity values.
 
-MRI intensity values are relative and scanner-dependent rather than standardized physical units \cite{nyul1999on}. Therefore, intensity scaling is applied before network input. For a non-constant single-channel volume, the executed min-max mapping can be written as:
+MRI intensity values are relative and scanner-dependent rather than standardized physical units \citep{nyul1999on}. Therefore, intensity scaling is applied before network input. For a non-constant single-channel volume, the executed min-max mapping can be written as:
 \begin{equation}
     S(I_{xyz}) = \frac{I_{xyz}-\min(I)}{\max(I)-\min(I)}.
 \end{equation}
 This maps the volume minimum to 0 and maximum to 1; MONAI handles the constant-volume edge case. The scaling is applied to each loaded volume, not across the full dataset. No histogram standardization or scanner-specific normalization is performed.
 
 \section{Nano-Mamba U-Net Architecture}
-The proposed model follows a 3D U-Net-style encoder-decoder structure. The encoder uses convolutional blocks and pooling to reduce spatial resolution while increasing feature channels. The decoder uses transposed convolutions and skip connections to recover spatial resolution and preserve boundary information. The architectural modification studied in this thesis is the insertion of a lightweight Mamba-inspired bottleneck at the compressed latent representation. For Nano-Mamba U-Net, the main tensor path is $B\times1\times256\times256\times16$ at input, $B\times128\times32\times32\times2$ after the third pooling operation and the first bottleneck convolution, and $B\times4\times256\times256\times16$ at the output. The bottleneck therefore serializes $32\times32\times2=2048$ spatial tokens, each with 128 channels.
+The proposed model follows a 3D U-Net-style encoder-decoder structure. The encoder uses convolutional blocks and pooling to reduce spatial resolution while increasing feature channels. The decoder uses transposed convolutions and skip connections to recover spatial resolution and preserve boundary information. The architectural modification studied in this thesis is the insertion of a lightweight Mamba-inspired bottleneck at the compressed latent representation. For Nano-Mamba U-Net, the main tensor path is $B\times1\times256\times256\times16$ at input, $B\times128\times32\times32\times2$ after the third pooling operation and the first bottleneck convolution, and $B\times4\times256\times256\times16$ at the output. The bottleneck therefore serializes $32\times32\times2=2048$ spatial tokens, each with 128 channels. In this thesis, \emph{lightweight} means that Nano-Mamba has the lowest reported trainable-parameter count while retaining competitive batch-one throughput on the recorded hardware. It does not mean that the model leads every speed, memory, or accuracy metric.
 
 \begin{figure}[hbt!]
 \centering
@@ -162,7 +162,7 @@ Here, $X$ is the input feature map, $Y$ is the output feature map, $K$ is the lo
 For a five-dimensional \texttt{BatchNorm3d} input with shape
 \(N\times C\times D\times H\times W\), the mean and variance for each channel
 are estimated over the combined \(N,D,H,W\) elements, not over the batch axis
-alone \cite{ioffe2015batch}. For a feature value $x$, batch normalization can
+alone \citep{ioffe2015batch}. For a feature value $x$, batch normalization can
 be expressed as:
 \begin{equation}
     \hat{x}=\frac{x-\mu_{B}}{\sqrt{\sigma_{B}^2+\epsilon}}, \qquad y=\gamma\hat{x}+\beta.
@@ -218,10 +218,12 @@ The remaining legacy projection channels are retained for checkpoint
 compatibility but have no path to the output. The output sequence is reshaped
 back into 3D feature form before being passed to the decoder.
 
-This design choice must be interpreted carefully. The original Mamba paper proposes selective state space sequence modeling \cite{gu2023mamba}. The implementation in this project uses a lightweight PyTorch block inspired by this direction, but it does not claim to reproduce the full hardware-aware selective scan. The research contribution is therefore the integration and evaluation of a compact sequence-inspired bottleneck inside a cardiac MRI segmentation model.
+The executed block performs kernel-3 depthwise mixing along the fixed raster-serialized latent sequence and applies a token-wise scalar gate. It contains no recurrent state-space propagation, selective scan, self-attention, or direct global all-token interaction. Moreover, raster serialization introduces order-dependent adjacencies where rows and slices meet; a pair of consecutive tokens is not always a pair of isotropic 3D neighbours. The operation is therefore best understood as compact local gated sequence mixing at the bottleneck, not as global 3D context modeling.
+
+This design choice must be interpreted carefully. The original Mamba paper proposes selective state space sequence modeling \citep{gu2023mamba}. The implementation in this project uses a lightweight PyTorch block inspired by this direction, but it does not claim to reproduce the full hardware-aware selective scan. The research contribution is therefore the integration and evaluation of a compact sequence-inspired bottleneck inside a cardiac MRI segmentation model.
 
 \section{Comparison Models and Ablation Design}
-The experiment compares Nano-Mamba U-Net with several reference architectures. The 3D U-Net baseline represents the standard encoder-decoder approach. Attention U-Net represents attention-gated skip connections. SegResNet16 represents a residual convolutional segmentation model based on the SegResNet family \cite{myronenko2019segresnet}. Two ablation variants are included to study the role of the bottleneck: No-Mamba U-Net replaces the Mamba-inspired bottleneck with convolutional blocks, while Half-Mamba U-Net reduces the bottleneck capacity.
+The experiment compares Nano-Mamba U-Net with several reference architectures. The 3D U-Net baseline represents the standard encoder-decoder approach. Attention U-Net represents attention-gated skip connections. SegResNet16 represents a residual convolutional segmentation model based on the SegResNet family \citep{myronenko2019segresnet}. Two custom controls study the bottleneck. The \emph{convolutional-bottleneck control (No-Mamba)} contains zero Mamba or Mamba-inspired operations: it executes \texttt{DoubleConv(64,128)} followed by \texttt{DoubleConv(128,128)}. The \emph{64-channel Mamba-bottleneck ablation (Half-Mamba)} executes \texttt{DoubleConv(64,64)}, the same type of Mamba-inspired block at 64 channels, and then \texttt{DoubleConv(64,128)}. ``Half'' therefore refers only to the sequence-block channel width relative to Nano's 128-channel block, not to half of the complete network.
 
 The executed normalization and batch-size combinations are model specific:
 \begin{table}[hbt!]
@@ -233,7 +235,7 @@ The executed normalization and batch-size combinations are model specific:
 Configuration & Executed normalization & Batch size \\
 \hline
 MONAI 3D U-Net & Instance normalization & 2 \\
-Nano-, No-, and Half-Mamba U-Net & \texttt{BatchNorm3d} & 2 \\
+Nano, convolutional control, and 64-channel ablation & \texttt{BatchNorm3d} & 2 \\
 MONAI Attention U-Net & \texttt{BatchNorm3d} & 1 \\
 MONAI SegResNet16 & Group normalization (8 groups) & 1 \\
 \hline
@@ -249,7 +251,7 @@ reported comparison. SegResNet16 did not have this specific conflict because
 its default executed normalization was group normalization, which does not use
 batch statistics.
 
-The ablations are not parameter matched: the No-Mamba variant contains 2.29M reported parameters, whereas Nano-Mamba U-Net contains 1.46M. It also uses a different two-block convolutional bottleneck. The comparison can therefore describe the observed architecture-level accuracy-efficiency trade-off, but it cannot isolate a causal benefit or harm from sequence gating alone. This distinction is important because No-Mamba U-Net slightly outperformed Nano-Mamba U-Net in mean Dice, while Nano-Mamba U-Net retained the lowest reported parameter count.
+The ablations are not parameter matched: the convolutional-bottleneck control contains 2.29M reported parameters, the 64-channel Mamba-bottleneck ablation contains 1.64M, and Nano-Mamba U-Net contains 1.46M. The control also has a structurally different two-block convolutional bottleneck. These comparisons describe executed architecture-level accuracy--efficiency trade-offs, but they cannot isolate a causal benefit or harm from sequence gating alone. This distinction is important because the zero-Mamba convolutional control slightly outperformed Nano-Mamba U-Net in mean Dice, while Nano-Mamba retained the lowest reported parameter count.
 
 \section{Training Objective and Optimization}
 The models are trained using a Dice-Cross Entropy objective. Dice loss addresses region-level overlap, while cross entropy provides voxel-wise class supervision. For class $c$, the Dice score is:
@@ -270,7 +272,7 @@ The total loss used for optimization is:
 \end{equation}
 Here, $p_{i,c}$ denotes the predicted probability for voxel $i$ and class $c$, while $g_{i,c}$ denotes the one-hot ground-truth label. This loss is a standard practical choice for medical segmentation and is implemented using MONAI's Dice-Cross Entropy loss. The executed constructor sets \texttt{to\_onehot\_y=True} and \texttt{softmax=True} but does not override \texttt{include\_background}; under the documented MONAI default, the four-channel training Dice term includes background. By contrast, the reported evaluation Dice is computed only for the three foreground structures. The optimization loss and the reported metric therefore use related but not identical class averaging.
 
-Optimization is performed with AdamW \cite{loshchilov2017decoupled}. The learning rate is $1\times10^{-4}$ and weight decay is $1\times10^{-5}$. All models are trained for 150 epochs without a learning-rate scheduler or early stopping; validation is run after every epoch. UNet3D, Nano-Mamba, No-Mamba, and Half-Mamba use batch size 2; Attention U-Net and SegResNet16 use batch size 1 because of memory constraints. This is not a strictly controlled batch-size comparison. Different batch sizes imply different numbers of optimizer updates per epoch, and normalization choices also differ across model families. The table should therefore be interpreted as a comparison of executed model configurations, not a perfectly controlled isolation of architecture alone.
+Optimization is performed with AdamW \citep{loshchilov2017decoupled}. The learning rate is $1\times10^{-4}$ and weight decay is $1\times10^{-5}$. All models are trained for 150 epochs without a learning-rate scheduler or early stopping; validation is run after every epoch. UNet3D, Nano-Mamba, the convolutional-bottleneck control, and the 64-channel Mamba-bottleneck ablation use batch size 2; Attention U-Net and SegResNet16 use batch size 1 because of memory constraints. This is not a strictly controlled batch-size comparison. Different batch sizes imply different numbers of optimizer updates per epoch, and normalization choices also differ across model families. The table should therefore be interpreted as a comparison of executed model configurations, not a perfectly controlled isolation of architecture alone.
 
 \section{Checkpoint Selection and Evaluation Metrics}
 A key methodological correction in the final experiment is validation-based checkpoint selection. Earlier exploratory scripts saved best models according to training loss, which is not a reliable indicator of generalization. In the final experiment, the checkpoint is saved only when validation mean Dice improves. If $\overline{D}^{(e)}_{val}$ denotes the validation mean Dice at epoch $e$, the selected checkpoint is:
@@ -351,7 +353,7 @@ A smaller value means less frame-to-frame curvature in the global volume traject
 Manual segmentation masks are available only at ED and ES. Both resized-grid endpoint Dice, which connects to the historical experiment, and native-grid endpoint Dice after nearest-neighbour mask restoration are reported. EF error is reported in percentage points, and ED/ES phase detection is reported as exact-frame and within-one-frame accuracy. Patient-level means and paired temporal-fusion-minus-frame-wise differences use 10,000 bootstrap replicates with seed 20260821. The analysis also reports diagnostic-group summaries, but their group sizes range from one to seven patients and are therefore descriptive only. Every frame row, patient row, figure, source hash, checkpoint hash, and aggregate value is preserved in the result bundle and independently recomputed by a second audit script.
 
 \section{Hardware and Reproducibility}
-The experiment used PyTorch \cite{paszke2019pytorch} and MONAI on a single
+The experiment used PyTorch \citep{paszke2019pytorch} and MONAI on a single
 NVIDIA RTX 4060 GPU with 8GB VRAM. Seed 42 is applied to Python's random
 generator, NumPy, PyTorch on the CPU, and PyTorch on every CUDA device. The
 executed entry point also enables the CuDNN deterministic flag, disables the
