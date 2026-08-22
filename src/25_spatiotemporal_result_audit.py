@@ -108,6 +108,25 @@ def canonical_hash_variants(path: Path) -> Dict[str, str]:
     }
 
 
+def canonical_line_ending_match_mode(path: Path, target_sha256: str) -> str:
+    """Return the provenance hash's canonical newline form.
+
+    ``raw`` is deliberately not reported because it describes the current
+    checkout rather than the recorded source.  For example, the same LF
+    provenance hash matched ``raw`` on Linux but ``lf`` after a Windows CRLF
+    checkout.  Selecting only the canonical LF/CRLF variants makes the sealed
+    audit report byte-stable across operating systems while still rejecting
+    every non-newline content change.
+    """
+
+    variants = canonical_hash_variants(path)
+    if variants["lf"] == target_sha256:
+        return "lf"
+    if variants["crlf"] == target_sha256:
+        return "crlf"
+    raise AuditError(f"Source lineage mismatch: {path}")
+
+
 def circular_frame_distance(first: int, second: int, frames: int) -> int:
     direct = abs(first - second)
     return min(direct, frames - direct)
@@ -245,11 +264,8 @@ def audit_source_lineage(
     for key, relative in source_paths.items():
         path = repo_root / relative
         require(path.is_file(), f"Current source is missing: {relative}")
-        variants = canonical_hash_variants(path)
         target = str(recorded.get(key, ""))
-        matches = [mode for mode, digest in variants.items() if digest == target]
-        require(bool(matches), f"Source lineage mismatch: {relative}")
-        modes[key] = matches[0]
+        modes[key] = canonical_line_ending_match_mode(path, target)
 
     split_path = repo_root / "evidence/rigorous_patient_split/patient_split_seed42.json"
     per_case_path = repo_root / "evidence/rigorous_patient_split/per_case_NanoMambaUNet.csv"

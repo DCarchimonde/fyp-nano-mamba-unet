@@ -405,8 +405,8 @@
     "checked": true,
     "independent_historical_endpoint_max_abs_dice_difference": 0.00016910548567161676,
     "line_ending_match_modes": {
-      "cine_analysis": "raw",
-      "metrics": "raw",
+      "cine_analysis": "lf",
+      "metrics": "lf",
       "nano_mamba_core": "crlf",
       "rigorous_pipeline": "crlf"
     }

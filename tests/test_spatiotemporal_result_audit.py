@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -47,6 +49,27 @@ class SpatiotemporalResultAuditTests(unittest.TestCase):
             observed["result_directory"], "evidence/spatiotemporal_cine/raw"
         )
         self.assertEqual(observed, expected)
+
+        # The sealed report must not change merely because Git checked a
+        # source file out with Windows CRLF rather than Unix LF newlines.
+        lf = b"first line\nsecond line\n"
+        crlf = lf.replace(b"\n", b"\r\n")
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / "source.py"
+            for checkout in (lf, crlf):
+                source.write_bytes(checkout)
+                self.assertEqual(
+                    AUDIT.canonical_line_ending_match_mode(
+                        source, hashlib.sha256(lf).hexdigest()
+                    ),
+                    "lf",
+                )
+                self.assertEqual(
+                    AUDIT.canonical_line_ending_match_mode(
+                        source, hashlib.sha256(crlf).hexdigest()
+                    ),
+                    "crlf",
+                )
 
     def test_circular_phase_distance_handles_cycle_boundary(self) -> None:
         self.assertEqual(AUDIT.circular_frame_distance(1, 30, 30), 1)
