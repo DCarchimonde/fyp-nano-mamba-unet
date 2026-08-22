@@ -5,7 +5,7 @@
 | Item | Status | Evidence / final action |
 |---|---|---|
 | Registered title exact and unchanged | Pass | Canonical LaTeX title and PDF cover |
-| Chapters 1--8 and references present | Pass | Canonical 94-page PDF |
+| Chapters 1--8 and references present | Pass | Canonical 95-page PDF |
 | Main table tied to rigorous CSV | Pass | Aggregate-consistency audit and committed evidence copies |
 | Patient split is deterministic, disjoint, and complete | Pass | Seed 42; 80/20 patients; 160/40 cases |
 | Quantitative figures use experiment evidence | Pass | Spatial summary/training plots plus audited full-cine curve, EF, and endpoint-overlay figures |
@@ -13,7 +13,7 @@
 | Invalid qualitative validation figure removed | Pass | Restoration requires explicit checkpoint and validation case |
 | Active reference list | Pass | 32 cited and manually formatted APA-style entries; no uncited bibliography dump |
 | Clean thesis build | Pass | Exit 0; A4; no undefined references/citations; no overfull boxes |
-| Full PDF visual QA | Pass | All 94 pages rendered and reviewed; full-size checks include both abstracts, acronym list, every corrected equation, normalization table, results, limitations, overlay, and final reference page |
+| Full PDF visual QA | Pass | All 95 pages rendered and reviewed; full-size checks include both abstracts, acronym list, every corrected equation, normalization table, results, limitations, Half-Mamba comparison, overlay, and final reference page |
 | Final artifact manifest | Pass | Scientific scope, experiment design, hashes, build command, versions, and page/slide counts |
 | Exact image-processing explanation | Pass | Thesis method, dedicated slide, bilingual cheat sheet, and viva Q5--12 |
 | Exact tensor/sequence explanation | Pass | Input, bottleneck, token, and output shapes tied to code |
@@ -41,6 +41,7 @@
 | Affine-mismatch safety | Pass with boundary | Six cases pass shape/zoom/pixel/label checks; scalar metrics supported, dense correspondence not claimed |
 | Fusion probability precision | Pass with disclosure | Float32 logits/softmax and fusion arithmetic; float16 probability storage; no precision-independent Dice/EF claim |
 | Ablation naming and graph | Pass | No-Mamba is explicitly a zero-Mamba convolutional control; Half-Mamba is explicitly a 64-channel gated-block ablation |
+| Half-Mamba compactness comparison | Pass | Nano uses 11.1% fewer reported trainable parameters while retaining 99.8% of mean DSC; paired CI crosses zero, so no reliable accuracy penalty or formal equivalence is claimed |
 | Lightweight claim | Pass with boundary | Lowest reported trainable-parameter count plus competitive recorded batch-one FPS; no Peak-VRAM or universal-efficiency claim |
 | Related-work boundary | Pass | VSS/SSM segmentation and learned motion/optical-flow work contrasted with the local gate and fixed temporal fusion |
 

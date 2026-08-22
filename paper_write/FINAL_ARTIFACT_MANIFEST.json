@@ -1,6 +1,6 @@
 {
-  "schema_version": 7,
-  "audit_date": "2026-08-22",
+  "schema_version": 8,
+  "audit_date": "2026-08-23",
   "branch": "p2-final-audit-2026-08-20",
   "registered_title": "Nano-Mamba U-Net: A Spatio-Temporal Framework for Cardiac Motion Analysis",
   "scientific_scope": {
@@ -14,10 +14,11 @@
     "motion_boundary": "Completed outputs are segmentation-derived global trajectories and functional indices. No learned temporal Mamba, registration, optical flow, dense deformation, tissue correspondence, regional strain, or external clinical validation is claimed.",
     "mamba_boundary": "The bottleneck uses kernel-3 depthwise local mixing and a token-wise scalar gate on a fixed raster sequence. It has no recurrent state propagation, selective scan, self-attention, or direct global all-token interaction and is not the reference Mamba/VSS implementation.",
     "ablation_definitions": "The historical No-Mamba model is a zero-Mamba convolutional-bottleneck control. The historical Half-Mamba model uses the same type of gated block at 64 rather than 128 channels; Half refers only to that block width.",
+    "half_mamba_tradeoff": "Nano uses 11.117% fewer reported trainable parameters than the 64-channel Half-Mamba ablation (1.456325M versus 1.638469M) while retaining 99.796% of its mean Dice. The paired interval crosses zero, so no reliable accuracy penalty or formal equivalence is claimed.",
     "lightweight_definition": "Lowest reported trainable-parameter count together with competitive recorded batch-one throughput; no claim of leadership in every accuracy, speed, or peak-memory metric.",
     "supported_claim": "Nano-Mamba provides a compact spatial accuracy-efficiency trade-off; the full-cine extension produces complete global trajectories, and fixed probability fusion makes the LV-volume curve smoother without establishing a resolved Dice or EF gain.",
     "boundary_file": "SCIENTIFIC_BOUNDARIES.md",
-    "boundary_file_sha256": "a18de88d309f982a8c98c5629d3c9de25b9adea686bab2276f5d4368a82d5094",
+    "boundary_file_sha256": "fc5c14da6e3c1aff7b8bbf6ac2cbaba3ec149c49196077312680c30f37f378bf",
     "cine_protocol": "SPATIOTEMPORAL_ANALYSIS.md",
     "cine_protocol_sha256": "218db035318a9a3378de8b37732bd40f9503e898d247f719fc622135924a421d"
   },
@@ -114,6 +115,9 @@
     },
     "nano_trainable_parameters": 1456325,
     "nano_parameters_millions": 1.456325,
+    "half_mamba_parameters_millions": 1.638469,
+    "nano_parameter_reduction_vs_half_mamba_percent": 11.116719327616199,
+    "nano_dice_retention_vs_half_mamba_percent": 99.79551194357771,
     "nano_checkpoint_state_dict_scalars": 1457747,
     "nano_non_parameter_batchnorm_buffers": 1422,
     "nano_foreground_dice_percent": {
@@ -253,9 +257,9 @@
     "active_apa_reference_list_sha256": "b464f6689b62cacc4087df9e4990f3fb564d43614872345b025d692b7c15d7d5",
     "active_references": 32,
     "pdf": "paper_write/Universiti_Malaya_Thesis_Template/thesis.pdf",
-    "pdf_sha256": "0f8325eaa3db9d58978ca6d63068116a514a70cfa020ce448f5b21d7a3fe0b5b",
-    "bytes": 1613792,
-    "pages": 94,
+    "pdf_sha256": "8d868480ffc7a6830554c4516e2f27b690e0dd94c776f5efc12e0abe8737f369",
+    "bytes": 1615101,
+    "pages": 95,
     "page_size": "A4 (595.276 x 841.89 pt)",
     "pdf_version": "1.5",
     "build_command": "bash scripts/build_thesis.sh",
@@ -266,14 +270,14 @@
       "no missing figures",
       "no overfull boxes",
       "cross-references stable after four LaTeX passes",
-      "all 94 pages rendered and visually reviewed, including the final reference page"
+      "all 95 pages rendered and visually reviewed, including the revised Half-Mamba comparison and final reference page"
     ]
   },
   "word_count": {
     "record": "paper_write/WORD_COUNT.md",
-    "record_sha256": "2d49a74a40b86073dc69279cf66464078b4b72e97de34a9972fc8f49f061bd13",
+    "record_sha256": "defc399777fbf6063fe6f17b070265959609e9cb600449cfdba50c3b928978d0",
     "method": "detex over the five active body-chapter sources, then wc -w",
-    "active_body_words": 16262,
+    "active_body_words": 16400,
     "english_abstract_words": 463,
     "malay_abstract_words": 446,
     "scope": "Body count excludes abstracts, front matter, references, and inactive legacy files; each abstract is below 500 words."
@@ -287,9 +291,9 @@
     "speaker_notes": "14/14 slides; each contains a source block",
     "viva_bank": "presentation/P2_VIVA_QA.md",
     "viva_questions": 68,
-    "viva_bank_sha256": "ccc50e759ac236f60dbfc295cbf2cd34a87644ae458fcb3f63bc8b8453db7bbd",
+    "viva_bank_sha256": "ce1f8af3e17b29507839110aace055eda1b299151660af869593f26a5a347110",
     "method_cheatsheet": "presentation/P2_DEFENSE_METHOD_CHEATSHEET.md",
-    "method_cheatsheet_sha256": "d0e0351259ba6c08c6837845b234cbd36809f2c3ce73facf3cb7ba6aedd9caea",
+    "method_cheatsheet_sha256": "72c8c23bd3bd231efadc72b71bb5e9510be3e542d10e4df93f1bfeb30869c64a",
     "qa": [
       "all 14 slides rendered and visually reviewed",
       "layout overflow test passed",
@@ -300,14 +304,14 @@
   },
   "final_audit": {
     "file": "paper_write/P2_FINAL_AUDIT.md",
-    "sha256": "8ef6c37a4136e40348045dd86ecd976a63c62cab16af577fcb121b6635285706",
+    "sha256": "05c3d2ab2c2258c9c91f89fc441a79ab6890c73caa9bc03ed89d6254f7166edf",
     "disposition": "Scientifically and defensively ready for P2 submission within the bounded spatial-segmentation plus full-cine global-function/motion scope."
   },
   "verification": {
     "unit_tests_container": "55 discovered: 48 passed and seven PyTorch/MONAI-dependent tests skipped explicitly because those packages are unavailable in the audit container",
     "spatial_scientific_evidence_audit": "pass",
     "full_cine_independent_audit": "pass",
-    "pdf_visual_review": "all 94 pages reviewed, including full-size checks of abstracts, acronym list, corrected equations, normalization table, results, limitations, and final reference page",
+    "pdf_visual_review": "all 95 pages reviewed, including full-size checks of abstracts, acronym list, corrected equations, normalization table, results, revised Half-Mamba comparison, limitations, and final reference page",
     "presentation_visual_review": "all 14 slides reviewed",
     "presentation_overflow_test": "pass",
     "presentation_template_fidelity": "pass with zero issues"

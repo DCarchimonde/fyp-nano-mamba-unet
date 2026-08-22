@@ -1,10 +1,10 @@
 # Thesis Word-Count Record
 
-**Audit date:** 2026-08-22
+**Audit date:** 2026-08-23
 
 **Canonical entry point:** `Universiti_Malaya_Thesis_Template/thesis.tex`
 
-The five active body-chapter sources contain approximately **16,262 words** by
+The five active body-chapter sources contain approximately **16,400 words** by
 `detex | wc -w`:
 
 | Active chapter source | Words |
@@ -12,9 +12,9 @@ The five active body-chapter sources contain approximately **16,262 words** by
 | `sample-chap-intro.tex` | 2,679 |
 | `sample-chap-litreview.tex` | 2,539 |
 | `sample-chap-methodology.tex` | 4,249 |
-| `sample-chap-results-p2.tex` | 4,421 |
-| `sample-chap-conclusion.tex` | 2,374 |
-| **Total** | **16,262** |
+| `sample-chap-results-p2.tex` | 4,516 |
+| `sample-chap-conclusion.tex` | 2,417 |
+| **Total** | **16,400** |
 
 Reproduction command from the template directory:
 

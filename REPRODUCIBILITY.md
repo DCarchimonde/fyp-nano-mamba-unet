@@ -154,7 +154,10 @@ convolutional-bottleneck control (historical label: No-Mamba) also exceeds
 Nano-Mamba U-Net. Nano-Mamba U-Net's defensible contribution is its
 compact accuracy--efficiency trade-off: 84.78% validation mean Dice with 1.456M
 reported parameters, not best-in-class Dice and not proof that its gated module
-causes an accuracy improvement. The separate cine result supports complete
+causes an accuracy improvement. Relative to the 64-channel Mamba-bottleneck
+ablation, Nano uses 11.1% fewer reported trainable parameters and retains 99.8%
+of its mean Dice; the paired interval crosses zero, so no reliable accuracy
+penalty or formal equivalence is claimed. The separate cine result supports complete
 segmentation-derived cardiac-cycle trajectories and smoother global LV curves
 from fixed temporal fusion. It does not support a resolved endpoint-Dice or EF
 advantage, learned temporal Mamba behavior, or dense tissue tracking.

@@ -101,6 +101,12 @@ refers only to that block width. These architectures are retained as executed
 evidence, but they are not parameter matched and therefore cannot establish a
 causal accuracy effect for the gate.
 
+Nano has 1.456325M reported trainable parameters versus 1.638469M for the
+64-channel ablation, an 11.117% reduction, while retaining 99.796% of its mean
+Dice. The paired Nano-minus-ablation interval crosses zero. This supports a
+compactness interpretation without establishing an accuracy penalty or formal
+equivalence.
+
 The historical entry point sets seed 42 for Python, NumPy, PyTorch CPU, and all
 CUDA devices, enables deterministic CuDNN behavior, disables CuDNN benchmarking,
 and uses zero DataLoader workers. It did not enable PyTorch's global

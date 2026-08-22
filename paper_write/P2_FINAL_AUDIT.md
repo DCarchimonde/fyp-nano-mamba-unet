@@ -1,6 +1,6 @@
 # P2 Final Scientific and Defense Audit
 
-Audit date: 22 August 2026
+Audit date: 23 August 2026
 
 Scope: experiment completeness, methodological vulnerabilities, code--paper
 agreement, thesis quality, and viva readiness. Historical command-forensics is
@@ -72,8 +72,8 @@ bank, and bilingual method cheat sheet.
 |---|---:|---:|---|
 | SegResNet16 | 86.70% | 4.701M | Accuracy leader |
 | Conv. control (historical No-Mamba) | 85.64% | 2.288M | Zero Mamba operations; higher Dice than Nano; not capacity matched |
-| 64-channel Mamba ablation (historical Half-Mamba) | 84.95% | 1.638M | Close to Nano; paired ordering unresolved |
-| Nano-Mamba | 84.78% | 1.456M | Smallest; competitive accuracy--efficiency point |
+| 64-channel Mamba ablation (historical Half-Mamba) | 84.95% | 1.638M | 0.174 pp above Nano; paired interval crosses zero |
+| Nano-Mamba | 84.78% | 1.456M | 11.1% fewer parameters than Half-Mamba; no reliable accuracy penalty established |
 | 3D U-Net | 80.83% | 4.809M | Nano is +3.945 pp and 69.714% smaller |
 | Attention U-Net | 74.78% | 5.909M | Weakest executed configuration; not a general verdict on attention |
 
@@ -83,6 +83,12 @@ isolate a causal benefit from the Mamba-inspired gate. The historical
 No-Mamba label denotes a purely convolutional control with zero Mamba
 operations; “Half-Mamba” denotes only a 64-channel version of the gated
 bottleneck, not half of the whole network.
+
+The Half-Mamba comparison is a positive compactness result when both axes are
+reported: Nano uses 11.117% fewer reported trainable parameters (1.456325M
+versus 1.638469M) and retains 99.796% of the ablation's mean DSC. Its paired
+interval crosses zero, so this supports a more compact operating point without
+an established accuracy penalty, but not a formal claim of equivalence.
 
 ## Stage B: completed full-cine analysis
 
@@ -156,7 +162,7 @@ and retained evidence. Its full evidence and disposition are recorded in
 
 | High-risk item | Final verdict |
 |---|---|
-| Set/loss/operator glyph corruption | Active formulas rewritten with portable bold/plain symbols and semantic operators; verified in the clean 94-page PDF |
+| Set/loss/operator glyph corruption | Active formulas rewritten with portable bold/plain symbols and semantic operators; verified in the clean 95-page PDF |
 | Attention equation scope | Scaled score is explicitly parenthesized inside softmax and multiplied by `V` afterward |
 | Batch size 1 with normalization | Attention U-Net used BatchNorm3d and completed 150 epochs; SegResNet16 used GroupNorm; cross-model confounding is explicit |
 | Circular fusion at first/last frame | Correct modulo indexing; both boundaries now have dedicated regression tests |
@@ -207,7 +213,7 @@ precision-independent improvements.
 
 | Deliverable/check | Final status |
 |---|---|
-| Thesis | 94-page A4 PDF; clean four-pass build; all pages rendered and reviewed |
+| Thesis | 95-page A4 PDF; clean four-pass build; all pages rendered and reviewed |
 | Presentation | 14 slides; all rendered/reviewed; no overflow; template-fidelity pass |
 | Speaker notes | Present on all 14 slides; each contains a source block |
 | Viva preparation | 68 questions plus bilingual method cheat sheet |

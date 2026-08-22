@@ -300,7 +300,7 @@ No. The sealed run computed logits and softmax in float32 with AMP disabled and 
 
 ### 66. What exactly does “Half-Mamba” mean, and what did it show?
 
-It is the historical name of the 64-channel Mamba-bottleneck ablation. Its bottleneck is `DoubleConv(64,64)`, the same type of Mamba-inspired block at 64 channels, then `DoubleConv(64,128)`. “Half” refers only to the gated block width relative to Nano's 128 channels, not half of the whole network. It obtained 84.95% Dice versus Nano's 84.78%, but the paired Nano-minus-ablation interval `[-0.91,+0.55]` percentage points crosses zero, so this small ordering is unresolved.
+It is the historical name of the 64-channel Mamba-bottleneck ablation. Its bottleneck is `DoubleConv(64,64)`, the same type of Mamba-inspired block at 64 channels, then `DoubleConv(64,128)`. “Half” refers only to the gated block width relative to Nano's 128 channels, not half of the whole network. It obtained 84.95% Dice with 1.638M parameters versus Nano's 84.78% with 1.456M. Nano therefore used approximately 11.1% fewer parameters while retaining 99.8% of the ablation's mean Dice. The paired Nano-minus-ablation interval `[-0.91,+0.55]` percentage points crosses zero, so the current evidence does not establish a reliable accuracy penalty for Nano; this is not a formal equivalence result.
 
 ### 67. Why do you call the model lightweight without presenting peak VRAM as a headline metric?
 

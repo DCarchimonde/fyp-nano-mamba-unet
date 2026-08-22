@@ -138,7 +138,7 @@ S=\frac{\operatorname{mean}_t|\widehat V_{t+1}-2\widehat V_t+\widehat V_{t-1}|}
 
 - SegResNet16：**86.70%**，最高 validation mean Dice。
 - 卷积控制组（历史名 No-Mamba，零 Mamba）：**85.64%**，比 Nano 高 **0.862 pp**，但参数更多且 bottleneck 结构不同。
-- 64-channel Mamba ablation（历史名 Half-Mamba）：**84.95%**；比 Nano 高 **0.174 pp**，但 paired CI 跨 0，排序未解决。
+- 64-channel Mamba ablation（历史名 Half-Mamba）：**84.95%**、**1.638M**；Nano 的参数少 **11.1%**（1.456M），保留其 **99.8%** mean Dice，且 paired CI 跨 0，因此没有建立 Nano 的可靠精度损失，也不能宣称正式等效。
 - Nano-Mamba：**84.78%**，**1.456M** reported parameters，最小模型。
 - UNet3D：**80.83%**，**4.809M**；Nano 相比它 **+3.945 pp**，参数少 **69.714%**。
 

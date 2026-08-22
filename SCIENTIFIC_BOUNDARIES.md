@@ -37,7 +37,10 @@ viva answers.
 - The 64-channel Mamba-bottleneck ablation (historical experiment name:
   `Ablation_HalfMamba_UNet`) uses the same type of Mamba-inspired block at 64
   channels. “Half” describes that block width relative to Nano's 128 channels,
-  not half of the network. Its paired ordering against Nano is unresolved.
+  not half of the network. Nano uses 1.456325M reported trainable parameters
+  versus 1.638469M for this ablation, an 11.117% reduction, while retaining
+  99.796% of its mean Dice. The paired interval crosses zero, so the evidence
+  does not establish a reliable accuracy penalty for Nano or formal equivalence.
 - Audited per-case rows support a post-hoc paired patient-bootstrap interval
   of [+2.829, +5.009] percentage points for Nano-Mamba minus UNet3D.
 - The corresponding interval crosses zero for Nano-Mamba versus the 64-channel

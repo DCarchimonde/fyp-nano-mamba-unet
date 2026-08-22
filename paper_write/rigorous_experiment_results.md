@@ -36,6 +36,11 @@ describe half of the complete network. The control's higher Dice prevents a
 claim that the present gate improves accuracy, while its 57.1% larger parameter
 count and different bottleneck prevent a clean causal claim that the gate is
 harmful. The 64-channel ablation's paired ordering against Nano is unresolved.
+More completely, Nano uses 1.456325M reported trainable parameters versus
+1.638469M for the 64-channel ablation, a reduction of 11.117%, while retaining
+99.796% of its mean DSC. The paired interval crossing zero means that the
+current evidence does not establish a reliable accuracy penalty for Nano; it
+does not constitute a formal equivalence result.
 
 The safest thesis claim is therefore:
 
