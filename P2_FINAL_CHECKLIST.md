@@ -5,6 +5,7 @@
 | Item | Status | Evidence / final action |
 |---|---|---|
 | Registered title exact and unchanged | Pass | Canonical LaTeX title and PDF cover |
+| Coursework title-page statement | Pass | Current UM wording: `RESEARCH REPORT SUBMITTED TO THE ...` |
 | Chapters 1--8 and references present | Pass | Canonical 95-page PDF |
 | Main table tied to rigorous CSV | Pass | Aggregate-consistency audit and committed evidence copies |
 | Patient split is deterministic, disjoint, and complete | Pass | Seed 42; 80/20 patients; 160/40 cases |

@@ -250,15 +250,15 @@
   },
   "thesis": {
     "entry_point": "paper_write/Universiti_Malaya_Thesis_Template/thesis.tex",
-    "entry_point_sha256": "52c97c8b95a10a915d254e6cb4cbf24a209652b7450fb1e08ff7d7926fa7a03f",
+    "entry_point_sha256": "d2928e4fbb21dfc5c155d427de644eff9f8fff1afbd63b7724ea20fbc9cb5bd7",
     "bibliography_metadata": "paper_write/Universiti_Malaya_Thesis_Template/myrefs.bib",
     "bibliography_metadata_sha256": "061846e7976455bb171871cf9caf9f37f1e17c025cc48a50aa4b033d619865bd",
     "active_apa_reference_list": "paper_write/Universiti_Malaya_Thesis_Template/references-apa7.tex",
     "active_apa_reference_list_sha256": "b464f6689b62cacc4087df9e4990f3fb564d43614872345b025d692b7c15d7d5",
     "active_references": 32,
     "pdf": "paper_write/Universiti_Malaya_Thesis_Template/thesis.pdf",
-    "pdf_sha256": "8d868480ffc7a6830554c4516e2f27b690e0dd94c776f5efc12e0abe8737f369",
-    "bytes": 1615101,
+    "pdf_sha256": "52fbf6114f414a7f8129d1607e6f8861d19b8d7fdad94b499335ba18e2ae36ad",
+    "bytes": 1615102,
     "pages": 95,
     "page_size": "A4 (595.276 x 841.89 pt)",
     "pdf_version": "1.5",
@@ -270,6 +270,7 @@
       "no missing figures",
       "no overfull boxes",
       "cross-references stable after four LaTeX passes",
+      "Master's coursework title page uses the current RESEARCH REPORT statement",
       "all 95 pages rendered and visually reviewed, including the revised Half-Mamba comparison and final reference page"
     ]
   },

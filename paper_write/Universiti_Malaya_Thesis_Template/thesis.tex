@@ -65,6 +65,14 @@
 % fills the known thesis metadata while leaving private/unknown identifiers blank
 % for manual completion before formal submission.
 \makeatletter
+% The current UM preparation guideline labels a Master's coursework
+% submission as a RESEARCH REPORT.  The bundled 2023 LaTeX class still uses
+% the older RESEARCH PROJECT wording, so override only this title-page
+% statement while leaving the vendor class unchanged.
+\renewcommand\statement@mastercoursework{%
+  RESEARCH REPORT SUBMITTED TO THE\\\MakeTextUppercase{\@mtfaculty}\\%
+  \MakeTextUppercase{\@mtunien}, IN PARTIAL FULFILMENT OF THE REQUIREMENTS FOR THE DEGREE OF \MakeTextUppercase{\@mtdegree}%
+}
 \renewcommand{\declarationpage}{%
   \chapter*{\@mtunien\vskip1em Original Literary Work Declaration}
   {\noindent Name of Candidate: Tong Siyuan \hfill (I.C./Passport No.: \candidatePassportNo)\par
