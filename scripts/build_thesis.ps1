@@ -14,7 +14,7 @@ $P2TexmfHome = Join-Path $P2BuildDir "texmf-home"
 
 New-Item -ItemType Directory -Force -Path $P2BuildDir, $P2TexmfVar, $P2TexmfConfig, $P2TexmfHome | Out-Null
 
-foreach ($P2Command in @("pdflatex", "makeglossaries", "pdfinfo")) {
+foreach ($P2Command in @("pdflatex", "makeglossaries")) {
     if (-not (Get-Command $P2Command -ErrorAction SilentlyContinue)) {
         throw "Required command is unavailable: $P2Command"
     }
@@ -79,22 +79,21 @@ if ($P2AcceptanceFailures) {
 }
 
 $P2Pdf = Join-Path $P2BuildDir "thesis.pdf"
-$P2PdfInfo = & pdfinfo $P2Pdf
-if ($LASTEXITCODE -ne 0) {
-    throw "pdfinfo failed for $P2Pdf"
-}
-
-$P2PageLine = $P2PdfInfo | Where-Object { $_ -match '^Pages:\s+(\d+)\s*$' } | Select-Object -First 1
+$P2PageLine = Select-String -Path $P2FinalLog -Pattern '\((\d+) pages?,' | Select-Object -Last 1
 if (-not $P2PageLine) {
-    throw "Could not read the PDF page count. Build retained at $P2BuildDir"
+    throw "Could not read the PDF page count from the final LaTeX log. Build retained at $P2BuildDir"
 }
-[void]($P2PageLine -match '^Pages:\s+(\d+)\s*$')
+[void]($P2PageLine.Line -match '\((\d+) pages?,')
 $P2PageCount = [int]$Matches[1]
 if ($P2PageCount -ne $ExpectedPages) {
     throw "Thesis acceptance check failed: expected $ExpectedPages pages, got $P2PageCount. Build retained at $P2BuildDir"
 }
 
-$P2PdfInfo | Where-Object { $_ -match '^(Pages|Page size|File size|PDF version):' }
+Write-Output ("Pages: {0}" -f $P2PageCount)
+Write-Output ("File size: {0} bytes" -f (Get-Item $P2Pdf).Length)
+if (Get-Command "pdfinfo" -ErrorAction SilentlyContinue) {
+    & pdfinfo $P2Pdf | Where-Object { $_ -match '^(Page size|PDF version):' }
+}
 Get-FileHash -Algorithm SHA256 $P2Pdf
 
 $P2CanonicalPdf = Join-Path $P2SourceDir "thesis.pdf"
