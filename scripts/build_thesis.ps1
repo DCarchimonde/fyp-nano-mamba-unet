@@ -42,8 +42,21 @@ try {
     Push-Location $P2BuildDir
     try {
         $P2GlossaryLog = Join-Path $P2BuildDir "makeglossaries.log"
-        & makeglossaries thesis *> $P2GlossaryLog
-        if ($LASTEXITCODE -ne 0) {
+        # Windows PowerShell 5.1 promotes native stderr output to an ErrorRecord
+        # when ErrorActionPreference is Stop.  makeglossaries legitimately writes
+        # a warning there when the main glossary is empty even though the acronym
+        # glossary is generated successfully, so judge the command by its exit code.
+        $P2SavedErrorActionPreference = $ErrorActionPreference
+        $P2GlossaryExitCode = 1
+        try {
+            $ErrorActionPreference = "Continue"
+            & makeglossaries thesis *> $P2GlossaryLog
+            $P2GlossaryExitCode = $LASTEXITCODE
+        }
+        finally {
+            $ErrorActionPreference = $P2SavedErrorActionPreference
+        }
+        if ($P2GlossaryExitCode -ne 0) {
             throw "makeglossaries failed. See $P2GlossaryLog"
         }
     }
