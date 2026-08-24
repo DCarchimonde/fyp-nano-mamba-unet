@@ -4,6 +4,7 @@ set -euo pipefail
 p2_repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 p2_source_dir="$p2_repo_root/paper_write/Universiti_Malaya_Thesis_Template"
 p2_build_dir="$(mktemp -d /tmp/nano-mamba-thesis.XXXXXX)"
+p2_expected_pages=95
 p2_texmf_var="$p2_build_dir/texmf-var"
 p2_texmf_config="$p2_build_dir/texmf-config"
 p2_texmf_home="$p2_build_dir/texmf-home"
@@ -20,6 +21,11 @@ for p2_command in pdflatex makeglossaries pdfinfo sha256sum rg; do
 done
 
 cd "$p2_source_dir"
+
+if rg -n '^(<<<<<<<|=======|>>>>>>>)' --glob '*.tex' --glob '*.cls' .; then
+  echo "Unresolved Git conflict marker found in thesis sources." >&2
+  exit 1
+fi
 
 pdflatex \
   -interaction=nonstopmode \
@@ -52,7 +58,15 @@ if rg -n -F \
   exit 1
 fi
 
-pdfinfo "$p2_build_dir/thesis.pdf" | rg "^(Pages|Page size|File size|PDF version)"
+p2_pdf_info="$(pdfinfo "$p2_build_dir/thesis.pdf")"
+p2_page_count="$(printf '%s\n' "$p2_pdf_info" | sed -n 's/^Pages:[[:space:]]*//p')"
+if [[ "$p2_page_count" != "$p2_expected_pages" ]]; then
+  echo "Thesis acceptance check failed: expected $p2_expected_pages pages, got $p2_page_count." >&2
+  echo "Build retained at $p2_build_dir" >&2
+  exit 1
+fi
+
+printf '%s\n' "$p2_pdf_info" | rg "^(Pages|Page size|File size|PDF version)"
 sha256sum "$p2_build_dir/thesis.pdf"
 cp "$p2_build_dir/thesis.pdf" "$p2_source_dir/thesis.pdf"
 

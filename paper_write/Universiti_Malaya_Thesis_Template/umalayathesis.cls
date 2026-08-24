@@ -209,21 +209,14 @@
 %%%%%%%%%%%%
 \RequirePackage[T1]{fontenc}
 \RequirePackage[scaled]{helvet}
-% Prefer the template's original New TX fonts.  Minimal TeX installations do
-% not always ship texlive-fonts-extra, so retain a metrically compatible Times
-% fallback instead of making an otherwise reproducible build fail.
-\IfFileExists{newtxtext.sty}{%
-  \RequirePackage{newtxtext,newtxmath}%
-}{%
-  \ClassWarning{umalayathesis}{newtx fonts unavailable; using mathptmx fallback}%
-  \RequirePackage{mathptmx}%
-}
-\IfFileExists{inconsolata.sty}{%
-  \RequirePackage{inconsolata}%
-}{%
-  \ClassWarning{umalayathesis}{inconsolata unavailable; using Courier fallback}%
-  \RequirePackage{courier}%
-}
+% Pin the fonts used by the audited 95-page submission artifact.  Selecting
+% New TX/Inconsolata only when they happen to be installed makes line breaks,
+% page count, and math-package behaviour depend on the local TeX Live setup.
+% In particular, New TX plus a later amssymb can redefine \Bbbk.  The
+% Times/Courier-compatible pair below is available in standard TeX Live and
+% reproduces the typography used for the visually audited PDF.
+\RequirePackage{mathptmx}
+\RequirePackage{courier}
 \RequirePackage{bm}
 
 \AddToHook{begindocument/before}{%

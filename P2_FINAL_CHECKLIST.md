@@ -58,6 +58,18 @@
 
 ## Final commands
 
+Use the dedicated multi-pass build command.  A single editor/LaTeX Workshop
+pass intentionally produces an incomplete intermediate PDF without the final
+contents, lists, acronyms, citations, and cross-references.
+
+Windows PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build_thesis.ps1
+```
+
+Linux/macOS/Git Bash:
+
 ```bash
 python src/22_p2_evidence_audit.py
 python src/25_spatiotemporal_result_audit.py --result-dir evidence/spatiotemporal_cine/raw --repo-root .
