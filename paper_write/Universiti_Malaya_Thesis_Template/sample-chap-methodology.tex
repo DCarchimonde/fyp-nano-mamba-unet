@@ -43,18 +43,18 @@ The study follows a two-stage experimental computing workflow. First, the ACDC c
 \section{Dataset and Data Discovery}
 The experiment uses the Automated Cardiac Diagnosis Challenge (ACDC) dataset \citep{bernard2018deep}. The task is multi-class segmentation of three anatomical structures: RV, MYO, and LV. The final discovery snapshot records 200 non-empty image-label path pairs from 100 patients. Each patient contributes labelled end-diastolic and end-systolic frames, giving two labelled 3D cases per patient.
 
-A practical issue in this project is that the local dataset layout contains paths ending in \texttt{.nii} that may act as containers rather than directly readable NIfTI files. Therefore, the data discovery procedure checks whether each candidate path is a non-empty file or a directory containing a non-empty NIfTI path. Candidates with no data are omitted. Before splitting, the procedure also verifies that every identifier from \texttt{patient001} through \texttt{patient100} appears with exactly two labelled cases. A duplicated case identifier or incomplete patient coverage terminates the run. These checks prevent an incomplete discovery result from entering the experiment unnoticed.
+A practical issue in this project is that the local dataset layout contains paths ending in \texttt{.nii} that may act as containers rather than directly readable NIfTI files. Therefore, the data discovery procedure checks whether each candidate path is a non-empty file or a directory containing a non-empty NIfTI path. Candidates with no data are omitted. Before splitting, the procedure also verifies that every identifier from \texttt{patient001} through \texttt{patient100} appears with exactly two labelled cases. Discovery stops if an identifier is repeated or if any patient is missing. This validation prevents a partial case list from being passed silently to training.
 
 \section{Patient-Level Training and Validation Split}
-Patients, rather than individual cases, formed the splitting unit. Both labelled frames from a given patient were consequently assigned to the same partition, with neither allowed to appear in the other partition. This removes a route by which patient-specific anatomy could leak into validation. With seed 42 and an 80/20 split, the resulting groups contained 80 training patients and 20 validation patients. That allocation corresponds to 160 labelled cases for training and 40 for validation.
+The split was performed by patient. A patient's two labelled frames always remained together, so neither frame could occur in the opposite partition. This rule blocks the most direct form of anatomical leakage between training and validation. Using seed 42 for the 80/20 allocation produced 80 training patients and 20 validation patients, equivalent to 160 labelled training cases and 40 labelled validation cases.
 
-Write $\mathbf{P}$ for the complete set of patient identifiers. The split can be expressed as:
+Let $\mathbf{P}$ denote all patient identifiers. The required partition relationship is:
 \begin{equation}
     \mathbf{P}_{\mathrm{train}} \cap \mathbf{P}_{\mathrm{val}} = \varnothing,
     \qquad
     \mathbf{P}_{\mathrm{train}} \cup \mathbf{P}_{\mathrm{val}} = \mathbf{P}.
 \end{equation}
-This condition is the core methodological safeguard of the experiment. It ensures that the validation Dice measures performance on unseen patients rather than on additional frames from patients used during training.
+This disjointness requirement is the experiment's main protection against leakage. It ensures that the validation Dice measures performance on unseen patients rather than on additional frames from patients used during training.
 
 \section{Preprocessing Pipeline}
 All models use the same deterministic preprocessing pipeline implemented with MONAI \citep{cardoso2022monai}. The exact executed order is:
@@ -167,12 +167,12 @@ be expressed as:
 \begin{equation}
     \hat{x}=\frac{x-\mu_{B}}{\sqrt{\sigma_{B}^2+\epsilon}}, \qquad y=\gamma\hat{x}+\beta.
 \end{equation}
-The parameters $\gamma$ and $\beta$ are learned, allowing the network to
-recover suitable feature scales after normalization. Consequently, batch size
-one does not by itself produce an undefined variance when spatial feature
-elements remain available, although its running statistics come from one
-patient volume at a time and are a legitimate comparison confound. ReLU
-activation is then applied as:
+Learning $\gamma$ and $\beta$ lets the layer adjust the normalized feature
+scale and offset. With spatial elements contributing to the estimate, a batch
+size of one does not automatically make the variance undefined. The running
+statistics are nevertheless estimated from a single patient volume at each
+step, leaving a confound in comparisons between model families. The following ReLU is then
+used:
 \begin{equation}
     f(x)=\max(0,x).
 \end{equation}
@@ -209,16 +209,16 @@ The implemented bottleneck is Mamba-inspired rather than a full selective scan i
 Here, \(\operatorname{Proj}_{\mathrm{in}}\) and
 \(\operatorname{Proj}_{\mathrm{out}}\) denote trainable linear mappings;
 \(\operatorname{DWConv1D}\) denotes the depthwise convolution along the
-sequence, and \(\operatorname{sigmoid}\) supplies the gate activation. Writing
-\(M_{b\ell c}\) in component form makes the element-wise product clear: the
-batch index \(b\), token index \(\ell\), and channel index \(c\) are not summed.
-In the code that was executed, \(\operatorname{Proj}_{\mathrm{gate}}\) generates
-$2d_{state}+1$ channels, of which only the first contributes to $\mathbf{G}$.
-The other legacy projection channels remain for compatibility with the saved
-checkpoint even though they have no route to the output. The output sequence is reshaped
-back into 3D feature form before being passed to the decoder.
+sequence, and \(\operatorname{sigmoid}\) supplies the gate activation. The
+component notation for \(M_{b\ell c}\) indicates multiplication at the same
+batch, token, and channel indices; none of these indices is summed. In the
+executed code, \(\operatorname{Proj}_{\mathrm{gate}}\) returns
+$2d_{state}+1$ channels, but \(\mathbf{G}\) receives only the first one. The
+remaining projection outputs are legacy checkpoint parameters and do not feed
+the output path. After gating and projection, the sequence is reshaped into a
+3D feature grid for the decoder.
 
-The executed block performs kernel-3 depthwise mixing along the fixed raster-serialized latent sequence and applies a token-wise scalar gate. It contains no recurrent state-space propagation, selective scan, self-attention, or direct global all-token interaction. Moreover, raster serialization introduces order-dependent adjacencies where rows and slices meet; a pair of consecutive tokens is not always a pair of isotropic 3D neighbours. The operation is therefore best understood as compact local gated sequence mixing at the bottleneck, not as global 3D context modeling.
+In the implemented block, a depthwise kernel of size 3 mixes nearby positions in the fixed raster sequence, after which one scalar gate is applied per token. There is no recurrent state, selective scan, self-attention, or operation that directly connects every token to every other token. Raster order also creates artificial neighbours at row and slice boundaries, so consecutive sequence positions are not invariably isotropic neighbours in 3D. The block is consequently interpreted as local gated mixing in the bottleneck rather than global 3D context modeling.
 
 This design choice must be interpreted carefully. The original Mamba paper proposes selective state space sequence modeling \citep{gu2023mamba}. The implementation in this project uses a lightweight PyTorch block inspired by this direction, but it does not claim to reproduce the full hardware-aware selective scan. The research contribution is therefore the integration and evaluation of a compact sequence-inspired bottleneck inside a cardiac MRI segmentation model.
 
@@ -359,18 +359,16 @@ generator, NumPy, PyTorch on the CPU, and PyTorch on every CUDA device. The
 executed entry point also enables the CuDNN deterministic flag, disables the
 CuDNN benchmark flag, and gives both data loaders zero worker processes. Thus,
 none of the seed or CuDNN controls stated in this method is missing from the
-entry point. The historical run did not enable the PyTorch mode that rejects
-nondeterministic operations, so the correct claim is controlled seeding and deterministic
-CuDNN configuration rather than guaranteed bitwise reproducibility. All six result rows are accompanied by 40-case metric
-tables and 150-epoch training logs; their class averages and selected best
-epochs reproduce the aggregate result table. The full-cine run used Python
-3.10.20, PyTorch 2.7.1 with CUDA 11.8, MONAI 1.5.2, the epoch-121 Nano-Mamba
-checkpoint, and batch size one. The patient split, preprocessing code, model
-definitions, evaluation code, full-cine result rows, figures, and hashes are
-	retained in the project repository. These deterministic controls and sealed
-	artifacts make the run more repeatable within the same software and hardware
-	environment; they cannot ensure bitwise-equivalent output after a library
-	version or device changes.
+entry point. PyTorch's strict rejection of nondeterministic operations was not
+enabled in the historical run. Reproducibility is therefore claimed only for the
+recorded seeds and CuDNN settings, not at the level of bitwise identity. For each
+of the six models, a 40-case metric table and a 150-epoch log reproduce the class
+means and selected epoch in the aggregate table. The cine analysis was run with
+Python 3.10.20, PyTorch 2.7.1, CUDA 11.8, MONAI 1.5.2, batch size one, and the
+Nano-Mamba checkpoint from epoch 121. The repository retains the split, source
+code, frame-level results, figures, and hashes needed to trace that execution.
+Repetition within the same software and hardware setting is therefore supported,
+although changing a library version or device may still change individual bits.
 
 \section{Methodological Summary}
-The methodology supports a cautious six-model comparison and a separate full-cine analysis under one patient-level split. It does not provide an independent test set, matched batch sizes, matched-capacity ablations, multi-seed training, augmentation, intermediate-frame manual labels, or external clinical validation. Historical six-model Dice remains a resized-grid measure; the full-cine stage additionally reports native-grid endpoint Dice and physical measurements. The backbone is not a full implementation of the original Mamba selective scan, and fixed probability fusion is not learned temporal modeling. The study therefore addresses both the compact accuracy--efficiency trade-off and a bounded segmentation-derived cardiac-cycle analysis, not universal architectural superiority or dense motion tracking.
+Under a single patient split, the method supports two analyses: a six-model comparison and a post-hoc study of the complete cines. It does not provide an independent test set, matched batch sizes, matched-capacity ablations, multi-seed training, augmentation, intermediate-frame manual labels, or external clinical validation. Historical six-model Dice remains a resized-grid measure; the full-cine stage additionally reports native-grid endpoint Dice and physical measurements. The backbone is not a full implementation of the original Mamba selective scan, and fixed probability fusion is not learned temporal modeling. The study therefore addresses both the compact accuracy--efficiency trade-off and a bounded segmentation-derived cardiac-cycle analysis, not universal architectural superiority or dense motion tracking.

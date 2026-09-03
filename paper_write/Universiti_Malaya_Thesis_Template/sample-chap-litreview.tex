@@ -6,17 +6,17 @@
 \chapter{LITERATURE REVIEW}
 \label{chap:litreview}
 
-This chapter establishes the scientific and technical background for the design choices made in the thesis. It does not argue that the proposed model replaces existing cardiac segmentation methods. The relevant setting is narrower: automated cardiac MRI segmentation requires accurate anatomical delineation, while parameter count, memory demand, and reproducible validation also matter in practice. Within that setting, a lightweight Mamba-inspired U-Net is a meaningful design to investigate.
+This review places the proposed design within the methods that preceded it. The intention is not to position Nano-Mamba as a replacement for existing cardiac segmentation systems. Instead, the literature is examined around the particular constraints of this project: anatomical accuracy, model size, memory demand, and reproducible validation. Those constraints motivate evaluating a small Mamba-inspired U-Net.
 
 \section{Cardiac MRI Segmentation in Clinical Computing}
-Cardiac Magnetic Resonance (CMR) provides a non-invasive view of cardiac morphology and function. In ACDC, the required masks correspond to the Left Ventricle (LV), Right Ventricle (RV), and Myocardium (MYO) \citep{bernard2018deep}. Delineating these structures makes it possible to compute ventricular volumes, myocardial mass, and ejection fraction. A neural network classifier does not supply those quantities directly; the anatomical calculations are made from its spatial masks. The reliability of downstream functional analysis therefore depends on the quality of the segmentation.
+Cardiac Magnetic Resonance (CMR) images reveal both cardiac structure and function without an invasive procedure. In ACDC, the required targets are the myocardium (MYO) and both ventricular cavities: LV and RV \citep{bernard2018deep}. Ventricular volumes, myocardial mass, and ejection fraction can then be calculated from these regions. They are not direct outputs of the classifier: the network predicts spatial masks, from which the anatomical measurements are derived. Errors in those masks consequently carry into the functional analysis.
 
-The three segmentation targets do not present equal difficulty. The LV cavity is relatively compact and usually has a clearer blood-pool boundary, so its segmentation is often more stable. Myocardium, by contrast, forms a thin ring whose outline can be obscured by partial-volume effects, papillary muscles, and ambiguous signal. The RV adds a variable crescent-like shape and a thinner wall. Because these anatomical differences can produce distinct error patterns, evaluation should report class-specific performance as well as an aggregate Dice score.
+The LV, RV, and MYO are not equally easy to delineate. The compact LV cavity often presents a clearer border with the blood pool. By comparison, MYO is a thin ring and its outline can be confused by papillary muscles, partial-volume effects, or weak signal contrast. The RV is also difficult because its crescent shape varies and its wall is thin. Separate class scores are therefore needed to show errors that an aggregate Dice value could conceal.
 
-ACDC covers several cardiac conditions: normal subjects, dilated cardiomyopathy, hypertrophic cardiomyopathy, myocardial infarction, and abnormal right-ventricle cases \citep{bernard2018deep}. This mixture provides more anatomical variation than a healthy-only dataset. Even so, the available ACDC training cohort is limited, which makes patient-level separation of training and validation essential. Placing frames from one patient in both partitions could make the reported score reflect remembered patient-specific anatomy rather than generalization.
+Five diagnostic categories are represented in ACDC \citep{bernard2018deep}. Alongside normal subjects, the cohort includes dilated and hypertrophic cardiomyopathy, myocardial infarction, and right-ventricular abnormality. It therefore contains more varied anatomy than a cohort restricted to healthy hearts. Its training cohort is still limited in size. Keeping each patient's frames in only one partition is essential; otherwise, validation could reward recognition of patient-specific anatomy rather than performance on unseen patients.
 
 \section{Traditional Medical Image Segmentation Methods}
-Before deep learning became dominant, medical image segmentation commonly relied on intensity thresholding, deformable models, graph-based optimization, and level-set methods. These approaches remain important historically because they clarify why learning-based segmentation became attractive.
+Prior to the widespread use of deep networks, segmentation was commonly formulated through intensity thresholds, deformable contours, graph optimisation, or level sets. Reviewing these approaches makes clear which practical limitations encouraged the later move to learned representations.
 
 A simple thresholding method assumes that the target object can be separated from the background by intensity. Otsu's method, for example, selects a threshold $T$ by maximizing the between-class variance \citep{otsu1979threshold}. If the two classes have probabilities $\omega_0(T)$ and $\omega_1(T)$, and means $\mu_0(T)$ and $\mu_1(T)$, the objective can be written as:
 \begin{equation}
@@ -105,21 +105,21 @@ where index \(i\) runs over the spatial feature elements. Thus,
 \(\delta\) is a nonlinear activation, and \(\alpha_i x_i\) is explicit
 element-wise multiplication. The key idea is not that attention automatically
 guarantees better segmentation, but that it provides a mechanism for feature
-selection. In the final experiment of this thesis, Attention U-Net did not
-outperform the other models, which illustrates why empirical comparison under
-the same split is necessary.
+selection. In this experiment, however, the Attention U-Net score was below
+those of the other evaluated models. An attention mechanism must therefore be
+judged from a controlled comparison rather than assumed to improve the result.
 
 \subsection{Residual Networks and SegResNet}
-Residual learning was introduced to make deeper networks easier to optimize \citep{he2016deep}. Instead of asking stacked layers to learn a full mapping $H(x)$, a residual block learns a residual function $F(x)$ and adds the input back to the output:
+Residual learning provides a shortcut path that can ease the optimisation of deep networks \citep{he2016deep}. Rather than representing the entire mapping $H(x)$ with a stack of layers, the block learns $F(x)$ and combines it with the unchanged input:
 \begin{equation}
     y = F(x) + x.
 \end{equation}
-This identity shortcut improves gradient flow and can make deeper convolutional models more trainable. SegResNet-style medical segmentation architectures use residual blocks in an encoder-decoder setting \citep{myronenko2019segresnet}. In this thesis, the MONAI SegResNet configuration with 16 initial filters serves as a residual convolutional alternative to the proposed Nano-Mamba U-Net. The final results show that SegResNet16 achieved the highest mean Dice, which must be acknowledged rather than hidden.
+The identity route gives gradients a direct path through the block and can make a deeper convolutional network easier to train. SegResNet applies residual blocks within a medical-image encoder-decoder \citep{myronenko2019segresnet}. The SegResNet16 configuration used here starts with 16 filters and serves as the residual convolutional comparator for Nano-Mamba U-Net. It produced the highest mean Dice in the final experiment, so the comparison does not support an accuracy-leadership claim for Nano-Mamba.
 
 \section{Transformers and Sequence Modeling in Medical Imaging}
-Transformers introduced self-attention as a way to model long-range dependencies \citep{vaswani2017attention}. Vision Transformer adapted this idea to image classification by treating image patches as tokens \citep{dosovitskiy2020image}. In medical imaging, UNETR used transformer encoders for 3D segmentation \citep{hatamizadeh2022unetr}, while Swin Transformer and Swin UNETR introduced hierarchical shifted-window attention to reduce the cost of global attention \citep{liu2021swin,hatamizadeh2022swin}.
+Self-attention was introduced in the Transformer to relate distant sequence elements \citep{vaswani2017attention}. Vision Transformer transferred this mechanism to images by representing patches as tokens \citep{dosovitskiy2020image}. Medical segmentation variants followed: UNETR uses a Transformer encoder for 3D volumes \citep{hatamizadeh2022unetr}, whereas Swin Transformer and Swin UNETR restrict attention to shifted hierarchical windows to control the expense of global interactions \citep{liu2021swin,hatamizadeh2022swin}.
 
-The computational concern with standard self-attention is that the attention matrix grows quadratically with the number of tokens. For an input sequence of length $N$, the attention matrix has size $N\times N$, and the simplified attention operation is:
+The cost of standard self-attention is tied to all pairwise token comparisons. A sequence containing $N$ tokens produces an $N\times N$ attention matrix, with the simplified computation written as:
 \begin{equation}
     \operatorname{Attention}(Q,K,V)
     =\left[
@@ -128,16 +128,15 @@ The computational concern with standard self-attention is that the attention mat
       \right)
     \right]V.
 \end{equation}
-Here, \(d_k\) is the key-vector dimension. The square brackets make the
-scope explicit: softmax acts on the complete scaled score matrix
-\(QK^{\mathsf{T}}/\sqrt{d_k}\), and the resulting attention-weight matrix is
-then multiplied by \(V\). This equation shows why sequence length matters: the
-multiplication \(QK^{\mathsf{T}}\) compares every token with every other token.
-Restricting attention to windows reduces this expense. Even so, token count
-remains an important concern in volumetric segmentation because a 3D image can
-produce a long spatial sequence.
+In this expression, \(d_k\) denotes the dimension of a key vector. Softmax is
+applied to the whole scaled score matrix
+\(QK^{\mathsf{T}}/\sqrt{d_k}\); only afterwards is the resulting weight matrix
+multiplied by \(V\). The product \(QK^{\mathsf{T}}\) contains the pairwise
+comparisons, explaining the dependence on sequence length. Windowed attention
+reduces the number of such comparisons, but token count remains consequential
+for a 3D volume because rasterisation may yield a long spatial sequence.
 
-This computational cost does not make every Transformer infeasible or unsuitable for medical imaging; earlier work demonstrates effective Transformer-based segmentation. The motivation examined in this thesis is more limited. For a master's project concerned with a lightweight implementation and reproducible experiments on a consumer GPU, it is reasonable to test alternatives intended to combine broader contextual processing with fewer parameters.
+Effective Transformer segmenters show that this cost is not, by itself, evidence that the architecture is unsuitable for medical imaging. The motivation examined in this thesis is more limited. For a master's project concerned with a lightweight implementation and reproducible experiments on a consumer GPU, it is reasonable to test alternatives intended to combine broader contextual processing with fewer parameters.
 
 \section{State Space Models and Mamba-Inspired Design}
 State Space Models (SSMs) represent sequence dynamics through a hidden state. A continuous-time linear state space model can be written as:
@@ -155,20 +154,20 @@ An accurate account of the method depends on this distinction. If the implementa
 \section{Full-Cine Temporal Segmentation and Cardiac Motion Analysis}
 Cardiac cine analysis can use time in fundamentally different ways. \citet{qin2018jointmotion} jointly learned cardiac MR segmentation and motion estimation using recurrent spatial transformers, thereby producing explicit inter-frame motion information in addition to masks. \citet{yan2019cineflow} used optical-flow learning to add the temporal dimension to cine MRI analysis. Such approaches seek a deformation field or pixel/tissue correspondence between phases; when appropriately validated, this supports motion tracking beyond independent mask measurements.
 
-The present thesis addresses a narrower downstream problem. The trained Nano-Mamba backbone receives one 3D phase at a time and has no temporal input. After all phases are inferred, a fixed circular filter combines class probabilities as $0.25P_{t-1}+0.50P_t+0.25P_{t+1}$, including wrap-around at the first and last phases. The resulting masks support LV/RV/MYO volume curves, phase timing, EF, LV-centroid displacement, and a myocardial radial-distance summary. These are segmentation-derived global temporal and motion surrogates. They do not establish point correspondence, a dense deformation field, optical flow, local myocardial displacement, or strain. This distinction defines both the contribution and the validation boundary of the full-cine stage.
+The present thesis addresses a narrower downstream problem. The trained Nano-Mamba backbone receives one 3D phase at a time and has no temporal input. After all phases are inferred, a fixed circular filter combines class probabilities as $0.25P_{t-1}+0.50P_t+0.25P_{t+1}$, including wrap-around at the first and last phases. The resulting masks provide LV/RV/MYO volume curves as well as phase timing and EF. Two further summaries describe motion globally: displacement of the LV centroid and change in myocardial radial distance. These are segmentation-derived global temporal and motion surrogates. They do not establish point correspondence, a dense deformation field, optical flow, local myocardial displacement, or strain. This distinction defines both the contribution and the validation boundary of the full-cine stage.
 
 \section{Loss Functions and Evaluation Metrics}
-Medical segmentation is often class-imbalanced because background voxels dominate the image volume, while structures such as myocardium occupy a smaller region. Dice-based objectives are commonly used because they directly optimize overlap between prediction and ground truth \citep{milletari2016v,sudre2017generalised}. For a predicted binary mask $P$ and ground-truth mask $G$, the Dice Similarity Coefficient is:
+Medical segmentation is often class-imbalanced because background voxels dominate the image volume, while structures such as myocardium occupy a smaller region. Dice-based objectives are commonly used because they directly optimize overlap between prediction and ground truth \citep{milletari2016v,sudre2017generalised}. Given a binary prediction $P$ and its reference mask $G$, their Dice Similarity Coefficient is:
 \begin{equation}
     \mathrm{DSC}(P,G)=\frac{2|P\cap G|}{|P|+|G|}.
 \end{equation}
-For the multi-class task, Dice is calculated separately for RV, MYO, and LV before the three values are averaged. The thesis reports results using this procedure.
+In the four-class experiment, a foreground Dice value is obtained independently for RV, MYO, and LV; the reported mean is the average of those three values.
 
-Cross-entropy supplies voxel-level classification supervision and is also widely used. Let $y_i$ be the true class of voxel $i$ and $p_{i,c}$ the predicted probability that it belongs to class $c$. The multi-class loss is:
+Cross-entropy evaluates the class probability assigned at each voxel. If voxel $i$ has reference class $y_i$ and the model assigns class $c$ probability $p_{i,c}$, the multi-class loss is:
 \begin{equation}
     L_{\mathrm{CE}}=-\sum_i\sum_c \mathbf{1}(y_i=c)\log p_{i,c}.
 \end{equation}
-The experiments use MONAI's Dice-Cross Entropy loss, which combines region-overlap and voxel-level training signals. This is an established practical choice rather than a new loss proposed in the thesis \citep{cardoso2022monai}.
+Training used MONAI's Dice-Cross Entropy loss so that region overlap and voxel-wise class evidence contributed to one objective. This is an established practical choice rather than a new loss proposed in the thesis \citep{cardoso2022monai}.
 
 Evaluation should also avoid leakage. If the same patient contributes samples to both training and validation, the measured Dice may overestimate generalization. Therefore, the final experimental design of this thesis uses patient-level splitting. This methodological point is as important as the architecture itself, because a strong model comparison is only meaningful when all models are trained and evaluated under the same split.
 
