@@ -6,14 +6,14 @@
 \chapter{LITERATURE REVIEW}
 \label{chap:litreview}
 
-This chapter reviews the scientific and technical literature that supports the design choices of this thesis. The purpose is not to claim that the proposed model replaces all existing cardiac segmentation methods. Instead, the review identifies the specific research context in which a lightweight Mamba-inspired U-Net is meaningful: automated cardiac MRI segmentation requires accurate anatomical delineation, but practical models must also consider parameter count, memory usage, and reproducible validation.
+This chapter establishes the scientific and technical background for the design choices made in the thesis. It does not argue that the proposed model replaces existing cardiac segmentation methods. The relevant setting is narrower: automated cardiac MRI segmentation requires accurate anatomical delineation, while parameter count, memory demand, and reproducible validation also matter in practice. Within that setting, a lightweight Mamba-inspired U-Net is a meaningful design to investigate.
 
-\section{Cardiac MRI Segmentation as a Clinical Computing Problem}
-Cardiac Magnetic Resonance (CMR) imaging is widely used for non-invasive assessment of cardiac morphology and function. In the ACDC benchmark, the segmentation targets are the Right Ventricle (RV), Myocardium (MYO), and Left Ventricle (LV), which are clinically important because they support the computation of ventricular volumes, myocardial mass, and ejection fraction \citep{bernard2018deep}. These quantities are not obtained directly from a neural network classifier; they require spatial masks from which anatomical volumes can be computed. Therefore, segmentation quality is central to the reliability of downstream cardiac function analysis.
+\section{Cardiac MRI Segmentation in Clinical Computing}
+Cardiac Magnetic Resonance (CMR) provides a non-invasive view of cardiac morphology and function. In ACDC, the required masks correspond to the Left Ventricle (LV), Right Ventricle (RV), and Myocardium (MYO) \citep{bernard2018deep}. Delineating these structures makes it possible to compute ventricular volumes, myocardial mass, and ejection fraction. A neural network classifier does not supply those quantities directly; the anatomical calculations are made from its spatial masks. The reliability of downstream functional analysis therefore depends on the quality of the segmentation.
 
-CMR segmentation is challenging because the difficulty is not uniform across all structures. LV segmentation is often more stable because the LV cavity is relatively compact and has a clearer blood-pool boundary. In contrast, the myocardium is a thin ring-like structure whose boundaries can be affected by partial volume effects, papillary muscles, and signal ambiguity. The RV is also difficult because it has a more variable crescent-like shape and thinner wall. These anatomical observations explain why a single aggregate Dice score is insufficient; class-specific performance should also be reported when evaluating cardiac segmentation models.
+The three segmentation targets do not present equal difficulty. The LV cavity is relatively compact and usually has a clearer blood-pool boundary, so its segmentation is often more stable. Myocardium, by contrast, forms a thin ring whose outline can be obscured by partial-volume effects, papillary muscles, and ambiguous signal. The RV adds a variable crescent-like shape and a thinner wall. Because these anatomical differences can produce distinct error patterns, evaluation should report class-specific performance as well as an aggregate Dice score.
 
-The ACDC dataset is useful for this thesis because it includes multiple cardiac conditions, including normal subjects and pathological groups such as dilated cardiomyopathy, hypertrophic cardiomyopathy, myocardial infarction, and abnormal right ventricle cases \citep{bernard2018deep}. This heterogeneity makes the benchmark more relevant than a dataset containing only healthy cardiac anatomy. Nevertheless, the ACDC training cohort remains a limited dataset, so patient-level separation between training and validation is essential. If frames from the same patient appear in both training and evaluation, the reported performance may reflect memorization of patient-specific anatomy rather than generalization.
+ACDC covers several cardiac conditions: normal subjects, dilated cardiomyopathy, hypertrophic cardiomyopathy, myocardial infarction, and abnormal right-ventricle cases \citep{bernard2018deep}. This mixture provides more anatomical variation than a healthy-only dataset. Even so, the available ACDC training cohort is limited, which makes patient-level separation of training and validation essential. Placing frames from one patient in both partitions could make the reported score reflect remembered patient-specific anatomy rather than generalization.
 
 \section{Traditional Medical Image Segmentation Methods}
 Before deep learning became dominant, medical image segmentation commonly relied on intensity thresholding, deformable models, graph-based optimization, and level-set methods. These approaches remain important historically because they clarify why learning-based segmentation became attractive.
@@ -22,25 +22,25 @@ A simple thresholding method assumes that the target object can be separated fro
 \begin{equation}
     \sigma_B^2(T) = \omega_0(T)\omega_1(T)\left[\mu_0(T)-\mu_1(T)\right]^2.
 \end{equation}
-This formulation is elegant because it does not require annotated training data. However, it is not sufficient for cardiac MRI segmentation. MRI intensities are not standardized in the same way as CT Hounsfield Units, and myocardium, blood pool, and surrounding tissues may overlap in intensity. As a result, a global threshold cannot reliably separate RV, MYO, and LV across patients.
+This formulation is elegant because it does not require annotated training data. However, it is not sufficient for cardiac MRI segmentation. MRI intensities are not standardized in the same way as CT Hounsfield Units, and myocardium, blood pool, and surrounding tissues may overlap in intensity. For this reason, one global threshold cannot dependably separate RV, MYO, and LV across patients.
 
-Active contour models, introduced by \citet{kass1988snakes}, formulate segmentation as an energy minimization problem. A contour evolves under internal smoothness forces and external image forces. A simplified energy functional can be written as:
+Active contour models introduced by \citet{kass1988snakes} cast segmentation as minimization of an energy. Internal forces regulate the contour, while external forces respond to the image. One simplified form of the energy is:
 \begin{equation}
     E_{snake} = \int_0^1 \left[\frac{1}{2}\alpha |v'(s)|^2 + \frac{1}{2}\beta |v''(s)|^2 + E_{image}(v(s))\right]ds.
 \end{equation}
-Here, the first two terms regulate contour continuity and smoothness, while $E_{image}$ attracts the contour to image features such as edges. This is useful when boundaries are clear, but cardiac MRI boundaries can be weak or ambiguous at basal and apical slices. Moreover, deformable models often require careful initialization, which limits their practicality for fully automated pipelines.
+The first two terms impose continuity and smoothness on the contour, whereas $E_{image}$ pulls it toward image features such as edges. Clear boundaries suit this formulation, but CMR boundaries may be weak or ambiguous at the base and apex. Deformable models can also depend on careful initialization, limiting their use in a fully automated pipeline.
 
-Level-set methods represent the contour implicitly as the zero level of a higher-dimensional function $\phi$ \citep{osher1988fronts}. A typical evolution equation is:
+In a level-set method, the contour is represented implicitly by the zero level of a higher-dimensional function $\phi$ \citep{osher1988fronts}. Its evolution is commonly written as:
 \begin{equation}
     \frac{\partial \phi}{\partial t} + F|\nabla \phi| = 0.
 \end{equation}
-The implicit representation allows topology changes more naturally than parametric snakes. However, iterative numerical optimization and sensitivity to image forces remain practical limitations. For this reason, traditional methods are useful background, but they do not remove the need for robust data-driven segmentation in heterogeneous CMR datasets \citep{chen2020cardiacreview}.
+Because this representation is implicit, it accommodates topology changes more naturally than a parametric snake. Its practical limitations still include iterative numerical optimization and sensitivity to the image forces. These methods therefore remain useful background, but heterogeneous CMR data continue to require robust data-driven segmentation approaches \citep{chen2020cardiacreview}.
 
 \section{Deep Learning Segmentation Architectures}
 \subsection{Fully Convolutional Networks and U-Net}
-Fully Convolutional Networks (FCNs) showed that classification-style neural networks could be reformulated for dense pixel-wise prediction by replacing fully connected layers with convolutional operations \citep{long2015fully}. This idea was important because segmentation requires a prediction for every pixel or voxel rather than one image-level label.
+Fully Convolutional Networks (FCNs) demonstrated that a classification-style network could be adapted for dense pixel-wise prediction by replacing its fully connected layers with convolutional operations \citep{long2015fully}. This reformulation was important because segmentation requires a class decision at every pixel or voxel, rather than one label for an entire image.
 
-U-Net became one of the most influential architectures in biomedical image segmentation \citep{ronneberger2015u}. Its main contribution is the encoder-decoder structure with skip connections. The encoder gradually reduces spatial resolution to learn semantic features, while the decoder restores resolution to produce a segmentation mask. Skip connections transfer high-resolution spatial features from the encoder to the decoder, which helps recover fine boundaries. If $\mathbf{X}^{(l)}_{enc}$ is an encoder feature map and $\mathbf{X}^{(l+1)}_{dec}$ is a decoder feature map from a coarser level, a simplified skip-connection operation can be written as:
+U-Net has become a major architecture in biomedical image segmentation \citep{ronneberger2015u}. Its encoder-decoder layout is linked by skip connections. Spatial resolution is progressively reduced in the encoder as semantic features are learned, and the decoder restores that resolution to form a segmentation mask. Through the skip paths, high-resolution encoder features reach the decoder and assist recovery of fine boundaries. Let $\mathbf{X}^{(l)}_{enc}$ be an encoder feature map and $\mathbf{X}^{(l+1)}_{dec}$ a decoder feature map from the next coarser level. A simplified skip operation is then:
 \begin{equation}
     \mathbf{X}^{(l)}_{\mathrm{dec}}
     =\operatorname{Conv}\!\left(
@@ -133,10 +133,11 @@ scope explicit: softmax acts on the complete scaled score matrix
 \(QK^{\mathsf{T}}/\sqrt{d_k}\), and the resulting attention-weight matrix is
 then multiplied by \(V\). This equation shows why sequence length matters: the
 multiplication \(QK^{\mathsf{T}}\) compares every token with every other token.
-Window-based methods reduce this cost, but the broader issue remains important
-for volumetric segmentation because 3D images can produce many spatial tokens.
+Restricting attention to windows reduces this expense. Even so, token count
+remains an important concern in volumetric segmentation because a 3D image can
+produce a long spatial sequence.
 
-It would be inaccurate to claim that all transformer models are infeasible or that they are unsuitable for medical imaging. Prior work shows that transformer-based segmentation can be effective. The more careful motivation for this thesis is narrower: for a master's project focused on lightweight deployment and reproducible experiments on a consumer GPU, it is reasonable to investigate alternatives that attempt to combine broader context modeling with lower parameter count.
+This computational cost does not make every Transformer infeasible or unsuitable for medical imaging; earlier work demonstrates effective Transformer-based segmentation. The motivation examined in this thesis is more limited. For a master's project concerned with a lightweight implementation and reproducible experiments on a consumer GPU, it is reasonable to test alternatives intended to combine broader contextual processing with fewer parameters.
 
 \section{State Space Models and Mamba-Inspired Design}
 State Space Models (SSMs) represent sequence dynamics through a hidden state. A continuous-time linear state space model can be written as:
@@ -147,9 +148,9 @@ Here, $h(t)$ is the hidden state, $x(t)$ is the input signal, $y(t)$ is the outp
 
 Mamba extends this line of work through selective state space modeling and hardware-aware sequence processing \citep{gu2023mamba}. Recent biomedical segmentation studies have also explored Mamba-style modules for medical image segmentation. U-Mamba combines convolutional processing with state-space blocks, while SegMamba studies long-range sequential modeling for 3D medical segmentation \citep{ma2024umamba,xing2024segmamba}. VM-UNet uses Visual State Space blocks in a U-shaped architecture, Mamba-UNet uses a VMamba-based encoder-decoder and reports experiments on ACDC and Synapse, and LightM-UNet uses residual Vision Mamba layers to pursue a lightweight design \citep{ruan2024vmunet,wang2024mambaunet,liao2024lightmunet}. These works make Mamba/SSM segmentation directly relevant to this thesis, but they are related methods rather than evidence that every Mamba-inspired block will automatically improve cardiac segmentation.
 
-However, this thesis must distinguish the original Mamba implementation, the Visual State Space or SSM blocks in those recent segmentation models, and the implemented project model. Nano-Mamba serializes compressed 3D features and applies only kernel-3 depthwise sequence convolution, token-wise scalar gating, projections, and a residual connection. It has no recurrent state-space transition, selective scan, attention matrix, or direct global all-token interaction. Its fixed raster order also creates boundary adjacencies that are not isotropic 3D neighbours. It is therefore more accurate to describe the contribution as a local Mamba-inspired gated bottleneck exploration, not as a reproduction of Mamba or the cited Visual State Space architectures.
+However, this thesis must distinguish the original Mamba implementation, the Visual State Space or SSM blocks in those recent segmentation models, and the implemented project model. Nano-Mamba serializes compressed 3D features and applies only kernel-3 depthwise sequence convolution, token-wise scalar gating, projections, and a residual connection. It has no recurrent state-space transition, selective scan, attention matrix, or direct global all-token interaction. Its fixed raster order also creates boundary adjacencies that are not isotropic 3D neighbours. Accordingly, the contribution investigates a local gated bottleneck inspired by Mamba; it is not an implementation of either Mamba itself or the Visual State Space architectures cited above.
 
-This distinction matters for scientific integrity. If the implementation does not include the full selective scan algorithm, the thesis should not claim that it has implemented the complete Mamba architecture. The contribution is still valid, but it should be framed correctly: the project investigates whether a compact sequence-inspired bottleneck can provide a useful accuracy-efficiency trade-off in cardiac MRI segmentation.
+An accurate account of the method depends on this distinction. If the implementation does not include the full selective scan algorithm, the thesis should not claim that it has implemented the complete Mamba architecture. The contribution is still valid, but it should be framed correctly: the project investigates whether a compact sequence-inspired bottleneck can provide a useful accuracy-efficiency trade-off in cardiac MRI segmentation.
 
 \section{Full-Cine Temporal Segmentation and Cardiac Motion Analysis}
 Cardiac cine analysis can use time in fundamentally different ways. \citet{qin2018jointmotion} jointly learned cardiac MR segmentation and motion estimation using recurrent spatial transformers, thereby producing explicit inter-frame motion information in addition to masks. \citet{yan2019cineflow} used optical-flow learning to add the temporal dimension to cine MRI analysis. Such approaches seek a deformation field or pixel/tissue correspondence between phases; when appropriately validated, this supports motion tracking beyond independent mask measurements.
@@ -161,13 +162,13 @@ Medical segmentation is often class-imbalanced because background voxels dominat
 \begin{equation}
     \mathrm{DSC}(P,G)=\frac{2|P\cap G|}{|P|+|G|}.
 \end{equation}
-In multi-class segmentation, Dice can be computed separately for RV, MYO, and LV, and then averaged. This is the reporting strategy used in this thesis.
+For the multi-class task, Dice is calculated separately for RV, MYO, and LV before the three values are averaged. The thesis reports results using this procedure.
 
-Cross-entropy is also widely used because it provides voxel-wise classification supervision. If $y_i$ is the true class at voxel $i$ and $p_{i,c}$ is the predicted probability for class $c$, the multi-class cross-entropy can be expressed as:
+Cross-entropy supplies voxel-level classification supervision and is also widely used. Let $y_i$ be the true class of voxel $i$ and $p_{i,c}$ the predicted probability that it belongs to class $c$. The multi-class loss is:
 \begin{equation}
     L_{\mathrm{CE}}=-\sum_i\sum_c \mathbf{1}(y_i=c)\log p_{i,c}.
 \end{equation}
-The final experiment uses MONAI's Dice-Cross Entropy loss, combining region-overlap supervision with voxel-wise classification supervision. This choice is practical rather than novel; it follows established segmentation practice and is supported by the MONAI framework \citep{cardoso2022monai}.
+The experiments use MONAI's Dice-Cross Entropy loss, which combines region-overlap and voxel-level training signals. This is an established practical choice rather than a new loss proposed in the thesis \citep{cardoso2022monai}.
 
 Evaluation should also avoid leakage. If the same patient contributes samples to both training and validation, the measured Dice may overestimate generalization. Therefore, the final experimental design of this thesis uses patient-level splitting. This methodological point is as important as the architecture itself, because a strong model comparison is only meaningful when all models are trained and evaluated under the same split.
 
